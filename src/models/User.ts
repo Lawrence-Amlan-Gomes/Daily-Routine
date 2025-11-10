@@ -1,0 +1,31 @@
+// src/models/User.ts
+import mongoose from "mongoose";
+
+export interface IUser extends Document {
+  _id: mongoose.Types.ObjectId;
+  name: string;
+  email: string;
+  password: string;
+  photo?: string;
+  firstTimeLogin: boolean;
+  createdAt: Date;
+  isAdmin: boolean;
+}
+
+const UserSchema = new mongoose.Schema<IUser>(
+  {
+    name: { type: String, required: true, trim: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    password: { type: String, required: true },
+    photo: { type: String, default: "" },
+    firstTimeLogin: { type: Boolean, default: true },
+    createdAt: { type: Date, default: Date.now },
+    isAdmin: { type: Boolean, default: false },
+  },
+  {
+    versionKey: false,
+    timestamps: false,
+  }
+);
+
+export const User = mongoose.models.users || mongoose.model<IUser>("users", UserSchema);

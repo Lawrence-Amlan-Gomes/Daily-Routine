@@ -1,0 +1,63 @@
+// src/store/features/auth/authSlice.ts
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+export interface CleanUser {
+  id: string;
+  name: string;
+  email: string;
+  photo: string;
+  firstTimeLogin: boolean;
+  isAdmin: boolean;
+  createdAt: string; // ← ALWAYS STRING
+}
+
+export interface CleanGoogleUser {
+  name: string;
+  email: string;
+  image: string;
+}
+
+interface AuthState {
+  user: CleanUser | null;
+  googleUser: CleanGoogleUser | null;
+}
+
+const initialState: AuthState = {
+  user: null,
+  googleUser: null,
+};
+
+const authSlice = createSlice({
+  name: 'auth',
+  initialState,
+  reducers: {
+    setAuth: (state, action: PayloadAction<CleanUser | null>) => {
+      state.user = action.payload;
+      if (typeof window !== 'undefined') {
+        if (action.payload) {
+          localStorage.setItem('authUser', JSON.stringify(action.payload));
+        } else {
+          localStorage.removeItem('authUser');
+        }
+      }
+    },
+    setGoogleAuth: (state, action: PayloadAction<CleanGoogleUser | null>) => {
+      state.googleUser = action.payload;
+      // Optionally persist googleUser similarly if needed:
+      // if (typeof window !== 'undefined') {
+      //   if (action.payload) {
+      //     localStorage.setItem('authGoogleUser', JSON.stringify(action.payload));
+      //   } else {
+      //     localStorage.removeItem('authGoogleUser');
+      //   }
+      // }
+    },
+  },
+});
+
+export const {
+  setAuth,
+  setGoogleAuth,
+} = authSlice.actions;
+
+export default authSlice.reducer;
