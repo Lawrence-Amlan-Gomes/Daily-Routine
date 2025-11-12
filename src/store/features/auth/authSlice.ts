@@ -1,5 +1,5 @@
 // src/store/features/auth/authSlice.ts
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface CleanUser {
   id: string;
@@ -8,7 +8,7 @@ export interface CleanUser {
   photo: string;
   firstTimeLogin: boolean;
   isAdmin: boolean;
-  createdAt: string; // ← ALWAYS STRING
+  createdAt: string;
 }
 
 export interface CleanGoogleUser {
@@ -28,36 +28,40 @@ const initialState: AuthState = {
 };
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     setAuth: (state, action: PayloadAction<CleanUser | null>) => {
       state.user = action.payload;
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         if (action.payload) {
-          localStorage.setItem('authUser', JSON.stringify(action.payload));
+          localStorage.setItem("authUser", JSON.stringify(action.payload));
         } else {
-          localStorage.removeItem('authUser');
+          localStorage.removeItem("authUser");
         }
       }
     },
     setGoogleAuth: (state, action: PayloadAction<CleanGoogleUser | null>) => {
       state.googleUser = action.payload;
-      // Optionally persist googleUser similarly if needed:
-      // if (typeof window !== 'undefined') {
-      //   if (action.payload) {
-      //     localStorage.setItem('authGoogleUser', JSON.stringify(action.payload));
-      //   } else {
-      //     localStorage.removeItem('authGoogleUser');
-      //   }
-      // }
+      if (typeof window !== "undefined") {
+        if (action.payload) {
+          localStorage.setItem("authGoogleUser", JSON.stringify(action.payload));
+        } else {
+          localStorage.removeItem("authGoogleUser");
+        }
+      }
+    },
+    logout: (state) => {
+      state.user = null;
+      state.googleUser = null;
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("authUser");
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("authGoogleUser");
+      }
     },
   },
 });
 
-export const {
-  setAuth,
-  setGoogleAuth,
-} = authSlice.actions;
-
+export const { setAuth, setGoogleAuth, logout } = authSlice.actions;
 export default authSlice.reducer;

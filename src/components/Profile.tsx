@@ -1,7 +1,7 @@
 // src/components/Profile.tsx
 "use client";
 
-import { updateUser } from "@/app/actions"; // ← FIXED: Direct Server Action
+import { updateUser } from "@/app/actions";
 import colors from "@/app/color/color";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useTheme } from "@/app/hooks/useTheme";
@@ -9,11 +9,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ProfilePic from "./ProfilePic";
+import { useDispatch } from "react-redux";
+import { logout } from "@/store/features/auth/authSlice";
+import { signOut } from "next-auth/react";
 
 const Profile = () => {
   const router = useRouter();
+  const dispatch = useDispatch();
   const { theme } = useTheme();
-  const { user: auth, googleUser, setAuth, setGoogleAuth } = useAuth();
+  const { user: auth, googleUser, setAuth } = useAuth();
   const [name, setName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
 
@@ -25,17 +29,14 @@ const Profile = () => {
 
   const handleUpdate = async () => {
     if (!auth || !name.trim()) return;
-
     setIsEditing(false);
 
     try {
-      // Update DB
       await updateUser(auth.email, { name, firstTimeLogin: false });
-      // Update local state
       setAuth({ ...auth, name });
     } catch (error) {
       alert("Failed to update name. Try again.");
-      setName(auth.name); // revert
+      setName(auth.name);
     }
   };
 
@@ -47,18 +48,16 @@ const Profile = () => {
     }
   };
 
-  const logout = () => {
-    if (confirm("Are you sure you want to log out?")) {
-      setAuth(null);
-      setGoogleAuth(null);
-      router.push("/login");
-    }
+  const handleLogout = async () => {
+    if (!confirm("Are you sure you want to log out?")) return;
+
+    dispatch(logout());
+    await signOut({ redirect: false });
+    router.push("/login");
   };
 
   return auth ? (
-    <div
-      className={`w-full overflow-y-auto lg:overflow-hidden lg:flex lg:justify-center lg:items-center pt-[15%] sm:pt-[12%]`}
-    >
+    <div className="w-full overflow-y-auto lg:overflow-hidden lg:flex lg:justify-center lg:items-center pt-[15%] sm:pt-[12%]">
       <div
         className={`p-5 sm:p-10 overflow-hidden rounded-lg w-[80%] mx-[10%] mt-5 xl:w-[700px] lg:w-[600px] 2xl:w-[900px] lg:my-0 text-center ${
           theme ? `${colors.cardLight}` : `${colors.cardDark}`
@@ -95,7 +94,9 @@ const Profile = () => {
                   {isEditing ? "Update" : "Edit"}
                 </button>
               </div>
-              {!googleUser ? (
+
+              {/* CHANGE PASSWORD BUTTON – ONLY FOR EMAIL LOGIN */}
+              {!googleUser && (
                 <div className="w-full mt-5 mb-5 flex items-center justify-center">
                   <Link href="/changePassword" className="w-full">
                     <button
@@ -109,17 +110,13 @@ const Profile = () => {
                     </button>
                   </Link>
                 </div>
-              ) : (
-                <></>
               )}
 
               <div className="w-full mt-5 mb-5 flex items-center justify-center">
                 <button
-                  onClick={logout}
+                  onClick={handleLogout}
                   className={`sm:p-3 p-1 w-[70%] text-[12px] sm:text-[18px] sm:w-full text-white tracking-wider py-2 px-5 shadow-lg rounded-lg ${
-                    theme
-                      ? "bg-red-700 hover:bg-red-800"
-                      : "bg-red-800 hover:bg-red-900"
+                    theme ? "bg-red-700 hover:bg-red-800" : "bg-red-800 hover:bg-red-900"
                   }`}
                 >
                   Log Out
@@ -162,6 +159,7 @@ const Profile = () => {
             )}
           </div>
         </div>
+
         <div className={`w-full float-left h-[50px] sm:block hidden`}>
           <div
             className={`${
@@ -179,7 +177,9 @@ const Profile = () => {
               {isEditing ? "Update" : "Edit"}
             </button>
           </div>
-          {!googleUser ? (
+
+          {/* CHANGE PASSWORD – DESKTOP */}
+          {!googleUser && (
             <div className="w-[40%] mr-[5%] h-full float-left flex items-center justify-center">
               <Link href="/changePassword" className="w-full">
                 <button
@@ -193,20 +193,17 @@ const Profile = () => {
                 </button>
               </Link>
             </div>
-          ) : (
-            <></>
           )}
+
           <div
             className={`${
               googleUser ? "w-[47.5%]" : "w-[25%]"
             } h-full float-left flex items-center justify-center`}
           >
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className={`p-3 w-full text-white text-[16px] py-2 px-5 shadow-lg rounded-lg ${
-                theme
-                  ? "bg-red-700 hover:bg-red-800"
-                  : "bg-red-800 hover:bg-red-900"
+                theme ? "bg-red-700 hover:bg-red-800" : "bg-red-800 hover:bg-red-900"
               }`}
             >
               Log Out

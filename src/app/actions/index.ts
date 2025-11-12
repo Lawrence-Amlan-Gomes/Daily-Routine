@@ -7,10 +7,14 @@ import { cleanUserForClient } from "@/lib/data-util";
 import bcrypt from "bcrypt";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { generateToken } from "@/lib/server/jwt";
+import { signOut } from "@/app/auth";
+import { CleanUser } from "@/store/features/auth/authSlice";
+import { verifyToken } from "@/lib/server/jwt";
+import { CleanUser } from "@/store/features/auth/authSlice";
 
 // ==================== AUTH ACTIONS ====================
 
-// src/app/actions/index.ts
 export async function performLogin({
   email,
   password,
@@ -25,13 +29,19 @@ export async function performLogin({
   const match = await bcrypt.compare(password, user.password);
   if (!match) return null;
 
-  return {
-    _id: user._id.toString(),
+  const cleanUser: CleanUser = {
+    id: user._id.toString(),
     name: user.name,
     email: user.email,
     photo: user.photo || "",
     firstTimeLogin: user.firstTimeLogin || false,
+    isAdmin: user.isAdmin || false,
+    createdAt: user.createdAt?.toISOString() || new Date().toISOString(),
   };
+
+  const token = await generateToken(cleanUser);
+
+  return { user: cleanUser, token };
 }
 
 export async function createUser(data: {
@@ -59,13 +69,6 @@ export async function createUser(data: {
   return cleanUserForClient(user.toObject());
 }
 
-export async function changePassword(email: string, newPassword: string) {
-  await dbConnect();
-  const hashed = await bcrypt.hash(newPassword, 12);
-  await User.updateOne({ email }, { password: hashed });
-  revalidatePath("/profile");
-}
-
 export async function changePhoto(email: string, photo: string) {
   await dbConnect();
   await User.updateOne({ email }, { photo });
@@ -90,11 +93,13 @@ export async function findUserByEmail(email: string) {
   if (!user) return null;
 
   return {
-    _id: user._id.toString(),
+    id: user._id.toString(),
     name: user.name,
     email: user.email,
     photo: user.photo || "",
     firstTimeLogin: user.firstTimeLogin || false,
+    isAdmin: user.isAdmin || false,
+    createdAt: user.createdAt?.toISOString() || new Date().toISOString(),
   };
 }
 
@@ -115,4 +120,24 @@ export async function verifyAndChangePassword(
   await User.updateOne({ email }, { password: hashed });
 
   revalidatePath("/profile");
+}
+
+// ==================== GOOGLE + JWT ====================
+
+export async function generateJwtForGoogle(user: CleanUser): Promise<string> {
+  "use server";
+  return await generateToken(user);
+}
+
+export async function verifyJwtToken(token: string): Promise<CleanUser | null> {
+  "use server";
+  return await verifyToken(token);
+}
+
+// ==================== LOGOUT ====================
+
+export async function logoutUser() {
+  "use server";
+  await signOut({ redirect: false });
+  redirect("/login");
 }

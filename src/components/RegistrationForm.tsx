@@ -1,7 +1,7 @@
 // src/components/RegistrationForm.tsx
 "use client";
 
-import { getAllUsers, createUser } from "@/app/actions";
+import { createUser } from "@/app/actions";
 import colors from "@/app/color/color";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useTheme } from "@/app/hooks/useTheme";

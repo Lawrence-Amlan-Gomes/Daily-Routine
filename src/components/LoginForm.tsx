@@ -1,7 +1,7 @@
 // src/app/(auth)/login/LoginForm.tsx
 "use client";
 
-import { performLogin, findUserByEmail, changePhoto, updateUser } from "@/app/actions";
+import { performLogin, findUserByEmail, changePhoto, updateUser, generateJwtForGoogle } from "@/app/actions";
 import colors from "@/app/color/color";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useTheme } from "@/app/hooks/useTheme";
@@ -34,7 +34,6 @@ const LoginForm = () => {
   const [mainError, setMainError] = useState({ isError: false, error: "" });
   const [googleError, setGoogleError] = useState({ isError: false, error: "" });
 
-  // Auto-clear errors when typing
   useEffect(() => {
     setEmailError(
       email
@@ -50,7 +49,6 @@ const LoginForm = () => {
     setGoogleError({ isError: false, error: "" });
   }, [email, password]);
 
-  // Auto-clear Google error after 3s
   useEffect(() => {
     if (googleError.isError) {
       const t = setTimeout(
@@ -66,18 +64,17 @@ const LoginForm = () => {
 
     setIsLoading(true);
     try {
-      const user = await performLogin({ email, password });
+      const result = await performLogin({ email, password });
 
-      if (user) {
-        // If first time login via Google → sync photo
-        if (user.firstTimeLogin && session?.user?.image) {
-          if (user.email == session?.user?.email) {
-            user.photo = session.user.image;
-          }
+      if (result) {
+        const { user, token } = result;
+
+        if (typeof window !== "undefined" && !localStorage.getItem("authUser")) {
+          localStorage.setItem("authToken", token);
         }
 
-        setAuth(user); // THIS SAVES USER TO REDUX
-        router.push("/"); // Go home
+        setAuth(user);
+        router.push("/");
       } else {
         setMainError({
           isError: true,
@@ -98,7 +95,6 @@ const LoginForm = () => {
   const handleGoogleSignIn = async () => {
     setIsLoadingGoogle(true);
     try {
-      // If not signed in → trigger Google popup
       if (!session?.user) {
         await signIn("google");
         return;
@@ -108,15 +104,24 @@ const LoginForm = () => {
       const user = await findUserByEmail(userEmail);
 
       if (user) {
-        // Sync photo on first-time Google login
         if (user.firstTimeLogin && session.user.image) {
           user.photo = session.user.image;
           await changePhoto(userEmail, session.user.image);
           await updateUser(userEmail, { firstTimeLogin: false });
         }
 
+        const token = await generateJwtForGoogle(user);
+
+        if (typeof window !== "undefined" && !localStorage.getItem("authUser")) {
+          localStorage.setItem("authToken", token);
+        }
+
         setAuth(user);
-        setGoogleAuth(user)
+        setGoogleAuth({
+          name: session.user.name!,
+          email: session.user.email!,
+          image: session.user.image!,
+        });
         router.push("/");
       } else {
         setGoogleError({
@@ -124,11 +129,11 @@ const LoginForm = () => {
           error: `Your email ${userEmail} hasn't registered yet`,
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Google login error:", err);
       setGoogleError({
         isError: true,
-        error: "Google login failed. Try again.",
+        error: err.message || "Google login failed. Try again.",
       });
     } finally {
       setIsLoadingGoogle(false);
@@ -156,31 +161,12 @@ const LoginForm = () => {
         <div className="text-[20px] lg:text-[25px] 2xl:text-[40px] font-bold sm:mb-10">
           Login
         </div>
-        {/* Trick the browser with fake email and password fields */}
+
         <div className="opacity-0">
-          <EachField
-            label="fake"
-            type="email"
-            name="email"
-            isReal={false}
-            placeholder="Enter your email"
-            value={email}
-            setValue={setEmail}
-            iserror={emailError.iserror}
-            error={emailError.error}
-          />
-          <EachField
-            label="fake"
-            type="password"
-            name="password"
-            isReal={false}
-            placeholder="Enter your password"
-            value={password}
-            setValue={setPassword}
-            iserror={passwordError.iserror}
-            error={passwordError.error}
-          />
+          <EachField label="fake" type="email" name="email" isReal={false} placeholder="Enter your email" value={email} setValue={setEmail} iserror={emailError.iserror} error={emailError.error} />
+          <EachField label="fake" type="password" name="password" isReal={false} placeholder="Enter your password" value={password} setValue={setPassword} iserror={passwordError.iserror} error={passwordError.error} />
         </div>
+
         <EachField
           label="Email"
           type="email"
@@ -203,12 +189,11 @@ const LoginForm = () => {
           iserror={passwordError.iserror}
           error={passwordError.error}
         />
-        {mainError.isError ? (
+
+        {mainError.isError && (
           <div className="mt-3 text-red-600 text-[10px] lg:text-[14px] 2xl:text-[22px]">
             {mainError.error}
           </div>
-        ) : (
-          <></>
         )}
 
         <button
@@ -223,6 +208,7 @@ const LoginForm = () => {
         >
           {isLoading ? `Logging...` : `Login`}
         </button>
+
         <div className="w-full flex flex-col items-center justify-center">
           <button
             onClick={handleGoogleSignIn}
@@ -254,6 +240,7 @@ const LoginForm = () => {
             </div>
           )}
         </div>
+
         <div className="sm:mt-18 mt-5 text-[12px] lg:text-[16px] 2xl:text-[26px]">
           No Account?{" "}
           <Link
