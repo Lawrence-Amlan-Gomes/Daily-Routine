@@ -34,7 +34,7 @@
     "react-redux": "^9.2.0",
     "redux-persist": "^6.0.0",
     "stripe": "^19.3.0",
-    "tailwind-scrollbar": "^4.0.2"
+    "tailwind-scrollbar": "2.1.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
