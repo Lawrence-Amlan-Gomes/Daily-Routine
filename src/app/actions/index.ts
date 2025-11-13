@@ -1,4 +1,3 @@
-// src/app/actions/index.ts
 "use server";
 
 import { User } from "@/models/User";
@@ -12,6 +11,20 @@ import { signOut } from "@/app/auth";
 import { CleanUser } from "@/store/features/auth/authSlice";
 import { verifyToken } from "@/lib/server/jwt";
 
+// Helper – explicit type for the plain-object returned by .lean()
+type LeanUser = {
+  _id: any;
+  name: string;
+  email: string;
+  password?: string;   // password is only present when we .select("+password")
+  photo?: string;
+  firstTimeLogin?: boolean;
+  isAdmin?: boolean;
+  createdAt?: Date;
+  paymentType?: string;
+  __v?: number;
+};
+
 // ==================== AUTH ACTIONS ====================
 
 export async function performLogin({
@@ -22,10 +35,12 @@ export async function performLogin({
   password: string;
 }) {
   await dbConnect();
-  const user = await User.findOne({ email }).lean();
+
+  // keep Mongoose document + explicitly select password
+  const user = await User.findOne({ email }).select("+password");
   if (!user) return null;
 
-  const match = await bcrypt.compare(password, user.password);
+  const match = await bcrypt.compare(password, user.password!);
   if (!match) return null;
 
   const cleanUser: CleanUser = {
@@ -54,8 +69,8 @@ export async function createUser(data: {
 
   const { email } = data;
 
-  // Check if email already exists
-  const existingUser = await User.findOne({ email }).lean();
+  // lean is fine here – we only need to check existence
+  const existingUser = await User.findOne({ email }).lean<LeanUser>();
   if (existingUser) {
     throw new Error("EMAIL_ALREADY_EXISTS");
   }
@@ -95,7 +110,9 @@ export async function updateUser(
 
 export async function findUserByEmail(email: string) {
   await dbConnect();
-  const user = await User.findOne({ email }).lean();
+
+  // lean + explicit typing – password not needed
+  const user = await User.findOne({ email }).lean<LeanUser>();
   if (!user) return null;
 
   return {
@@ -106,7 +123,7 @@ export async function findUserByEmail(email: string) {
     firstTimeLogin: user.firstTimeLogin || false,
     isAdmin: user.isAdmin || false,
     createdAt: user.createdAt?.toISOString() || new Date().toISOString(),
-    paymentType: user.paymentType
+    paymentType: user.paymentType,
   };
 }
 
@@ -117,10 +134,11 @@ export async function verifyAndChangePassword(
 ) {
   await dbConnect();
 
+  // need password → keep document + select it
   const user = await User.findOne({ email }).select("+password");
   if (!user) throw new Error("USER_NOT_FOUND");
 
-  const match = await bcrypt.compare(oldPassword, user.password);
+  const match = await bcrypt.compare(oldPassword, user.password!);
   if (!match) throw new Error("INCORRECT_OLD_PASSWORD");
 
   const hashed = await bcrypt.hash(newPassword, 12);
