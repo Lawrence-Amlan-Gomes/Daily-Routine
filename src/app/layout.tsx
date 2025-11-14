@@ -12,8 +12,8 @@ const roboto = Roboto({
 });
 
 export const metadata = {
-  title: "App name",
-  description: "App name",
+  title: "Recruiter Reply",
+  description: "recruiter Reply",
   icons: {
     icon: ["/favicon.ico?v=4"],
     apple: ["/apple-touch-icon.png?v=4"],

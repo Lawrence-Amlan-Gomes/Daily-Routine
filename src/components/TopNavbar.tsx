@@ -8,11 +8,20 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import ProfileIcon from './ProfileIcon';
 import ToogleTheme from './ToogleTheme';
-import CartIcon from './CartIcon';
 import colors from '@/app/color/color';
 
-// Reusable NavItem component
-const NavItem = ({ href, label, active, onClick, theme }) => (
+// ──────────────────────────────────────────────────────────────
+//  ONLY ADDED: Props interface + type annotation
+// ──────────────────────────────────────────────────────────────
+interface NavItemProps {
+  href: string;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  theme: boolean;
+}
+
+const NavItem = ({ href, label, active, onClick, theme }: NavItemProps) => (
   <Link href={href}>
     <div
       className={`flex items-center h-full px-2 cursor-pointer transition-colors duration-200`}

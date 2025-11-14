@@ -1,7 +1,13 @@
 // src/app/(auth)/login/LoginForm.tsx
 "use client";
 
-import { performLogin, findUserByEmail, changePhoto, updateUser, generateJwtForGoogle } from "@/app/actions";
+import {
+  performLogin,
+  findUserByEmail,
+  changePhoto,
+  updateUser,
+  generateJwtForGoogle,
+} from "@/app/actions";
 import colors from "@/app/color/color";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useTheme } from "@/app/hooks/useTheme";
@@ -11,6 +17,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import EachField from "./EachField";
+import { CleanUser } from "@/store/features/auth/authSlice";
 
 const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -59,88 +66,93 @@ const LoginForm = () => {
     }
   }, [googleError.isError]);
 
-  const submitForm = async () => {
-    if (emailError.iserror || passwordError.iserror) return;
+const submitForm = async () => {
+  if (emailError.iserror || passwordError.iserror) return;
 
-    setIsLoading(true);
-    try {
-      const result = await performLogin({ email, password });
+  setIsLoading(true);
+  try {
+    const result = await performLogin({ email, password });
 
-      if (result) {
-        const { user, token } = result;
+    if (result) {
+      const { user, token } = result;
 
-        if (typeof window !== "undefined" && !localStorage.getItem("authUser")) {
-          localStorage.setItem("authToken", token);
-        }
-
-        setAuth(user);
-        router.push("/");
-      } else {
-        setMainError({
-          isError: true,
-          error: "Email or password is incorrect",
-        });
+      if (typeof window !== "undefined" && !localStorage.getItem("authUser")) {
+        localStorage.setItem("authToken", token);
       }
-    } catch (err) {
-      console.error("Login error:", err);
+
+      setAuth(user);
+      router.push("/");
+    } else {
       setMainError({
         isError: true,
-        error: "Something went wrong. Try again.",
+        error: "Email or password is incorrect",
       });
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (err) {
+    console.error("Login error:", err);
+    setMainError({
+      isError: true,
+      error: "Something went wrong. Try again.",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
-  const handleGoogleSignIn = async () => {
-    setIsLoadingGoogle(true);
-    try {
-      if (!session?.user) {
-        await signIn("google");
-        return;
+const handleGoogleSignIn = async () => {
+  setIsLoadingGoogle(true);
+  try {
+    if (!session?.user) {
+      await signIn("google");
+      return;
+    }
+
+    const userEmail = session.user.email!;
+    const user = await findUserByEmail(userEmail);
+
+    if (user) {
+      // Update photo and firstTimeLogin if needed
+      if (user.firstTimeLogin && session.user.image) {
+        user.photo = session.user.image;
+        await changePhoto(userEmail, session.user.image);
+        await updateUser(userEmail, { firstTimeLogin: false });
       }
 
-      const userEmail = session.user.email!;
-      const user = await findUserByEmail(userEmail);
+      // Normalize paymentType to satisfy CleanUser type
+      const cleanUser: CleanUser = {
+        ...user,
+        paymentType: user.paymentType ?? "none",
+      };
 
-      if (user) {
-        console.log(user)
-        if (user.firstTimeLogin && session.user.image) {
-          user.photo = session.user.image;
-          await changePhoto(userEmail, session.user.image);
-          await updateUser(userEmail, { firstTimeLogin: false });
-        }
+      const token = await generateJwtForGoogle(cleanUser);
 
-        const token = await generateJwtForGoogle(user);
-
-        if (typeof window !== "undefined" && !localStorage.getItem("authUser")) {
-          localStorage.setItem("authToken", token);
-        }
-
-        setAuth(user);
-        setGoogleAuth({
-          name: session.user.name!,
-          email: session.user.email!,
-          image: session.user.image!,
-        });
-        router.push("/");
-      } else {
-        setGoogleError({
-          isError: true,
-          error: `Your email ${userEmail} hasn't registered yet`,
-        });
+      if (typeof window !== "undefined" && !localStorage.getItem("authUser")) {
+        localStorage.setItem("authToken", token);
       }
-    } catch (err: any) {
-      console.error("Google login error:", err);
+
+      setAuth(cleanUser);
+      setGoogleAuth({
+        name: session.user.name!,
+        email: session.user.email!,
+        image: session.user.image!,
+      });
+      router.push("/");
+    } else {
       setGoogleError({
         isError: true,
-        error: err.message || "Google login failed. Try again.",
+        error: `Your email ${userEmail} hasn't registered yet`,
       });
-    } finally {
-      setIsLoadingGoogle(false);
     }
-  };
-
+  } catch (err: any) {
+    console.error("Google login error:", err);
+    setGoogleError({
+      isError: true,
+      error: err.message || "Google login failed. Try again.",
+    });
+  } finally {
+    setIsLoadingGoogle(false);
+  }
+};
   return (
     <div
       onKeyDown={(event) => {
@@ -164,8 +176,28 @@ const LoginForm = () => {
         </div>
 
         <div className="opacity-0">
-          <EachField label="fake" type="email" name="email" isReal={false} placeholder="Enter your email" value={email} setValue={setEmail} iserror={emailError.iserror} error={emailError.error} />
-          <EachField label="fake" type="password" name="password" isReal={false} placeholder="Enter your password" value={password} setValue={setPassword} iserror={passwordError.iserror} error={passwordError.error} />
+          <EachField
+            label="fake"
+            type="email"
+            name="email"
+            isReal={false}
+            placeholder="Enter your email"
+            value={email}
+            setValue={setEmail}
+            iserror={emailError.iserror}
+            error={emailError.error}
+          />
+          <EachField
+            label="fake"
+            type="password"
+            name="password"
+            isReal={false}
+            placeholder="Enter your password"
+            value={password}
+            setValue={setPassword}
+            iserror={passwordError.iserror}
+            error={passwordError.error}
+          />
         </div>
 
         <EachField

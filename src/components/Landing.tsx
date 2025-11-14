@@ -1,20 +1,16 @@
 "use client";
 import { useTheme } from "@/app/hooks/useTheme";
-import colors from "@/app/color/color";
-import { useAuth } from "@/app/hooks/useAuth";
+import Hero from "./Hero";
 
 export default function LandingPage() {
-  const { theme } = useTheme();
-  const { user: auth } = useAuth();
+  const {theme} = useTheme();
   return (
     <div
-      className={`px-[10%] mt-[20%] sm:mt-[10%] text-3xl text-center sm:px-[10%] mb-[5%] pb-[5%] w-full ${
+      className={`w-[99%] sm:pt-[15%] pt-[20%] ${
         theme ? "bg-[#ffffff] text-[#aaaaaaa]" : "bg-[#000000] text-[#eeeeee]"
       }`}
     >
-      {" "}
-      <div>{auth ? `Hello ${auth.name}` : ""} </div>
-      Authentication and Payment format
+      <Hero/>
     </div>
   );
 }

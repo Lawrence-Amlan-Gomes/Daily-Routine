@@ -1,8 +1,14 @@
-// app/components/ThemeWrapper.jsx
+// app/components/ThemeWrapper.tsx
 "use client";
-import { useTheme } from "@/app/hooks/useTheme";
 
-export default function ThemeWrapper({ children }) {
+import { useTheme } from "@/app/hooks/useTheme";
+import type { ReactNode } from "react";
+
+interface ThemeWrapperProps {
+  children: ReactNode;
+}
+
+export default function ThemeWrapper({ children }: ThemeWrapperProps) {
   const { theme } = useTheme();
 
   return (

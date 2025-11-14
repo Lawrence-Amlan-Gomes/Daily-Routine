@@ -73,7 +73,7 @@ const RegistrationForm = () => {
     } else {
       setEmailError({ iserror: false, error: "" });
     }
-  }, [email]); // Removed allEmails dependency
+  }, [email]);
 
   useEffect(() => {
     setPasswordError(
@@ -142,16 +142,32 @@ const RegistrationForm = () => {
     setIsLoadingGoogle(false);
   };
 
+  /* ------------------------------------------------------------------ */
+  /*  Google-auth registration – now fully type-safe                     */
+  /* ------------------------------------------------------------------ */
   useEffect(() => {
     if (session?.user && isGoogleClicked) {
+      const user = session.user; // Now guaranteed to be defined
+
       const run = async () => {
-        const userEmail = session.user.email!;
+        // `user` is in scope and type-narrowed
+        if (!user.email) {
+          setGoogleError({
+            isError: true,
+            error: "Google account has no email. Please try again.",
+          });
+          setIsGoogleClicked(false);
+          return;
+        }
+
+        const userEmail = user.email;
+
         try {
           await createUser({
-            name: userEmail.split("@")[0],
+            name: user.name ?? userEmail.split("@")[0],
             email: userEmail,
             password: "google-auth-12345678",
-            photo: session.user.image || "",
+            photo: user.image ?? "",
           });
           setSuccessMessage(`${userEmail} successfully registered`);
         } catch (err: any) {
@@ -170,9 +186,12 @@ const RegistrationForm = () => {
           setIsGoogleClicked(false);
         }
       };
+
       run();
     }
   }, [session, isGoogleClicked]);
+
+  /* ------------------------------------------------------------------ */
 
   return (
     <div

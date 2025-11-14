@@ -10,6 +10,7 @@ export interface IUser extends Document {
   firstTimeLogin: boolean;
   createdAt: Date;
   isAdmin: boolean;
+  paymentType: string; // ← ADDED: This line was missing!
 }
 
 const UserSchema = new mongoose.Schema<IUser>(
@@ -21,7 +22,7 @@ const UserSchema = new mongoose.Schema<IUser>(
     firstTimeLogin: { type: Boolean, default: true },
     createdAt: { type: Date, default: Date.now },
     isAdmin: { type: Boolean, default: false },
-    paymentType: {type: String, default: "Free"}
+    paymentType: { type: String, default: "Free" }, // ← Now valid because type exists above
   },
   {
     versionKey: false,

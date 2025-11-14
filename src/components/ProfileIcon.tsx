@@ -8,7 +8,14 @@ import Image from "next/image";
 import colors from "@/app/color/color";
 import { useState } from "react";
 
-const ProfileIcon = ({ active }) => {
+// ──────────────────────────────────────────────────────────────
+//  ONLY ADDED: Props interface + type annotation
+// ──────────────────────────────────────────────────────────────
+interface ProfileIconProps {
+  active?: string; // matches your usage: active === "profile"
+}
+
+const ProfileIcon = ({ active }: ProfileIconProps) => {
   const pathname = usePathname();
   const { theme } = useTheme();
   const { user: auth } = useAuth();
