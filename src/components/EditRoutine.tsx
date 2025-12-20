@@ -64,6 +64,23 @@ const isOverlapping = (
   return aStart < bEndNorm && bStart < aEndNorm;
 };
 
+const getDurationMinutes = (fromStr: string, toStr: string): number => {
+  const fromMins = timeToMinutes(fromStr);
+  let toMins = timeToMinutes(toStr);
+
+  if (fromMins === -1 || toMins === -1) return -1;
+
+  const fromPeriod = fromStr.endsWith("AM") ? "AM" : "PM";
+  const toPeriod = toStr.endsWith("AM") ? "AM" : "PM";
+  const overnight = isOvernight(fromPeriod, toPeriod);
+
+  if (overnight) {
+    toMins += 1440;
+  }
+
+  return toMins - fromMins;
+};
+
 const isValidHour = (h: string): boolean => {
   if (h === "") return false;
   const num = parseInt(h, 10);
@@ -121,7 +138,15 @@ export default function EditRoutine() {
     setIsPortalOpen(false);
   }, [selectedDay, auth?.routine]);
 
-  const validationError = useMemo((): string | null => {
+  const fromTimeStr = formatTimePart(fromHour, fromMinute, fromPeriod);
+  const toTimeStr = formatTimePart(toHour, toMinute, toPeriod);
+  const fromMins = timeToMinutes(fromTimeStr);
+  const toMins = timeToMinutes(toTimeStr);
+  const newOvernight = isOvernight(fromPeriod, toPeriod);
+  const duration = getDurationMinutes(fromTimeStr, toTimeStr);
+
+  // Validation for single day
+  const singleDayValidationError = useMemo((): string | null => {
     if (!newName.trim()) return null;
 
     if (!isValidHour(fromHour)) return "Start hour must be 1–12";
@@ -129,20 +154,25 @@ export default function EditRoutine() {
     if (!isValidHour(toHour)) return "End hour must be 1–12";
     if (!isValidMinute(toMinute)) return "End minutes must be 00–59";
 
-    const fromTimeStr = formatTimePart(fromHour, fromMinute, fromPeriod);
-    const toTimeStr = formatTimePart(toHour, toMinute, toPeriod);
-
-    const fromMins = timeToMinutes(fromTimeStr);
-    const toMins = timeToMinutes(toTimeStr);
-
     if (fromMins === -1 || toMins === -1) return "Invalid time format";
 
-    // Check if the range itself is valid (end after start, allowing overnight)
-    const newOvernight = isOvernight(fromPeriod, toPeriod);
+    // 1. If non-overnight and end time is before start time → this means it crosses midnight
     if (!newOvernight && fromMins >= toMins) {
-      return "End time must be after start time";
+      return "Tasks cannot cross midnight into the next day";
     }
 
+    // 2. Max duration
+    if (duration > 1439) return "Task cannot exceed 23 hours 59 minutes";
+
+    // 3. Min duration
+    if (duration < 5) return "Task must be at least 5 minutes long";
+
+    // 4. Overnight (explicit PM → AM is allowed only if duration checks passed)
+    if (newOvernight) {
+      return "Tasks cannot cross midnight into the next day"; // disallow overnight
+    }
+
+    // 5. Overlap on current day
     const hasOverlap = tasks.some((task) => {
       const [existingFrom, existingTo] = task.time.split(" - ");
       const eFrom = timeToMinutes(existingFrom);
@@ -167,7 +197,7 @@ export default function EditRoutine() {
       );
     });
 
-    if (hasOverlap) return "Time overlaps with an existing task";
+    if (hasOverlap) return "Time overlaps with an existing task on this day";
 
     return null;
   }, [
@@ -179,9 +209,85 @@ export default function EditRoutine() {
     toMinute,
     toPeriod,
     tasks,
+    duration,
   ]);
 
-  const isAddDisabled = !newName.trim() || !!validationError;
+  // Validation for every day
+  const everyDayValidationError = useMemo((): string | null => {
+    if (!newName.trim()) return null;
+
+    if (!isValidHour(fromHour)) return "Start hour must be 1–12";
+    if (!isValidMinute(fromMinute)) return "Start minutes must be 00–59";
+    if (!isValidHour(toHour)) return "End hour must be 1–12";
+    if (!isValidMinute(toMinute)) return "End minutes must be 00–59";
+
+    if (fromMins === -1 || toMins === -1) return "Invalid time format";
+
+    // 1. If non-overnight and end time is before start time → crosses midnight
+    if (!newOvernight && fromMins >= toMins) {
+      return "Tasks cannot cross midnight into the next day";
+    }
+
+    // 2. Max duration
+    if (duration > 1439) return "Task cannot exceed 23 hours 59 minutes";
+
+    // 3. Min duration
+    if (duration < 5) return "Task must be at least 5 minutes long";
+
+    // 4. Overnight
+    if (newOvernight) {
+      return "Tasks cannot cross midnight into the next day"; // disallow overnight
+    }
+
+    // 5. Overlap on ANY day
+    if (auth?.routine) {
+      const conflictingDays = daysOfWeek.filter((day) => {
+        const dayTasks = auth.routine?.[day] || [];
+        return dayTasks.some((task) => {
+          const [existingFrom, existingTo] = task.time.split(" - ");
+          const eFrom = timeToMinutes(existingFrom);
+          const eTo = timeToMinutes(existingTo);
+
+          if (eFrom === -1 || eTo === -1) return false;
+
+          const existingFromPeriod = existingFrom.endsWith("AM") ? "AM" : "PM";
+          const existingToPeriod = existingTo.endsWith("AM") ? "AM" : "PM";
+          const existingOvernight = isOvernight(
+            existingFromPeriod as "AM" | "PM",
+            existingToPeriod as "AM" | "PM"
+          );
+
+          return isOverlapping(
+            fromMins,
+            toMins,
+            eFrom,
+            eTo,
+            newOvernight,
+            existingOvernight
+          );
+        });
+      });
+
+      if (conflictingDays.length > 0) {
+        return `Time overlaps on ${conflictingDays.map(d => d.slice(0,3)).join(", ")}`;
+      }
+    }
+
+    return null;
+  }, [
+    newName,
+    fromHour,
+    fromMinute,
+    fromPeriod,
+    toHour,
+    toMinute,
+    toPeriod,
+    auth?.routine,
+    duration,
+  ]);
+
+  const isAddDisabled = !newName.trim() || !!singleDayValidationError;
+  const isAddEveryDayDisabled = !newName.trim() || !!everyDayValidationError;
 
   const addTask = () => {
     if (isAddDisabled) return;
@@ -218,6 +324,48 @@ export default function EditRoutine() {
     setToMinute("00");
     setToPeriod("AM");
     setIsPortalOpen(false);
+  };
+
+  const addTaskForEveryDay = () => {
+    if (isAddEveryDayDisabled) return;
+
+    const fromTimeStr = formatTimePart(fromHour, fromMinute, fromPeriod);
+    const toTimeStr = formatTimePart(toHour, toMinute, toPeriod);
+    const fullTime = `${fromTimeStr} - ${toTimeStr}`;
+
+    const newTask: IRoutineItem = { name: newName.trim(), time: fullTime };
+
+    if (auth) {
+      const updatedRoutine = { ...auth.routine };
+
+      daysOfWeek.forEach((day) => {
+        const currentTasks = updatedRoutine[day] || [];
+        const newTasks = [...currentTasks, newTask].sort(
+          (a, b) =>
+            timeToMinutes(a.time.split(" - ")[0]) -
+            timeToMinutes(b.time.split(" - ")[0])
+        );
+        updatedRoutine[day] = newTasks;
+      });
+
+      setAuth({
+        ...auth,
+        routine: updatedRoutine,
+      });
+
+      setTasks(updatedRoutine[selectedDay] || []);
+    }
+
+    setNewName("");
+    setFromHour("9");
+    setFromMinute("00");
+    setFromPeriod("AM");
+    setToHour("10");
+    setToMinute("00");
+    setToPeriod("AM");
+    setIsPortalOpen(false);
+    setMessage({ type: "success", text: "Added to every day!" });
+    setTimeout(() => setMessage(null), 2000);
   };
 
   const removeTask = (index: number) => {
@@ -262,6 +410,7 @@ export default function EditRoutine() {
     fromPeriod
   );
   const previewTo = formatTimePart(toHour || "HH", toMinute || "MM", toPeriod);
+
   return (
     <div
       className={`w-full h-full flex flex-col ${
@@ -286,7 +435,7 @@ export default function EditRoutine() {
                 ? "bg-blue-700 text-white"
                 : theme
                 ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                : "bg-[#222222] text-gray-300 hover:bg-gray-600"
+                : "bg-[#222222] text-gray-300 hover:bg-[#111111]"
             }`}
           >
             {day.slice(0, 3)}
@@ -328,8 +477,6 @@ export default function EditRoutine() {
 
       {/* Scrollable Task List */}
       <div className="flex-1 overflow-hidden pl-3 pb-5">
-        {" "}
-        {/* This is the flex parent */}
         <div
           className={`space-y-2 overflow-y-auto scrollbar-thin h-full pr-3 ${
             theme
@@ -337,8 +484,6 @@ export default function EditRoutine() {
               : "bg-[#080808] scrollbar-thumb-white scrollbar-track-[#111111]"
           }`}
         >
-          {" "}
-          {/* This now scrolls */}
           {tasks.length === 0 ? (
             <p className="text-xs text-gray-500 italic">No tasks</p>
           ) : (
@@ -362,13 +507,12 @@ export default function EditRoutine() {
               </div>
             ))
           )}
-          {/* Inline Add Form (inside the scrollable list) */}
+
+          {/* Inline Add Form */}
           {isPortalOpen ? (
             <div
               className={`p-3 rounded text-sm border ${
-                theme
-                  ? "bg-white border-gray-200"
-                  : "bg-[#222222] border-[#333333]"
+                theme ? "bg-white border-gray-200" : "bg-[#222222] border-[#333333]"
               }`}
             >
               <div className="flex justify-between items-center mb-2">
@@ -502,9 +646,10 @@ export default function EditRoutine() {
                 </div>
               </div>
 
-              {validationError && (
+              {/* Single-day error (above buttons) */}
+              {singleDayValidationError && (
                 <p className="text-xs text-red-600 text-center mt-3 font-medium">
-                  {validationError}
+                  {singleDayValidationError}
                 </p>
               )}
 
@@ -515,19 +660,42 @@ export default function EditRoutine() {
                 </span>
               </div>
 
-              <button
-                onClick={addTask}
-                disabled={isAddDisabled}
-                className={`w-full mt-3 text-sm font-medium py-2 rounded transition ${
-                  isAddDisabled
-                    ? theme
-                      ? "bg-[#cccccc] text-gray-600 cursor-not-allowed"
-                      : "bg-[#444444] text-[#aaaaaa] cursor-not-allowed"
-                    : "bg-green-700 hover:bg-green-800 text-white"
-                }`}
-              >
-                Add Task
-              </button>
+              <div className="mt-3 space-y-2">
+                <button
+                  onClick={addTask}
+                  disabled={isAddDisabled}
+                  className={`w-full text-sm font-medium py-2 rounded transition ${
+                    isAddDisabled
+                      ? theme
+                        ? "bg-[#cccccc] text-gray-600 cursor-not-allowed"
+                        : "bg-[#444444] text-[#aaaaaa] cursor-not-allowed"
+                      : "bg-green-700 hover:bg-green-800 text-white"
+                  }`}
+                >
+                  Add Task
+                </button>
+
+                {/* Every-day error (between buttons) */}
+                {everyDayValidationError && (
+                  <p className="text-xs text-red-600 text-center font-medium">
+                    {everyDayValidationError}
+                  </p>
+                )}
+
+                <button
+                  onClick={addTaskForEveryDay}
+                  disabled={isAddEveryDayDisabled}
+                  className={`w-full text-sm font-medium py-2 rounded transition ${
+                    isAddEveryDayDisabled
+                      ? theme
+                        ? "bg-[#cccccc] text-gray-600 cursor-not-allowed"
+                        : "bg-[#444444] text-[#aaaaaa] cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700 text-white"
+                  }`}
+                >
+                  Add Task for Every Day
+                </button>
+              </div>
             </div>
           ) : (
             <button
