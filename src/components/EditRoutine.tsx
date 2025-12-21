@@ -107,7 +107,7 @@ export default function EditRoutine({
   selectedDay,
   setSelectedDay,
   taskSearchQuery,
-  setTaskSearchQuery
+  setTaskSearchQuery,
 }: {
   selectedDay: Day;
   setSelectedDay: React.Dispatch<React.SetStateAction<Day>>;
@@ -617,7 +617,9 @@ export default function EditRoutine({
 
   const removeTask = (index: number, name: string) => {
     let sure = confirm(
-      `Are you sure you want to delete this task: ${name} from ${selectedDay}?`
+      `Are you sure you want to delete this task: ${name} from ${selectedDay
+        .charAt(0)
+        .toUpperCase()}${selectedDay.slice(1)}?`
     );
     if (!sure) return;
     const updatedTasks = tasks.filter((_, i) => i !== index);
@@ -701,7 +703,9 @@ export default function EditRoutine({
         <div className="relative">
           <input
             type="text"
-            placeholder="Search tasks on this day..."
+            placeholder={`Search tasks on ${selectedDay
+              .charAt(0)
+              .toUpperCase()}${selectedDay.slice(1)}...`}
             value={taskSearchQuery}
             onChange={(e) => setTaskSearchQuery(e.target.value)}
             className={`w-full px-3 py-2 pr-10 text-sm rounded border transition ${
@@ -713,7 +717,7 @@ export default function EditRoutine({
           {taskSearchQuery && (
             <button
               onClick={() => setTaskSearchQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 text-lg"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#888888] hover:text-red-700 text-lg"
             >
               ×
             </button>
