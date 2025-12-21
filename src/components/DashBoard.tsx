@@ -17,6 +17,7 @@ import ShowRoutine from "./ShowRoutine";
 
 export default function DashBoard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<Day>("saturday");
   const [hasMounted, setHasMounted] = useState(false);
   const { theme } = useTheme();
   const { user: auth } = useAuth();
@@ -24,9 +25,9 @@ export default function DashBoard() {
   console.log("Auth User:", auth);
 
   useEffect(() => {
-    if(auth === null && hasMounted){
+    if (auth === null && hasMounted) {
       router.push("/login");
-    } 
+    }
   }, []);
   // --------------------------------------------------------------
   // 1. Mark component as mounted after first render
@@ -82,7 +83,10 @@ export default function DashBoard() {
               transition={{ duration: 0.12 }}
               className="h-full w-full sm:pt-[55px] md:pt-[60px] overflow-auto"
             >
-              <EditRoutine/>
+              <EditRoutine
+                selectedDay={selectedDay}
+                setSelectedDay={setSelectedDay}
+              />
             </motion.div>
           )}
         </AnimatePresence>
@@ -117,12 +121,14 @@ export default function DashBoard() {
         style={{ width: "100%" }} // overrides animation on <sm
         transition={transition}
       >
-        <ShowRoutine />
+        <ShowRoutine
+          setIsSidebarOpen={setIsSidebarOpen}
+          selectedDay={selectedDay}
+          setSelectedDay={setSelectedDay}
+        />
       </motion.div>
 
-      <motion.div className="h-full w-full relative float-left sm:float-left block sm:hidden">
-        
-      </motion.div>
+      <motion.div className="h-full w-full relative float-left sm:float-left block sm:hidden"></motion.div>
     </div>
   ) : (
     <EmailNotVerified />

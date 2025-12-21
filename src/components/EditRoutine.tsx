@@ -103,11 +103,16 @@ const parseTime = (timeStr: string) => {
   };
 };
 
-export default function EditRoutine() {
+export default function EditRoutine({
+  selectedDay,
+  setSelectedDay,
+}: {
+  selectedDay: Day;
+  setSelectedDay: React.Dispatch<React.SetStateAction<Day>>;
+}) {
   const { theme } = useTheme();
   const { user: auth, setAuth } = useAuth();
 
-  const [selectedDay, setSelectedDay] = useState<Day>("saturday");
   const [tasks, setTasks] = useState<IRoutineItem[]>([]);
   const [isPortalOpen, setIsPortalOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -119,7 +124,9 @@ export default function EditRoutine() {
   const [toHour, setToHour] = useState("");
   const [toMinute, setToMinute] = useState("");
   const [toPeriod, setToPeriod] = useState<"AM" | "PM">("AM");
-
+  const [selectedDaysForMultiAdd, setSelectedDaysForMultiAdd] = useState<
+    Set<Day>
+  >(new Set());
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
@@ -238,8 +245,8 @@ export default function EditRoutine() {
     editingIndex,
   ]);
 
-  // Validation for every day
-  const everyDayValidationError = useMemo((): string | null => {
+  // Validation for multi-day add (only selected days)
+  const multiDayValidationError = useMemo((): string | null => {
     if (!newName.trim()) return null;
 
     if (!isValidHour(fromHour)) return "Start hour must be 1–12";
@@ -249,85 +256,79 @@ export default function EditRoutine() {
 
     if (fromMins === -1 || toMins === -1) return "Invalid time format";
 
-    // 1. If non-overnight and end time is before start time → crosses midnight
     if (!newOvernight && fromMins >= toMins) {
       return "Tasks cannot cross midnight into the next day";
     }
 
-    // 2. Max duration
     if (duration > 1439) return "Task cannot exceed 23 hours 59 minutes";
-
-    // 3. Min duration
     if (duration < 5) return "Task must be at least 5 minutes long";
-
-    // 4. Overnight
     if (newOvernight) {
-      return "Tasks cannot cross midnight into the next day"; // disallow overnight
+      return "Tasks cannot cross midnight into the next day";
     }
 
-    // 5. Check for duplicate name on ANY day
+    if (selectedDaysForMultiAdd.size === 0) return null;
+
     if (auth?.routine) {
-      // Get the original task name if editing
+      // Check duplicate names on selected days
       const originalTaskName =
         editingIndex !== null ? tasks[editingIndex]?.name : null;
 
-      const daysWithDuplicateName = daysOfWeek.filter((day) => {
-        const dayTasks = auth.routine?.[day] || [];
-        return dayTasks.some((task) => {
-          // Skip if this is the same task we're editing (by original name)
-          if (
-            originalTaskName &&
-            task.name.toLowerCase() === originalTaskName.toLowerCase()
-          ) {
-            return false;
-          }
-          return task.name.toLowerCase() === newName.trim().toLowerCase();
-        });
-      });
+      const daysWithDuplicate = Array.from(selectedDaysForMultiAdd).filter(
+        (day) => {
+          const dayTasks = auth.routine?.[day] || [];
+          return dayTasks.some((task) => {
+            if (
+              originalTaskName &&
+              task.name.toLowerCase() === originalTaskName.toLowerCase()
+            ) {
+              return false;
+            }
+            return task.name.toLowerCase() === newName.trim().toLowerCase();
+          });
+        }
+      );
 
-      if (daysWithDuplicateName.length > 0) {
-        return `A task with this name already exists on ${daysWithDuplicateName
+      if (daysWithDuplicate.length > 0) {
+        return `Task name already exists on ${daysWithDuplicate
           .map((d) => d.slice(0, 3))
           .join(", ")}`;
       }
-    }
 
-    // 6. Overlap on ANY day
-    if (auth?.routine) {
-      const conflictingDays = daysOfWeek.filter((day) => {
-        const dayTasks = auth.routine?.[day] || [];
-        return dayTasks.some((task, idx) => {
-          // Skip the task being edited on current day
-          if (
-            editingIndex !== null &&
-            day === selectedDay &&
-            idx === editingIndex
-          )
-            return false;
+      // Check time overlap on selected days
+      const conflictingDays = Array.from(selectedDaysForMultiAdd).filter(
+        (day) => {
+          const dayTasks = auth.routine?.[day] || [];
+          return dayTasks.some((task, idx) => {
+            if (
+              editingIndex !== null &&
+              day === selectedDay &&
+              idx === editingIndex
+            )
+              return false;
 
-          const [existingFrom, existingTo] = task.time.split(" - ");
-          const eFrom = timeToMinutes(existingFrom);
-          const eTo = timeToMinutes(existingTo);
+            const [eFromStr, eToStr] = task.time.split(" - ");
+            const eFrom = timeToMinutes(eFromStr);
+            const eTo = timeToMinutes(eToStr);
+            if (eFrom === -1 || eTo === -1) return false;
 
-          if (eFrom === -1 || eTo === -1) return false;
+            const eFromPeriod = eFromStr.endsWith("AM") ? "AM" : "PM";
+            const eToPeriod = eToStr.endsWith("AM") ? "AM" : "PM";
+            const eOvernight = isOvernight(
+              eFromPeriod as "AM" | "PM",
+              eToPeriod as "AM" | "PM"
+            );
 
-          const existingFromPeriod = existingFrom.endsWith("AM") ? "AM" : "PM";
-          const existingToPeriod = existingTo.endsWith("AM") ? "AM" : "PM";
-          const existingOvernight = isOvernight(
-            existingFromPeriod as "AM" | "PM",
-            existingToPeriod as "AM" | "PM"
-          );
-
-          return isOverlapping(
-            fromMins,
-            toMins,
-            eFrom,
-            eTo,
-            newOvernight,
-            existingOvernight
-          );
-        });
-      });
+            return isOverlapping(
+              fromMins,
+              toMins,
+              eFrom,
+              eTo,
+              newOvernight,
+              eOvernight
+            );
+          });
+        }
+      );
 
       if (conflictingDays.length > 0) {
         return `Time overlaps on ${conflictingDays
@@ -350,10 +351,62 @@ export default function EditRoutine() {
     editingIndex,
     selectedDay,
     tasks,
+    selectedDaysForMultiAdd,
   ]);
 
+  const addTaskToMultipleDays = () => {
+    if (
+      selectedDaysForMultiAdd.size === 0 ||
+      multiDayValidationError ||
+      !newName.trim()
+    )
+      return;
+
+    const fromTimeStr = formatTimePart(fromHour, fromMinute, fromPeriod);
+    const toTimeStr = formatTimePart(toHour, toMinute, toPeriod);
+    const fullTime = `${fromTimeStr} - ${toTimeStr}`;
+    const newTask: IRoutineItem = { name: newName.trim(), time: fullTime };
+
+    if (auth) {
+      const updatedRoutine = { ...auth.routine };
+
+      Array.from(selectedDaysForMultiAdd).forEach((day) => {
+        const currentTasks = updatedRoutine[day] || [];
+        const newTasks = [...currentTasks, newTask].sort(
+          (a, b) =>
+            timeToMinutes(a.time.split(" - ")[0]) -
+            timeToMinutes(b.time.split(" - ")[0])
+        );
+        updatedRoutine[day] = newTasks;
+      });
+
+      setAuth({
+        ...auth,
+        routine: updatedRoutine,
+      });
+
+      // Refresh current day's view
+      setTasks(updatedRoutine[selectedDay] || []);
+    }
+
+    // Reset form
+    setNewName("");
+    setFromHour("9");
+    setFromMinute("00");
+    setFromPeriod("AM");
+    setToHour("10");
+    setToMinute("00");
+    setToPeriod("AM");
+    setSelectedDaysForMultiAdd(new Set());
+    setIsPortalOpen(false);
+    setMessage({
+      type: "success",
+      text: `Added to ${selectedDaysForMultiAdd.size} day(s)!`,
+    });
+    setTimeout(() => setMessage(null), 2000);
+  };
+
   const isAddDisabled = !newName.trim() || !!singleDayValidationError;
-  const isAddEveryDayDisabled = !newName.trim() || !!everyDayValidationError;
 
   const openEditPortal = (index: number) => {
     const task = tasks[index];
@@ -410,48 +463,6 @@ export default function EditRoutine() {
     setIsPortalOpen(false);
   };
 
-  const addTaskForEveryDay = () => {
-    if (isAddEveryDayDisabled) return;
-
-    const fromTimeStr = formatTimePart(fromHour, fromMinute, fromPeriod);
-    const toTimeStr = formatTimePart(toHour, toMinute, toPeriod);
-    const fullTime = `${fromTimeStr} - ${toTimeStr}`;
-
-    const newTask: IRoutineItem = { name: newName.trim(), time: fullTime };
-
-    if (auth) {
-      const updatedRoutine = { ...auth.routine };
-
-      daysOfWeek.forEach((day) => {
-        const currentTasks = updatedRoutine[day] || [];
-        const newTasks = [...currentTasks, newTask].sort(
-          (a, b) =>
-            timeToMinutes(a.time.split(" - ")[0]) -
-            timeToMinutes(b.time.split(" - ")[0])
-        );
-        updatedRoutine[day] = newTasks;
-      });
-
-      setAuth({
-        ...auth,
-        routine: updatedRoutine,
-      });
-
-      setTasks(updatedRoutine[selectedDay] || []);
-    }
-
-    setNewName("");
-    setFromHour("9");
-    setFromMinute("00");
-    setFromPeriod("AM");
-    setToHour("10");
-    setToMinute("00");
-    setToPeriod("AM");
-    setIsPortalOpen(false);
-    setMessage({ type: "success", text: "Added to every day!" });
-    setTimeout(() => setMessage(null), 2000);
-  };
-
   const editTask = () => {
     if (isAddDisabled || editingIndex === null) return;
 
@@ -492,7 +503,7 @@ export default function EditRoutine() {
   };
 
   const editTaskForEveryDay = () => {
-    if (isAddEveryDayDisabled || editingIndex === null) return;
+    if (editingIndex === null || isAddDisabled) return;
 
     const originalTaskName = tasks[editingIndex].name;
 
@@ -500,24 +511,30 @@ export default function EditRoutine() {
     const toTimeStr = formatTimePart(toHour, toMinute, toPeriod);
     const fullTime = `${fromTimeStr} - ${toTimeStr}`;
 
-    const newTask: IRoutineItem = { name: newName.trim(), time: fullTime };
+    const updatedTask: IRoutineItem = {
+      name: newName.trim(),
+      time: fullTime,
+    };
 
     if (auth) {
       const updatedRoutine = { ...auth.routine };
 
+      // Find all days that have a task with the original name
       daysOfWeek.forEach((day) => {
         const currentTasks = updatedRoutine[day] || [];
-        // Remove the task with the original name
-        const filteredTasks = currentTasks.filter(
-          (task) => task.name !== originalTaskName
-        );
-        // Add the new task
-        const newTasks = [...filteredTasks, newTask].sort(
-          (a, b) =>
-            timeToMinutes(a.time.split(" - ")[0]) -
-            timeToMinutes(b.time.split(" - ")[0])
-        );
-        updatedRoutine[day] = newTasks;
+        const hasTask = currentTasks.some((t) => t.name === originalTaskName);
+
+        if (hasTask) {
+          // Replace the old task with the new one
+          const newTasks = currentTasks
+            .map((t) => (t.name === originalTaskName ? updatedTask : t))
+            .sort(
+              (a, b) =>
+                timeToMinutes(a.time.split(" - ")[0]) -
+                timeToMinutes(b.time.split(" - ")[0])
+            );
+          updatedRoutine[day] = newTasks;
+        }
       });
 
       setAuth({
@@ -525,9 +542,11 @@ export default function EditRoutine() {
         routine: updatedRoutine,
       });
 
+      // Refresh current view
       setTasks(updatedRoutine[selectedDay] || []);
     }
 
+    // Reset form
     setNewName("");
     setFromHour("");
     setFromMinute("");
@@ -536,15 +555,21 @@ export default function EditRoutine() {
     setToMinute("");
     setToPeriod("AM");
     setEditingIndex(null);
-    setMessage({ type: "success", text: "Updated for every day!" });
+
+    setMessage({
+      type: "success",
+      text: "Task updated on all days it exists!",
+    });
     setTimeout(() => setMessage(null), 2000);
   };
 
   const deleteTaskFromEveryDay = () => {
     if (editingIndex === null) return;
-
+    let sure = confirm(
+      `Are you sure you want to delete this task: ${tasks[editingIndex].name} from every day?`
+    );
+    if (!sure) return;
     const taskNameToDelete = tasks[editingIndex].name;
-
     if (auth) {
       const updatedRoutine = { ...auth.routine };
 
@@ -576,7 +601,11 @@ export default function EditRoutine() {
     setTimeout(() => setMessage(null), 2000);
   };
 
-  const removeTask = (index: number) => {
+  const removeTask = (index: number, name: string) => {
+    let sure = confirm(
+      `Are you sure you want to delete this task: ${name} from ${selectedDay}?`
+    );
+    if (!sure) return;
     const updatedTasks = tasks.filter((_, i) => i !== index);
     setTasks(updatedTasks);
 
@@ -712,9 +741,9 @@ export default function EditRoutine() {
                       </h4>
                       <button
                         onClick={() => setEditingIndex(null)}
-                        className="text-red-600 hover:text-white hover:bg-red-600 text-xs border-[1px] h-[15px] w-[15px] font-bold flex justify-center items-center rounded-sm border-red-600"
+                        className="text-white bg-red-600 hover:bg-red-700 text-xs border-[1px] px-1 font-bold flex justify-center items-center rounded-sm border-red-600"
                       >
-                        ×
+                        Close
                       </button>
                     </div>
 
@@ -842,11 +871,6 @@ export default function EditRoutine() {
                     </div>
 
                     {/* Single-day error */}
-                    {singleDayValidationError && (
-                      <p className="text-xs text-red-600 text-center mt-3 font-medium">
-                        {singleDayValidationError}
-                      </p>
-                    )}
 
                     <div className="text-xs text-center opacity-70 mt-3">
                       Preview:{" "}
@@ -870,18 +894,18 @@ export default function EditRoutine() {
                         Edit
                       </button>
 
-                      {/* Every-day error */}
-                      {/* {everyDayValidationError && (
-                        <p className="text-xs text-red-600 text-center font-medium">
-                          {everyDayValidationError}
+                      {singleDayValidationError && (
+                        <p className="text-xs text-red-600 text-center mt-3 font-medium">
+                          {singleDayValidationError}
                         </p>
                       )}
 
+                      {/* Edit for Every Day button */}
                       <button
                         onClick={editTaskForEveryDay}
-                        disabled={isAddEveryDayDisabled}
-                        className={`w-full text-sm font-medium py-2 rounded transition ${
-                          isAddEveryDayDisabled
+                        disabled={isAddDisabled}
+                        className={`w-full text-sm font-medium py-2 rounded transition mb-2 ${
+                          isAddDisabled
                             ? theme
                               ? "bg-[#cccccc] text-gray-600 cursor-not-allowed"
                               : "bg-[#444444] text-[#aaaaaa] cursor-not-allowed"
@@ -889,7 +913,7 @@ export default function EditRoutine() {
                         }`}
                       >
                         Edit for Every Day
-                      </button> */}
+                      </button>
 
                       <button
                         onClick={deleteTaskFromEveryDay}
@@ -914,7 +938,7 @@ export default function EditRoutine() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        removeTask(index);
+                        removeTask(index, task.name);
                       }}
                       className="text-red-600 hover:text-white hover:bg-red-600 text-xs border-[1px] h-[15px] w-[15px] font-bold flex justify-center items-center rounded-sm border-red-600"
                     >
@@ -943,9 +967,9 @@ export default function EditRoutine() {
                     </h4>
                     <button
                       onClick={() => setIsPortalOpen(false)}
-                      className="text-red-600 hover:text-white hover:bg-red-600 text-xs border-[1px] h-[15px] w-[15px] font-bold flex justify-center items-center rounded-sm border-red-600"
+                      className="text-white bg-red-600 hover:bg-red-700 text-xs border-[1px] px-1 font-bold flex justify-center items-center rounded-sm border-red-600"
                     >
-                      ×
+                      Close
                     </button>
                   </div>
 
@@ -1072,13 +1096,6 @@ export default function EditRoutine() {
                     </div>
                   </div>
 
-                  {/* Single-day error (above buttons) */}
-                  {singleDayValidationError && (
-                    <p className="text-xs text-red-600 text-center mt-3 font-medium">
-                      {singleDayValidationError}
-                    </p>
-                  )}
-
                   <div className="text-xs text-center opacity-70 mt-3">
                     Preview:{" "}
                     <span className="font-medium">
@@ -1101,26 +1118,72 @@ export default function EditRoutine() {
                       Add Task
                     </button>
 
-                    {/* Every-day error (between buttons) */}
-                    {everyDayValidationError && (
-                      <p className="text-xs text-red-600 text-center font-medium">
-                        {everyDayValidationError}
+                    {/* Single-day error (above buttons) */}
+                    {singleDayValidationError && (
+                      <p className="text-xs text-red-600 text-center mt-3 font-medium">
+                        {singleDayValidationError}
                       </p>
                     )}
 
+                    {/* Multi-day selection pills */}
+                    <div className="mt-4">
+                      <div className="text-xs opacity-70 mb-2">
+                        Select days to add to:
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {daysOfWeek.map((day) => (
+                          <button
+                            key={day}
+                            onClick={() => {
+                              const newSet = new Set(selectedDaysForMultiAdd);
+                              if (newSet.has(day)) {
+                                newSet.delete(day);
+                              } else {
+                                newSet.add(day);
+                              }
+                              setSelectedDaysForMultiAdd(newSet);
+                            }}
+                            className={`px-2 py-1 text-xs rounded-md capitalize transition ${
+                              selectedDaysForMultiAdd.has(day)
+                                ? "bg-blue-700 text-white"
+                                : theme
+                                ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                : "bg-[#333333] text-gray-300 hover:bg-[#111111]"
+                            }`}
+                          >
+                            {day.slice(0, 3)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Multi-day add button */}
                     <button
-                      onClick={addTaskForEveryDay}
-                      disabled={isAddEveryDayDisabled}
-                      className={`w-full text-sm font-medium py-2 rounded transition ${
-                        isAddEveryDayDisabled
+                      onClick={addTaskToMultipleDays}
+                      disabled={
+                        selectedDaysForMultiAdd.size === 0 ||
+                        !!multiDayValidationError ||
+                        !newName.trim()
+                      }
+                      className={`w-full text-sm font-medium py-2 rounded transition mt-3 ${
+                        selectedDaysForMultiAdd.size === 0 ||
+                        !!multiDayValidationError ||
+                        !newName.trim()
                           ? theme
                             ? "bg-[#cccccc] text-gray-600 cursor-not-allowed"
                             : "bg-[#444444] text-[#aaaaaa] cursor-not-allowed"
                           : "bg-blue-600 hover:bg-blue-700 text-white"
                       }`}
                     >
-                      Add Task for Every Day
+                      Add Task in Multiple Days
                     </button>
+
+                    {/* Multi-day error */}
+                    {multiDayValidationError && (
+                      <p className="text-xs text-red-600 text-center mt-3 font-medium">
+                        {multiDayValidationError}
+                      </p>
+                    )}
                   </div>
                 </div>
               ) : (
