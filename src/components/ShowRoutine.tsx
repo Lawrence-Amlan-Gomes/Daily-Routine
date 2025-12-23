@@ -77,7 +77,7 @@ export default function ShowRoutine({
   ]);
   const [nowHeight, setNowHeight] = useState(183);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
+  const today = new Date().toLocaleString("en-US", { weekday: "long" }); // e.g., "Monday"
   const pxPerMinute = zoomLevel;
   const hourHeight = 60 * pxPerMinute;
 
@@ -91,6 +91,16 @@ export default function ShowRoutine({
       newDays.unshift(last); // put it at the front
       return newDays;
     });
+  };
+
+  // Helper: Format minutes into "Xh Ym" or "Ym" or "Xh"
+  const formatDuration = (minutes: number): string => {
+    if (minutes < 60) {
+      return `${minutes}m`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins === 0 ? `${hours}h` : `${hours}h ${mins}m`;
   };
 
   const scrollToNow = () => {
@@ -281,7 +291,7 @@ export default function ShowRoutine({
           </div>
         </div>
         <div
-          className={`h-[50px] w-full border-b-[1px] ${
+          className={`h-[49px] w-full border-b-[1px] ${
             theme ? "border-[#888888]" : "border-[#888888]"
           }`}
         >
@@ -296,20 +306,27 @@ export default function ShowRoutine({
               </div>
             </div>
 
-            {daysOfWeek.map((day) => (
+            {daysOfWeek.map((day, idx) => (
               <div
                 key={day.full}
                 onClick={() => {
                   setIsSidebarOpen(true);
+                  setTaskSearchQuery("");
                   setSelectedDay(day.full.toLowerCase() as Day);
                 }}
                 className={`overflow-hidden border-l-[1px] cursor-pointer ${
-                  theme ? "border-[#888888]" : "border-[#888888]"
-                }`}
+                  idx == 6 ? "border-r-[1px]" : ""
+                } ${theme ? "border-[#888888]" : "border-[#888888]"}`}
               >
                 <div
-                  className={`p-3 text-center font-semibold ${
-                    theme ? "text-gray-900" : "text-white"
+                  className={`p-3 text-center font-semibold transition-all ${
+                    day.full === today
+                      ? theme
+                        ? "text-white bg-black"
+                        : "text-black bg-white"
+                      : theme
+                      ? "text-gray-900"
+                      : "text-white"
                   }`}
                 >
                   {day.full}
@@ -412,7 +429,7 @@ export default function ShowRoutine({
         </div>
 
         {/* Days */}
-        {daysOfWeek.map((day) => {
+        {daysOfWeek.map((day, idx) => {
           const dayKey = day.full.toLowerCase() as keyof typeof routine;
           const tasks: IRoutineItem[] = routine[dayKey] || [];
 
@@ -478,9 +495,9 @@ export default function ShowRoutine({
           return (
             <div
               key={day.full}
-              className={`overflow-hidden border-l-[1px] pt-[20px] ${
-                theme ? "border-[#888888]" : " border-[#888888]"
-              }`}
+              className={`overflow-hidden border-l-[1px] border-b-[1px] pt-[20px] ${
+                idx == 6 ? "border-r-[1px]" : ""
+              } ${theme ? "border-[#888888]" : " border-[#888888]"}`}
             >
               <div className="">
                 {sortedTasksWithGap.map((task, i) => {
@@ -495,25 +512,30 @@ export default function ShowRoutine({
                         if (task.name !== "dummy") {
                           setIsSidebarOpen(true);
                           setTaskSearchQuery(task.name);
-                        }else{
+                        } else {
                           setTaskSearchQuery("");
                         }
                       }}
-                      className={`text-sm overflow-hidden border-t-[1px] pr-1 border-blue-600  ${
-                        theme
+                      className={`text-sm overflow-hidden border-t-[1px] pr-1 border-blue-600 transition-colors ${
+                        // Special highlight: real task AND today
+                        task.name !== "dummy" && day.full === today
+                          ? theme
+                            ? "bg-[#222222] text-white cursor-pointer"
+                            : "bg-[#eeeeee] text-black  cursor-pointer"
+                          : theme
                           ? task.name === "dummy"
-                            ? "bg-transparent"
+                            ? "bg-transparent text-black"
                             : "bg-[#eeeeee] text-black cursor-pointer"
                           : task.name === "dummy"
-                          ? "bg-transparent"
-                          : "bg-[#222222] text-gray-200 cursor-pointer"
+                          ? "bg-transparent text-white"
+                          : "bg-[#222222] text-white cursor-pointer"
                       }`}
                       style={{
                         // Only add +1px for real tasks, keep exact height for dummies
                         height: `${height}px`,
                       }}
                     >
-                      {height < 10 ? (
+                      {height < 12 ? (
                         // Very short: name and time in ONE line
                         <></>
                       ) : height < 16 ? (
@@ -522,12 +544,14 @@ export default function ShowRoutine({
                           {task.name !== "dummy" ? (
                             <>
                               {task.name}
-                              <span className="text-[7px] opacity-75 ml-2">
+                              <span className="text-[7px] opacity-80 ml-2">
                                 ({task.time})
                               </span>
                             </>
                           ) : (
-                            ""
+                            <div className="text-[7px] opacity-70">
+                              {`${formatDuration(minutes)} Free`}
+                            </div>
                           )}
                         </div>
                       ) : height < 30 ? (
@@ -536,12 +560,14 @@ export default function ShowRoutine({
                           {task.name !== "dummy" ? (
                             <>
                               {task.name}
-                              <span className="text-[8px] opacity-75 ml-2">
+                              <span className="text-[8px] opacity-80 ml-2">
                                 ({task.time})
                               </span>
                             </>
                           ) : (
-                            ""
+                            <div className="text-[8px] opacity-70">
+                              {`${formatDuration(minutes)} Free`}
+                            </div>
                           )}
                         </div>
                       ) : height < 50 ? (
@@ -550,12 +576,14 @@ export default function ShowRoutine({
                           {task.name !== "dummy" ? (
                             <>
                               {task.name}
-                              <span className="text-[9px] opacity-75 ml-2">
+                              <span className="text-[9px] opacity-80 ml-2">
                                 ({task.time})
                               </span>
                             </>
                           ) : (
-                            ""
+                            <div className="text-[9px] opacity-70">
+                              {`${formatDuration(minutes)} Free`}
+                            </div>
                           )}
                         </div>
                       ) : height < 90 ? (
@@ -564,9 +592,19 @@ export default function ShowRoutine({
                           <div className="text-[13px] font-medium truncate ml-2 mt-1">
                             {task.name !== "dummy" ? task.name : ""}
                           </div>
-                          <div className="text-[11px] opacity-75 truncate ml-2">
+                          <div className="text-[11px] opacity-80 truncate ml-2">
                             {task.name !== "dummy" ? task.time : ""}
                           </div>
+                          {task.name !== "dummy" && height >= 70 && (
+                            <div className="text-[10px] opacity-70 ml-2">
+                              {formatDuration(minutes)}
+                            </div>
+                          )}
+                          {task.name == "dummy" && height >= 50 && (
+                            <div className="text-[10px] opacity-70 ml-2">
+                              {`${formatDuration(minutes)} Free`}
+                            </div>
+                          )}
                         </>
                       ) : (
                         // Tall: full name and time on separate lines
@@ -574,9 +612,19 @@ export default function ShowRoutine({
                           <div className="font-medium ml-2 mt-2">
                             {task.name !== "dummy" ? task.name : ""}
                           </div>
-                          <div className="text-xs opacity-75 ml-2">
+                          <div className="text-xs opacity-80 ml-2">
                             {task.name !== "dummy" ? task.time : ""}
                           </div>
+                          {task.name !== "dummy" && height >= 50 && (
+                            <div className="text-[12px] opacity-70 ml-2">
+                              {formatDuration(minutes)}
+                            </div>
+                          )}
+                          {task.name == "dummy" && height >= 50 && (
+                            <div className="text-[12px] opacity-70 ml-2">
+                              {`${formatDuration(minutes)} Free`}
+                            </div>
+                          )}
                         </>
                       )}
                     </div>
@@ -589,7 +637,7 @@ export default function ShowRoutine({
         {/* "Now" line - INSIDE the scrollable grid */}
         <div
           className={`absolute w-[88.5%] ml-[10%] h-[2px] border-t-[2px] border-green-700 z-20`}
-          style={{ top: `${nowHeight - 1.5}px` }}
+          style={{ top: `${nowHeight - 2}px` }}
         />
 
         {/* "Now" label */}
@@ -597,7 +645,7 @@ export default function ShowRoutine({
           className={`absolute text-[12px] font-bold px-1 rounded-sm left-[8.5%] z-20 border-[2px] border-green-700 ${
             theme ? "bg-green-700 text-white" : "bg-green-700 text-white"
           }`}
-          style={{ top: `${nowHeight - 11}px` }}
+          style={{ top: `${nowHeight - 11.5}px` }}
         >
           Now
         </div>
