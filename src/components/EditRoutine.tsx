@@ -137,6 +137,13 @@ export default function EditRoutine({
     text: string;
   } | null>(null);
 
+  const fromTimeStr = formatTimePart(fromHour, fromMinute, fromPeriod);
+  const toTimeStr = formatTimePart(toHour, toMinute, toPeriod);
+  const fromMins = timeToMinutes(fromTimeStr);
+  const toMins = timeToMinutes(toTimeStr);
+  const newOvernight = isOvernight(fromPeriod, toPeriod);
+  const duration = getDurationMinutes(fromTimeStr, toTimeStr);
+
   useEffect(() => {
     if (auth?.routine?.[selectedDay]) {
       const dayTasks = [...auth.routine[selectedDay]];
@@ -161,13 +168,6 @@ export default function EditRoutine({
     setEditingIndex(null);
   }, [selectedDay, auth?.routine]);
 
-  const fromTimeStr = formatTimePart(fromHour, fromMinute, fromPeriod);
-  const toTimeStr = formatTimePart(toHour, toMinute, toPeriod);
-  const fromMins = timeToMinutes(fromTimeStr);
-  const toMins = timeToMinutes(toTimeStr);
-  const newOvernight = isOvernight(fromPeriod, toPeriod);
-  const duration = getDurationMinutes(fromTimeStr, toTimeStr);
-
   // Validation for single day
   const singleDayValidationError = useMemo((): string | null => {
     if (!newName.trim()) return null;
@@ -180,8 +180,17 @@ export default function EditRoutine({
     if (fromMins === -1 || toMins === -1) return "Invalid time format";
 
     // 1. If non-overnight and end time is before start time → this means it crosses midnight
-    if (!newOvernight && fromMins >= toMins) {
-      return "Tasks cannot cross midnight into the next day";
+
+    if (newOvernight) {
+      const isExactlyMidnightEnd =
+        toHour === "12" && toMinute === "00" && toPeriod === "AM";
+      if (!isExactlyMidnightEnd) {
+        return "Task cannot extend past 12:01 AM into the next day";
+      }
+    } else {
+      if (fromMins >= toMins) {
+        return "End time must be after start time";
+      }
     }
 
     // 2. Max duration
@@ -189,11 +198,6 @@ export default function EditRoutine({
 
     // 3. Min duration
     if (duration < 5) return "Task must be at least 5 minutes long";
-
-    // 4. Overnight (explicit PM → AM is allowed only if duration checks passed)
-    if (newOvernight) {
-      return "Tasks cannot cross midnight into the next day"; // disallow overnight
-    }
 
     // 5. Check for duplicate name on current day
     const hasDuplicateName = tasks.some((task, idx) => {
@@ -260,15 +264,20 @@ export default function EditRoutine({
 
     if (fromMins === -1 || toMins === -1) return "Invalid time format";
 
-    if (!newOvernight && fromMins >= toMins) {
-      return "Tasks cannot cross midnight into the next day";
+    if (newOvernight) {
+      const isExactlyMidnightEnd =
+        toHour === "12" && toMinute === "00" && toPeriod === "AM";
+      if (!isExactlyMidnightEnd) {
+        return "Task cannot extend past 12:01 AM into the next day";
+      }
+    } else {
+      if (fromMins >= toMins) {
+        return "End time must be after start time";
+      }
     }
 
     if (duration > 1439) return "Task cannot exceed 23 hours 59 minutes";
     if (duration < 5) return "Task must be at least 5 minutes long";
-    if (newOvernight) {
-      return "Tasks cannot cross midnight into the next day";
-    }
 
     if (selectedDaysForMultiAdd.size === 0) return null;
 
@@ -959,6 +968,31 @@ export default function EditRoutine({
                         Select days to add to:
                       </div>
                       <div className="flex flex-wrap gap-1">
+                        {/* "All" Pill */}
+                        <button
+                          onClick={() => {
+                            if (
+                              selectedDaysForMultiAdd.size === daysOfWeek.length
+                            ) {
+                              // If all are already selected → deselect all
+                              setSelectedDaysForMultiAdd(new Set());
+                            } else {
+                              // Select all days
+                              setSelectedDaysForMultiAdd(new Set(daysOfWeek));
+                            }
+                          }}
+                          className={`px-3 py-1 text-xs rounded-md font-medium transition ${
+                            selectedDaysForMultiAdd.size === daysOfWeek.length
+                              ? "bg-purple-700 text-white hover:bg-purple-800"
+                              : theme
+                              ? "bg-gray-300 text-gray-800 hover:bg-gray-400"
+                              : "bg-[#444444] text-gray-200 hover:bg-[#555555]"
+                          }`}
+                        >
+                          All
+                        </button>
+
+                        {/* Individual day pills */}
                         {daysOfWeek.map((day) => (
                           <button
                             key={day}
