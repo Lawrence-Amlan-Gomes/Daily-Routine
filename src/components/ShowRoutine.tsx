@@ -8,6 +8,20 @@ import { useEffect, useState } from "react";
 import { useRef } from "react";
 import { set } from "mongoose";
 
+// ← ADD THESE TWO LINES HERE
+const daysOfWeek = [
+  "saturday",
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+] as const;
+
+type Day = (typeof daysOfWeek)[number];
+// ← END OF ADDITION
+
 const getMinutesPerSlot = (zoom: number) => {
   if (zoom <= 1.5) return 30;
   if (zoom <= 3) return 15;
@@ -310,9 +324,9 @@ export default function ShowRoutine({
               <div
                 key={day.full}
                 onClick={() => {
-                  setIsSidebarOpen(true);
                   setTaskSearchQuery("");
-                  setSelectedDay(day.full.toLowerCase() as Day);
+                  setIsSidebarOpen?.(true);
+                  setSelectedDay?.(day.full.toLowerCase() as Day);
                 }}
                 className={`overflow-hidden border-l-[1px] cursor-pointer ${
                   idx == 6 ? "border-r-[1px]" : ""
@@ -507,10 +521,10 @@ export default function ShowRoutine({
                     <div
                       key={i}
                       onClick={() => {
-                        setSelectedDay(day.full.toLowerCase() as Day);
+                        setSelectedDay?.(day.full.toLowerCase() as Day);
 
                         if (task.name !== "dummy") {
-                          setIsSidebarOpen(true);
+                          setIsSidebarOpen?.(true);
                           setTaskSearchQuery(task.name);
                         } else {
                           setTaskSearchQuery("");

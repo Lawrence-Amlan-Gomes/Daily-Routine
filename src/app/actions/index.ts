@@ -11,7 +11,6 @@ import {
 } from "@/lib/server/email"; // ← UPDATED
 import { generateToken, verifyToken } from "@/lib/server/jwt";
 import { User } from "@/models/User";
-import { CleanUser } from "@/store/features/auth/authSlice";
 import bcrypt from "bcrypt";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -27,7 +26,16 @@ type LeanUser = {
   createdAt?: Date;
   expiredAt?: Date;
   paymentType?: string;
-  isEmailVerified?: boolean; // ← NEW
+  isEmailVerified?: boolean;
+  routine?: {
+    saturday: { name: string; time: string }[];
+    sunday: { name: string; time: string }[];
+    monday: { name: string; time: string }[];
+    tuesday: { name: string; time: string }[];
+    wednesday: { name: string; time: string }[];
+    thursday: { name: string; time: string }[];
+    friday: { name: string; time: string }[];
+  };
   __v?: number;
 };
 
@@ -64,34 +72,48 @@ export async function performLogin({
     isEmailVerified: user.isEmailVerified || false,
     routine: user.routine
       ? {
-          saturday: user.routine.saturday.map((item) => ({
-            name: item.name,
-            time: item.time,
-          })),
-          sunday: user.routine.sunday.map((item) => ({
-            name: item.name,
-            time: item.time,
-          })),
-          monday: user.routine.monday.map((item) => ({
-            name: item.name,
-            time: item.time,
-          })),
-          tuesday: user.routine.tuesday.map((item) => ({
-            name: item.name,
-            time: item.time,
-          })),
-          wednesday: user.routine.wednesday.map((item) => ({
-            name: item.name,
-            time: item.time,
-          })),
-          thursday: user.routine.thursday.map((item) => ({
-            name: item.name,
-            time: item.time,
-          })),
-          friday: user.routine.friday.map((item) => ({
-            name: item.name,
-            time: item.time,
-          })),
+          saturday: user.routine.saturday.map(
+            (item: { name: string; time: string }) => ({
+              name: item.name,
+              time: item.time,
+            })
+          ),
+          sunday: user.routine.sunday.map(
+            (item: { name: string; time: string }) => ({
+              name: item.name,
+              time: item.time,
+            })
+          ),
+          monday: user.routine.monday.map(
+            (item: { name: string; time: string }) => ({
+              name: item.name,
+              time: item.time,
+            })
+          ),
+          tuesday: user.routine.tuesday.map(
+            (item: { name: string; time: string }) => ({
+              name: item.name,
+              time: item.time,
+            })
+          ),
+          wednesday: user.routine.wednesday.map(
+            (item: { name: string; time: string }) => ({
+              name: item.name,
+              time: item.time,
+            })
+          ),
+          thursday: user.routine.thursday.map(
+            (item: { name: string; time: string }) => ({
+              name: item.name,
+              time: item.time,
+            })
+          ),
+          friday: user.routine.friday.map(
+            (item: { name: string; time: string }) => ({
+              name: item.name,
+              time: item.time,
+            })
+          ),
         }
       : {
           saturday: [],
@@ -269,34 +291,48 @@ export async function findUserByEmail(email: string) {
     isEmailVerified: user.isEmailVerified || false, // ← NEW
     routine: user.routine
       ? {
-          saturday: user.routine.saturday.map((item) => ({
-            name: item.name,
-            time: item.time,
-          })),
-          sunday: user.routine.sunday.map((item) => ({
-            name: item.name,
-            time: item.time,
-          })),
-          monday: user.routine.monday.map((item) => ({
-            name: item.name,
-            time: item.time,
-          })),
-          tuesday: user.routine.tuesday.map((item) => ({
-            name: item.name,
-            time: item.time,
-          })),
-          wednesday: user.routine.wednesday.map((item) => ({
-            name: item.name,
-            time: item.time,
-          })),
-          thursday: user.routine.thursday.map((item) => ({
-            name: item.name,
-            time: item.time,
-          })),
-          friday: user.routine.friday.map((item) => ({
-            name: item.name,
-            time: item.time,
-          })),
+          saturday: user.routine.saturday.map(
+            (item: { name: string; time: string }) => ({
+              name: item.name,
+              time: item.time,
+            })
+          ),
+          sunday: user.routine.sunday.map(
+            (item: { name: string; time: string }) => ({
+              name: item.name,
+              time: item.time,
+            })
+          ),
+          monday: user.routine.monday.map(
+            (item: { name: string; time: string }) => ({
+              name: item.name,
+              time: item.time,
+            })
+          ),
+          tuesday: user.routine.tuesday.map(
+            (item: { name: string; time: string }) => ({
+              name: item.name,
+              time: item.time,
+            })
+          ),
+          wednesday: user.routine.wednesday.map(
+            (item: { name: string; time: string }) => ({
+              name: item.name,
+              time: item.time,
+            })
+          ),
+          thursday: user.routine.thursday.map(
+            (item: { name: string; time: string }) => ({
+              name: item.name,
+              time: item.time,
+            })
+          ),
+          friday: user.routine.friday.map(
+            (item: { name: string; time: string }) => ({
+              name: item.name,
+              time: item.time,
+            })
+          ),
         }
       : {
           saturday: [],

@@ -11,6 +11,12 @@ export default function PromptInput({
   getResponse,
   setIsTyping,
   aiResponse,
+}: {
+  myText: string;
+  setMyText: (value: string) => void;
+  getResponse: () => void;
+  setIsTyping: (value: boolean) => void;
+  aiResponse: string;
 }) {
   const [iAmThinking, setIAmThinking] = useState(false);
   const { theme } = useTheme();
@@ -19,7 +25,7 @@ export default function PromptInput({
     setIAmThinking(false);
   }, [aiResponse]);
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (myText !== "") {

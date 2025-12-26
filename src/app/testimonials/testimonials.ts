@@ -1,35 +1,35 @@
 const testimonials = [
   {
     id: 1,
-    clientName: "Sarah Chen",
-    clientRole: "Senior Software Engineer at TechCorp",
+    clientName: "Sarah Ahmed",
+    clientRole: "Marketing Specialist at Growthly",
     clientImg: "/C1.png",
     clientQuote:
-      "Recruiter’s Reply saved me hours every week. The AI nails the perfect professional tone, and I landed interviews at 3 dream companies in just one month!",
+      "Daily Routine helped me finally structure my day without feeling overwhelmed. I’m more focused, productive, and consistent than ever before.",
   },
   {
     id: 2,
-    clientName: "Rahim Khan",
-    clientRole: "Product Manager, StartupHub",
+    clientName: "Rahim Hasan",
+    clientRole: "Computer Science Student",
     clientImg: "/C2.png",
     clientQuote:
-      "I used to overthink every recruiter message. Now I paste, generate, and send in under 2 minutes. Pro plan is worth every penny.",
+      "I used to plan my day in my head and forget everything. Now I open the app every morning and know exactly what to do next.",
   },
   {
     id: 3,
-    clientName: "Ayesha Rahman",
-    clientRole: "UX Designer at InnovateCo",
+    clientName: "Nabila Chowdhury",
+    clientRole: "UI/UX Designer at Creative Studio",
     clientImg: "/C3.png",
     clientQuote:
-      "The tone variants are a game-changer. I switch between Friendly and Confident depending on the company — feels like having a career coach in my pocket.",
+      "The clean layout and simple routine builder make daily planning effortless. It feels calm, intentional, and motivating to use.",
   },
   {
     id: 4,
-    clientName: "David Patel",
-    clientRole: "Data Scientist, AI Labs",
+    clientName: "David Miller",
+    clientRole: "Freelance Web Developer",
     clientImg: "/C4.png",
     clientQuote:
-      "Went from 0 replies to 5 interviews in a week. The history + export feature keeps me organized. Best tool I’ve used since ChatGPT.",
+      "Building a daily routine with this app completely changed how I manage my time. I get more done and feel less stressed every day.",
   },
 ];
 

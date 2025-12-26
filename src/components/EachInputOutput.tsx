@@ -1,16 +1,24 @@
 "use client";
 import { useTheme } from "@/app/hooks/useTheme";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { CgCopy } from "react-icons/cg";
 import { useState } from "react";
 
-export default function EachInputOutput({ pair, isLast, isLoading }) {
+export default function EachInputOutput({
+  pair,
+  isLast,
+  isLoading,
+}: {
+  pair: [string, string];
+  isLast: boolean;
+  isLoading: boolean;
+}) {
   const { theme } = useTheme();
   const [copiedUser, setCopiedUser] = useState(false);
   const [copiedAI, setCopiedAI] = useState(false);
 
   // Parse bold (**text**)
-  const renderTextWithBold = (text) => {
+  const renderTextWithBold = (text: string) => {
     const regex = /\*\*(.*?)\*\*/g;
     const parts = [];
     let lastIndex = 0;
@@ -35,8 +43,8 @@ export default function EachInputOutput({ pair, isLast, isLoading }) {
   };
 
   // Render text with line breaks preserved
-  const renderTextWithLineBreaks = (text) => {
-    return text.split('\n').map((line, index, array) => (
+  const renderTextWithLineBreaks = (text: string) => {
+    return text.split("\n").map((line, index, array) => (
       <span key={index}>
         {renderTextWithBold(line)}
         {index < array.length - 1 && <br />}
@@ -45,7 +53,7 @@ export default function EachInputOutput({ pair, isLast, isLoading }) {
   };
 
   // ✅ Detect heading level — handles ** and #
-  const detectHeadingLevel = (text) => {
+  const detectHeadingLevel = (text: string): number => {
     const trimmed = text.trim();
     if (/^#{3,}\s*\**/.test(trimmed)) return 3;
     if (/^#{2}\s*\**/.test(trimmed)) return 2;
@@ -55,10 +63,11 @@ export default function EachInputOutput({ pair, isLast, isLoading }) {
   };
 
   // ✅ Remove all leading hashes and spaces
-  const cleanHeadingText = (text) => text.replace(/^#{1,6}\s*/, "").trim();
+  const cleanHeadingText = (text: string): string =>
+    text.replace(/^#{1,6}\s*/, "").trim();
 
   // ✅ Get clean text without markdown formatting
-  const getCleanText = (text) => {
+  const getCleanText = (text: string): string => {
     return text
       .split("[/n]") // Split by [/n] first
       .filter((p) => p.trim() !== "") // Remove empty paragraphs
@@ -94,23 +103,26 @@ export default function EachInputOutput({ pair, isLast, isLoading }) {
     }
   };
 
-  const typingVariants = {
+  const typingVariants: Variants = {
     animate: {
-      opacity: [0, 1, 0],
+      opacity: [0.3, 1, 0.3],
       transition: {
-        opacity: { repeat: Infinity, duration: 0.5, ease: "easeInOut" },
+        duration: 1.5,
+        repeat: Infinity,
+        repeatType: "loop" as const,
+        ease: "easeInOut" as const, // ← Correct camelCase
       },
     },
   };
 
-  const fontSizes = {
+  const fontSizes: Record<number, string> = {
     0: "text-[12px] sm:text-[16px]",
     1: "text-[14px] sm:text-[18px]",
     2: "text-[16px] sm:text-[20px]",
     3: "text-[15px] sm:text-[18px]",
   };
 
-  const spacing = {
+  const spacing: Record<number, string> = {
     0: "sm:mb-3 mb-2",
     1: "mt-3 mb-1 sm:mt-4 sm:mb-1",
     2: "mt-4 mb-2 sm:mt-5 sm:mb-3",
@@ -193,7 +205,9 @@ export default function EachInputOutput({ pair, isLast, isLoading }) {
                 return (
                   <p
                     key={index}
-                    className={`${fontSizes[level]} ${spacing[level]} ${colorClass}`}
+                    className={`${fontSizes[level] ?? fontSizes[0]} ${
+                      spacing[level] ?? spacing[0]
+                    } ${colorClass}`}
                   >
                     {renderTextWithBold(cleanText)}
                   </p>

@@ -1,6 +1,6 @@
 // src/lib/server/jwt.ts
 import { SignJWT, jwtVerify } from "jose";
-import { CleanUser } from "@/store/features/auth/authSlice";
+import { CleanUser, IRoutine } from "@/store/features/auth/authSlice"; // ← ADD IRoutine HERE
 
 if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET is missing in environment");

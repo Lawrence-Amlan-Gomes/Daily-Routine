@@ -143,7 +143,6 @@ export default function ProfilePic() {
         <div
           className={`sm:w-[150px] w-[100px] sm:h-[150px] h-[100px] rounded-xl border-[1px] overflow-hidden flex items-center justify-center relative cursor-pointer ${colors.keyBorder}`}
           onClick={() => setEditPic((prev) => !prev)}
-          style={{ imageRendering: "high-quality" }}
         >
           {isUploading ? (
             <div
@@ -162,7 +161,6 @@ export default function ProfilePic() {
               width={800}
               height={800}
               unoptimized={true}
-              style={{ imageRendering: "high-quality" }}
             />
           ) : (
             <div className="h-full w-full relative">
@@ -174,7 +172,6 @@ export default function ProfilePic() {
                 sizes="(max-width: 640px) 100px, 150px"
                 className="object-cover"
                 unoptimized={true}
-                style={{ imageRendering: "high-quality" }}
               />
             </div>
           )}

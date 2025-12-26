@@ -55,7 +55,7 @@ const TopNavbar = () => {
   // Define base navItems
   const baseNavItems = [
     { href: "/home", label: "Home", activeKey: "home" },
-    { href: "/pricing", label: "Pricing", activeKey: "pricing" },
+    // { href: "/pricing", label: "Pricing", activeKey: "pricing" },
     { href: "/dashBoard", label: "DashBoard", activeKey: "dashBoard" },
   ];
 

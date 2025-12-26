@@ -41,16 +41,16 @@ export default function Hero() {
             theme ? "text-[#0a0a0a]" : "text-[#ebebeb]"
           }`}
         >
-          Make Your <span className={`${colors.keyText}`}>Daily Routine</span>{" "}
-          And Utilize Your Time Better
+          Turn Every Day Into a{" "}
+          <span className={`${colors.keyText}`}>Well-Planned</span> Success{" "}
         </h1>
         <p
           className={`text-md sm:text-lg lg:text-xl ${
             theme ? "text-gray-600" : "text-gray-300"
           }`}
         >
-          Save time and stand out with tailored, professional email responses to
-          recruiters, generated in seconds.
+          Build structured daily routines that help you focus better, waste less
+          time, and actually get things done.
         </p>
         <div className="flex space-x-4">
           <Link
@@ -80,7 +80,10 @@ export default function Hero() {
             theme ? "bg-gray-100" : "bg-[#111111]"
           } overflow-hidden relative group`}
         >
-          <video
+          <div className="h-full w-full flex justify-center items-center">
+            The Video
+          </div>
+          {/* <video
             ref={videoRef}
             autoPlay
             loop
@@ -90,8 +93,8 @@ export default function Hero() {
           >
             <source src="/video.mp4" type="video/mp4" />
             Your browser does not support the video tag.
-          </video>
-          
+          </video> */}
+
           {/* Controls Container */}
           <div className="absolute bottom-4 right-4 flex items-center space-x-2">
             {/* Play/Pause Button - Visible on hover */}

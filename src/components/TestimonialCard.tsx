@@ -9,6 +9,11 @@ export default function TestimonialCard({
   clientImg,
   clientRole,
   clientQuote,
+}: {
+  clientName: string;
+  clientImg: string;
+  clientRole: string;
+  clientQuote: string;
 }) {
   const { theme } = useTheme();
 
