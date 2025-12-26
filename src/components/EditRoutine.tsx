@@ -131,6 +131,9 @@ export default function EditRoutine({
   const [selectedDaysForMultiAdd, setSelectedDaysForMultiAdd] = useState<
     Set<Day>
   >(new Set());
+  const [selectedDaysForMultiEdit, setSelectedDaysForMultiEdit] = useState<
+    Set<Day>
+  >(new Set());
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
@@ -167,6 +170,18 @@ export default function EditRoutine({
     setIsPortalOpen(false);
     setEditingIndex(null);
   }, [selectedDay, auth?.routine]);
+
+  const resetEditForm = () => {
+    setNewName("");
+    setFromHour("");
+    setFromMinute("");
+    setFromPeriod("AM");
+    setToHour("");
+    setToMinute("");
+    setToPeriod("AM");
+    setEditingIndex(null);
+    setSelectedDaysForMultiEdit(new Set());
+  };
 
   // Validation for single day
   const singleDayValidationError = useMemo((): string | null => {
@@ -253,8 +268,111 @@ export default function EditRoutine({
     editingIndex,
   ]);
 
-  // Validation for multi-day add (only selected days)
-  const multiDayValidationError = useMemo((): string | null => {
+  // Separate validation for MULTI-DAY ADD (new task)
+  const multiDayAddValidationError = useMemo((): string | null => {
+    if (!newName.trim()) return null;
+    if (selectedDaysForMultiAdd.size === 0) return null;
+
+    if (!isValidHour(fromHour)) return "Start hour must be 1–12";
+    if (!isValidMinute(fromMinute)) return "Start minutes must be 00–59";
+    if (!isValidHour(toHour)) return "End hour must be 1–12";
+    if (!isValidMinute(toMinute)) return "End minutes must be 00–59";
+
+    if (fromMins === -1 || toMins === -1) return "Invalid time format";
+
+    if (newOvernight) {
+      const isExactlyMidnightEnd =
+        toHour === "12" && toMinute === "00" && toPeriod === "AM";
+      if (!isExactlyMidnightEnd) {
+        return "Task cannot extend past 12:01 AM into the next day";
+      }
+    } else {
+      if (fromMins >= toMins) {
+        return "End time must be after start time";
+      }
+    }
+
+    if (duration > 1439) return "Task cannot exceed 23 hours 59 minutes";
+    if (duration < 5) return "Task must be at least 5 minutes long";
+
+    if (!auth?.routine) return null;
+
+    const newNameLower = newName.trim().toLowerCase();
+
+    // Check duplicate name on selected days
+    const daysWithDuplicateName = Array.from(selectedDaysForMultiAdd).filter(
+      (day) => {
+        const dayTasks = auth.routine[day] || [];
+        return dayTasks.some(
+          (task) => task.name.toLowerCase() === newNameLower
+        );
+      }
+    );
+
+    if (daysWithDuplicateName.length > 0) {
+      const formatted = daysWithDuplicateName
+        .map((d) => d.slice(0, 3))
+        .sort()
+        .join(", ");
+      return `Task name already exists on: ${formatted}`;
+    }
+
+    // Check time overlap on selected days
+    const conflictingDays = Array.from(selectedDaysForMultiAdd).filter(
+      (day) => {
+        const dayTasks = auth.routine[day] || [];
+        return dayTasks.some((task) => {
+          const [eFromStr, eToStr] = task.time.split(" - ");
+          const eFrom = timeToMinutes(eFromStr);
+          const eTo = timeToMinutes(eToStr);
+          if (eFrom === -1 || eTo === -1) return false;
+
+          const eFromPeriod = eFromStr.endsWith("AM") ? "AM" : "PM";
+          const eToPeriod = eToStr.endsWith("AM") ? "AM" : "PM";
+          const eOvernight = isOvernight(
+            eFromPeriod as "AM" | "PM",
+            eToPeriod as "AM" | "PM"
+          );
+
+          return isOverlapping(
+            fromMins,
+            toMins,
+            eFrom,
+            eTo,
+            newOvernight,
+            eOvernight
+          );
+        });
+      }
+    );
+
+    if (conflictingDays.length > 0) {
+      const formatted = conflictingDays
+        .map((d) => d.slice(0, 3))
+        .sort()
+        .join(", ");
+      return `Time overlaps on: ${formatted}`;
+    }
+
+    return null;
+  }, [
+    newName,
+    fromHour,
+    fromMinute,
+    fromPeriod,
+    toHour,
+    toMinute,
+    toPeriod,
+    auth?.routine,
+    duration,
+    fromMins,
+    toMins,
+    newOvernight,
+    selectedDaysForMultiAdd,
+  ]);
+
+  // Validation for multi-day EDIT (improved)
+  const multiDayEditValidationError = useMemo((): string | null => {
     if (!newName.trim()) return null;
 
     if (!isValidHour(fromHour)) return "Start hour must be 1–12";
@@ -279,75 +397,89 @@ export default function EditRoutine({
     if (duration > 1439) return "Task cannot exceed 23 hours 59 minutes";
     if (duration < 5) return "Task must be at least 5 minutes long";
 
-    if (selectedDaysForMultiAdd.size === 0) return null;
+    if (!auth?.routine || editingIndex === null) return null;
 
-    if (auth?.routine) {
-      // Check duplicate names on selected days
-      const originalTaskName =
-        editingIndex !== null ? tasks[editingIndex]?.name : null;
+    const originalTaskName = tasks[editingIndex]?.name;
+    if (!originalTaskName) return null;
 
-      const daysWithDuplicate = Array.from(selectedDaysForMultiAdd).filter(
-        (day) => {
-          const dayTasks = auth.routine?.[day] || [];
-          return dayTasks.some((task) => {
-            if (
-              originalTaskName &&
-              task.name.toLowerCase() === originalTaskName.toLowerCase()
-            ) {
-              return false;
-            }
-            return task.name.toLowerCase() === newName.trim().toLowerCase();
-          });
-        }
-      );
+    const selectedDays = selectedDaysForMultiEdit;
 
-      if (daysWithDuplicate.length > 0) {
-        return `Task name already exists on ${daysWithDuplicate
-          .map((d) => d.slice(0, 3))
-          .join(", ")}`;
-      }
+    if (selectedDays.size === 0) return null;
 
-      // Check time overlap on selected days
-      const conflictingDays = Array.from(selectedDaysForMultiAdd).filter(
-        (day) => {
-          const dayTasks = auth.routine?.[day] || [];
-          return dayTasks.some((task, idx) => {
-            if (
-              editingIndex !== null &&
-              day === selectedDay &&
-              idx === editingIndex
-            )
-              return false;
+    // === 1. Find which selected days actually have this task ===
+    const daysWithTask = Array.from(selectedDays).filter((day) =>
+      (auth.routine[day] || []).some((t) => t.name === originalTaskName)
+    );
 
-            const [eFromStr, eToStr] = task.time.split(" - ");
-            const eFrom = timeToMinutes(eFromStr);
-            const eTo = timeToMinutes(eToStr);
-            if (eFrom === -1 || eTo === -1) return false;
+    const daysWithoutTask = Array.from(selectedDays).filter(
+      (day) => !daysWithTask.includes(day)
+    );
 
-            const eFromPeriod = eFromStr.endsWith("AM") ? "AM" : "PM";
-            const eToPeriod = eToStr.endsWith("AM") ? "AM" : "PM";
-            const eOvernight = isOvernight(
-              eFromPeriod as "AM" | "PM",
-              eToPeriod as "AM" | "PM"
-            );
+    if (daysWithoutTask.length > 0) {
+      const formatted = daysWithoutTask
+        .map((d) => d.slice(0, 3))
+        .sort()
+        .join(", ");
+      return `This task doesn't exist on: ${formatted}`;
+    }
 
-            return isOverlapping(
-              fromMins,
-              toMins,
-              eFrom,
-              eTo,
-              newOvernight,
-              eOvernight
-            );
-          });
-        }
-      );
+    // === 2. Check for duplicate name (after edit) on days that have the task ===
+    const newNameLower = newName.trim().toLowerCase();
+    const originalNameLower = originalTaskName.toLowerCase();
 
-      if (conflictingDays.length > 0) {
-        return `Time overlaps on ${conflictingDays
-          .map((d) => d.slice(0, 3))
-          .join(", ")}`;
-      }
+    const daysWithNameConflict = daysWithTask.filter((day) => {
+      return (auth.routine[day] || []).some((t) => {
+        // Allow same name if it's the task we're editing
+        if (t.name.toLowerCase() === originalNameLower) return false;
+        return t.name.toLowerCase() === newNameLower;
+      });
+    });
+
+    if (daysWithNameConflict.length > 0) {
+      const formatted = daysWithNameConflict
+        .map((d) => d.slice(0, 3))
+        .join(", ");
+      return `Task name already exists on: ${formatted}`;
+    }
+
+    // === 3. Check for time overlap on days that have the task ===
+    const conflictingDays = daysWithTask.filter((day) => {
+      const dayTasks = auth.routine[day] || [];
+
+      return dayTasks.some((task) => {
+        // Skip the task we're editing on this day
+        if (task.name === originalTaskName) return false;
+
+        const [eFromStr, eToStr] = task.time.split(" - ");
+        const eFrom = timeToMinutes(eFromStr);
+        const eTo = timeToMinutes(eToStr);
+
+        if (eFrom === -1 || eTo === -1) return false;
+
+        const eFromPeriod = eFromStr.endsWith("AM") ? "AM" : "PM";
+        const eToPeriod = eToStr.endsWith("AM") ? "AM" : "PM";
+        const eOvernight = isOvernight(
+          eFromPeriod as "AM" | "PM",
+          eToPeriod as "AM" | "PM"
+        );
+
+        return isOverlapping(
+          fromMins,
+          toMins,
+          eFrom,
+          eTo,
+          newOvernight,
+          eOvernight
+        );
+      });
+    });
+
+    if (conflictingDays.length > 0) {
+      const formatted = conflictingDays
+        .map((d) => d.slice(0, 3))
+        .sort()
+        .join(", ");
+      return `Time overlaps on: ${formatted}`;
     }
 
     return null;
@@ -362,9 +494,11 @@ export default function EditRoutine({
     auth?.routine,
     duration,
     editingIndex,
-    selectedDay,
     tasks,
-    selectedDaysForMultiAdd,
+    selectedDaysForMultiEdit,
+    fromMins,
+    toMins,
+    newOvernight,
   ]);
 
   const filteredTasks = useMemo(() => {
@@ -377,7 +511,7 @@ export default function EditRoutine({
   const addTaskToMultipleDays = () => {
     if (
       selectedDaysForMultiAdd.size === 0 ||
-      multiDayValidationError ||
+      multiDayAddValidationError ||
       !newName.trim()
     )
       return;
@@ -445,6 +579,14 @@ export default function EditRoutine({
     setToPeriod(toParsed.period);
 
     setEditingIndex(index);
+
+    // NEW: Pre-select all days where this task name exists
+    if (auth?.routine) {
+      const daysWithThisTask = daysOfWeek.filter((day) =>
+        (auth.routine[day] || []).some((t) => t.name === task.name)
+      );
+      setSelectedDaysForMultiEdit(new Set(daysWithThisTask));
+    }
   };
 
   const addTask = () => {
@@ -523,30 +665,29 @@ export default function EditRoutine({
     setEditingIndex(null);
   };
 
-  const editTaskForEveryDay = () => {
-    if (editingIndex === null || isAddDisabled) return;
-
-    const originalTaskName = tasks[editingIndex].name;
+  const editTaskOnSelectedDays = () => {
+    if (
+      editingIndex === null ||
+      selectedDaysForMultiEdit.size === 0 ||
+      !!multiDayEditValidationError ||
+      !newName.trim()
+    )
+      return;
 
     const fromTimeStr = formatTimePart(fromHour, fromMinute, fromPeriod);
     const toTimeStr = formatTimePart(toHour, toMinute, toPeriod);
     const fullTime = `${fromTimeStr} - ${toTimeStr}`;
+    const updatedTask: IRoutineItem = { name: newName.trim(), time: fullTime };
 
-    const updatedTask: IRoutineItem = {
-      name: newName.trim(),
-      time: fullTime,
-    };
+    const originalTaskName = tasks[editingIndex].name;
 
     if (auth) {
       const updatedRoutine = { ...auth.routine };
 
-      // Find all days that have a task with the original name
-      daysOfWeek.forEach((day) => {
+      // Only update on selected days
+      Array.from(selectedDaysForMultiEdit).forEach((day) => {
         const currentTasks = updatedRoutine[day] || [];
-        const hasTask = currentTasks.some((t) => t.name === originalTaskName);
-
-        if (hasTask) {
-          // Replace the old task with the new one
+        if (currentTasks.some((t) => t.name === originalTaskName)) {
           const newTasks = currentTasks
             .map((t) => (t.name === originalTaskName ? updatedTask : t))
             .sort(
@@ -563,25 +704,17 @@ export default function EditRoutine({
         routine: updatedRoutine,
       });
 
-      // Refresh current view
       setTasks(updatedRoutine[selectedDay] || []);
     }
 
     setHasUnsavedChanges(true);
 
     // Reset form
-    setNewName("");
-    setFromHour("");
-    setFromMinute("");
-    setFromPeriod("AM");
-    setToHour("");
-    setToMinute("");
-    setToPeriod("AM");
-    setEditingIndex(null);
+    resetEditForm();
 
     setMessage({
       type: "success",
-      text: "Task updated on all days it exists!",
+      text: `Updated on ${selectedDaysForMultiEdit.size} day(s)!`,
     });
     setTimeout(() => setMessage(null), 2000);
   };
@@ -1024,12 +1157,12 @@ export default function EditRoutine({
                       onClick={addTaskToMultipleDays}
                       disabled={
                         selectedDaysForMultiAdd.size === 0 ||
-                        !!multiDayValidationError ||
+                        !!multiDayAddValidationError ||
                         !newName.trim()
                       }
                       className={`w-full text-sm font-medium py-2 rounded transition mt-3 ${
                         selectedDaysForMultiAdd.size === 0 ||
-                        !!multiDayValidationError ||
+                        !!multiDayAddValidationError ||
                         !newName.trim()
                           ? theme
                             ? "bg-[#cccccc] text-gray-600 cursor-not-allowed"
@@ -1041,9 +1174,9 @@ export default function EditRoutine({
                     </button>
 
                     {/* Multi-day error */}
-                    {multiDayValidationError && (
+                    {multiDayAddValidationError && (
                       <p className="text-xs text-red-600 text-center mt-3 font-medium">
-                        {multiDayValidationError}
+                        {multiDayAddValidationError}
                       </p>
                     )}
                   </div>
@@ -1230,7 +1363,7 @@ export default function EditRoutine({
                         <button
                           onClick={editTask}
                           disabled={isAddDisabled}
-                          className={`w-full text-sm font-medium py-2 rounded transition ${
+                          className={`w-full text-[13px] font-medium py-2 rounded transition ${
                             isAddDisabled
                               ? theme
                                 ? "bg-[#cccccc] text-gray-600 cursor-not-allowed"
@@ -1238,7 +1371,7 @@ export default function EditRoutine({
                               : "bg-green-700 hover:bg-green-800 text-white"
                           }`}
                         >
-                          Edit
+                          Edit (This Day Only)
                         </button>
 
                         {singleDayValidationError && (
@@ -1247,24 +1380,134 @@ export default function EditRoutine({
                           </p>
                         )}
 
-                        {/* Edit for Every Day button */}
+                        {/* Multi-day selection pills */}
+                        <div className="mt-4">
+                          <div className="text-xs opacity-70 mb-2">
+                            Select days to update this task:
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {/* "All" Pill */}
+                            <button
+                              onClick={() => {
+                                if (auth?.routine && editingIndex !== null) {
+                                  const originalTaskName =
+                                    tasks[editingIndex]?.name;
+                                  if (!originalTaskName) {
+                                    setSelectedDaysForMultiEdit(new Set());
+                                    return;
+                                  }
+
+                                  const daysWithTask = daysOfWeek.filter(
+                                    (day) =>
+                                      (auth.routine[day] || []).some(
+                                        (t) => t.name === originalTaskName
+                                      )
+                                  );
+
+                                  const currentSelected =
+                                    selectedDaysForMultiEdit;
+                                  const allRelevantSelected =
+                                    daysWithTask.every((d) =>
+                                      currentSelected.has(d)
+                                    );
+
+                                  if (allRelevantSelected) {
+                                    setSelectedDaysForMultiEdit(new Set());
+                                  } else {
+                                    setSelectedDaysForMultiEdit(
+                                      new Set(daysWithTask)
+                                    );
+                                  }
+                                }
+                              }}
+                              className={`px-3 py-1 text-xs rounded-md font-medium transition ${
+                                // Highlight only if ALL relevant days are selected
+                                auth?.routine && editingIndex !== null
+                                  ? (() => {
+                                      const originalTaskName =
+                                        tasks[editingIndex]?.name;
+                                      if (!originalTaskName) return false;
+                                      const daysWithTask = daysOfWeek.filter(
+                                        (day) =>
+                                          (auth.routine[day] || []).some(
+                                            (t) => t.name === originalTaskName
+                                          )
+                                      );
+                                      return daysWithTask.every((d) =>
+                                        selectedDaysForMultiEdit.has(d)
+                                      );
+                                    })()
+                                    ? "bg-purple-700 text-white hover:bg-purple-800"
+                                    : theme
+                                    ? "bg-gray-300 text-gray-800 hover:bg-gray-400"
+                                    : "bg-[#444444] text-gray-200 hover:bg-[#555555]"
+                                  : "bg-gray-300 text-gray-600"
+                              }`}
+                            >
+                              All Relevant
+                            </button>
+
+                            {/* Individual days */}
+                            {daysOfWeek.map((day) => (
+                              <button
+                                key={day}
+                                onClick={() => {
+                                  const newSet = new Set(
+                                    selectedDaysForMultiEdit
+                                  );
+                                  if (newSet.has(day)) {
+                                    newSet.delete(day);
+                                  } else {
+                                    newSet.add(day);
+                                  }
+                                  setSelectedDaysForMultiEdit(newSet);
+                                }}
+                                className={`px-2 py-1 text-xs rounded-md capitalize transition ${
+                                  selectedDaysForMultiEdit.has(day)
+                                    ? "bg-blue-700 text-white"
+                                    : theme
+                                    ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    : "bg-[#333333] text-gray-300 hover:bg-[#111111]"
+                                }`}
+                              >
+                                {day.slice(0, 3)}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Multi-day edit button */}
                         <button
-                          onClick={editTaskForEveryDay}
-                          disabled={isAddDisabled}
-                          className={`w-full text-sm font-medium py-2 rounded transition mb-2 ${
-                            isAddDisabled
+                          onClick={editTaskOnSelectedDays}
+                          disabled={
+                            selectedDaysForMultiEdit.size === 0 ||
+                            !!multiDayEditValidationError ||
+                            !newName.trim()
+                          }
+                          className={`w-full text-[13px] font-medium py-2 rounded transition mt-3 ${
+                            selectedDaysForMultiEdit.size === 0 ||
+                            !!multiDayEditValidationError ||
+                            !newName.trim()
                               ? theme
                                 ? "bg-[#cccccc] text-gray-600 cursor-not-allowed"
                                 : "bg-[#444444] text-[#aaaaaa] cursor-not-allowed"
                               : "bg-blue-600 hover:bg-blue-700 text-white"
                           }`}
                         >
-                          Edit for Every Day
+                          Update Task in Selected Days
                         </button>
 
+                        {multiDayEditValidationError &&
+                          selectedDaysForMultiEdit.size > 0 && (
+                            <p className="text-xs text-red-600 text-center mt-3 font-medium">
+                              {multiDayEditValidationError}
+                            </p>
+                          )}
+
+                        {/* Keep delete button */}
                         <button
                           onClick={deleteTaskFromEveryDay}
-                          className="w-full text-sm font-medium py-2 rounded transition bg-red-600 hover:bg-red-700 text-white"
+                          className="w-full text-[13px] font-medium py-2 rounded transition bg-red-600 hover:bg-red-700 text-white"
                         >
                           Delete from Every Day
                         </button>

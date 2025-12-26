@@ -44,9 +44,10 @@ export default function Testimonials() {
               theme ? "text-[#666666]" : "text-[#aaaaaa]"
             }`}
           >
-            Here’s what early users are saying about Recruiter’s Reply. These
-            testimonials show how our AI saves time, lands interviews, and turns
-            recruiter messages into opportunities — fast.
+            Here’s what early users are saying about Daily Routine. These
+            testimonials show how simple daily planning helps people stay
+            consistent, reduce stress, and take control of their day —
+            effortlessly.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">

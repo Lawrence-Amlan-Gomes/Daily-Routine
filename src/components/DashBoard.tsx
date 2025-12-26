@@ -9,11 +9,24 @@ import {
   MdKeyboardDoubleArrowLeft,
   MdKeyboardDoubleArrowRight,
 } from "react-icons/md";
-import Chat from "./Chat";
 import EmailNotVerified from "./EmailNotVerified";
 import { useRouter } from "next/navigation";
 import EditRoutine from "@/components/EditRoutine";
 import ShowRoutine from "./ShowRoutine";
+
+// ← ADD THESE TWO LINES HERE
+const daysOfWeek = [
+  "saturday",
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+] as const;
+
+type Day = (typeof daysOfWeek)[number];
+// ← END OF ADDITION
 
 export default function DashBoard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -41,7 +54,6 @@ export default function DashBoard() {
   // 2. Spring config – used **only** on desktop toggles
   // --------------------------------------------------------------
   const spring = {
-    type: "spring",
     stiffness: 320,
     damping: 32,
     mass: 1,
@@ -56,7 +68,7 @@ export default function DashBoard() {
   // --------------------------------------------------------------
   // 4. Conditional transition – **false** on mount AND on mobile
   // --------------------------------------------------------------
-  const transition = hasMounted ? spring : false;
+  const transition = hasMounted ? spring : undefined;
 
   return auth?.isEmailVerified ? (
     <div className="h-full w-full overflow-hidden fixed">
@@ -126,9 +138,7 @@ export default function DashBoard() {
       >
         <ShowRoutine
           setIsSidebarOpen={setIsSidebarOpen}
-          selectedDay={selectedDay}
           setSelectedDay={setSelectedDay}
-          taskSearchQuery={taskSearchQuery}
           setTaskSearchQuery={setTaskSearchQuery}
         />
       </motion.div>
