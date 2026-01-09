@@ -149,7 +149,7 @@ const LoginForm = () => {
           error: `Your email ${userEmail} hasn't registered yet`,
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Google login error:", err);
       setGoogleError({
         isError: true,

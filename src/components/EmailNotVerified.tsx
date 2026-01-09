@@ -6,12 +6,20 @@ import {
 import { useAuth } from "@/app/hooks/useAuth";
 import { useTheme } from "@/app/hooks/useTheme";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function EmailNotVerified() {
   const { theme } = useTheme();
   const { user: auth, setAuth } = useAuth();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const router = useRouter();
+
+  useEffect(() => {
+    if(!auth){
+      router.push("/login");
+    }
+  }, [auth, router]);
 
   // Poll for verification status every 5 seconds
   useEffect(() => {
@@ -36,6 +44,7 @@ export default function EmailNotVerified() {
     const interval = setInterval(checkVerification, 5000);
 
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth?.email]);
 
   async function reSend() {
@@ -52,6 +61,7 @@ export default function EmailNotVerified() {
       } else {
         setMessage(result.error || "Failed to send email");
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       setMessage("An error occurred. Please try again.");
     } finally {
@@ -72,7 +82,7 @@ export default function EmailNotVerified() {
             theme ? "text-[#222222]" : "text-[#dddddd]"
           } text-center mt-3`}
         >
-          Haven't received verification email yet?
+          Haven&apos;t received verification email yet?
         </div>
 
         {message && (

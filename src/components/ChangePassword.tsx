@@ -93,7 +93,7 @@ const ChangePassword = () => {
       await verifyAndChangePassword(auth.email, oldPassword, newPassword);
       alert("Password changed successfully!");
       router.push("/profile");
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err.message === "INCORRECT_OLD_PASSWORD") {
         setOldError({ iserror: true, error: "Old password is incorrect" });
       } else {

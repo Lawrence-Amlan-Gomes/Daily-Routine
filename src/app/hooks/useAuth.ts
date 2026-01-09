@@ -17,12 +17,12 @@ import type { CleanUser } from '@/store/features/auth/authSlice'; // optional: e
 export const useAuth = () => {
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((state: RootState) => state.auth.user) as CleanUser | null;
-  const googleUser = useSelector((state: RootState) => state.auth.googleUser) as any | null; // replace `any` if type exists
+  const googleUser = useSelector((state: RootState) => state.auth.googleUser) as unknown | null; // replace `any` if type exists
 
   return {
     user,
     googleUser,
     setAuth: (user: CleanUser | null) => dispatch(setAuth(user)),
-    setGoogleAuth: (user: any | null) => dispatch(setGoogleAuth(user)), // fix type if CleanGoogleUser exists
+    setGoogleAuth: (user: unknown | null) => dispatch(setGoogleAuth(user)), // fix type if CleanGoogleUser exists
   };
 };

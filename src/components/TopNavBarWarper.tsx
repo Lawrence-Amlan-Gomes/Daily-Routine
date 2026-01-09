@@ -1,5 +1,4 @@
 "use client";
-import { useTheme } from "@/app/hooks/useTheme";
 import { motion } from "framer-motion"; // Import framer-motion
 import { ReactNode } from "react"; // ← ONLY ADDED THIS
 
