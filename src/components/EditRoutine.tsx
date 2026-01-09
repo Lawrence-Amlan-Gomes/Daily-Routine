@@ -5,7 +5,7 @@ import { updateRoutine } from "@/app/actions";
 import { useTheme } from "@/app/hooks/useTheme";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useEffect, useState, useMemo } from "react";
-import { IRoutine, IRoutineItem } from "@/store/features/auth/authSlice";
+import { IRoutineItem } from "@/store/features/auth/authSlice";
 
 const daysOfWeek = [
   "saturday",
@@ -255,6 +255,7 @@ export default function EditRoutine({
     if (hasOverlap) return "Time overlaps with an existing task on this day";
 
     return null;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     newName,
     fromHour,
@@ -355,6 +356,7 @@ export default function EditRoutine({
     }
 
     return null;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     newName,
     fromHour,
@@ -483,6 +485,7 @@ export default function EditRoutine({
     }
 
     return null;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     newName,
     fromHour,
@@ -721,7 +724,7 @@ export default function EditRoutine({
 
   const deleteTaskFromEveryDay = () => {
     if (editingIndex === null) return;
-    let sure = confirm(
+    const sure = confirm(
       `Are you sure you want to delete this task: ${tasks[editingIndex].name} from every day?`
     );
     if (!sure) return;
@@ -758,7 +761,7 @@ export default function EditRoutine({
   };
 
   const removeTask = (index: number, name: string) => {
-    let sure = confirm(
+    const sure = confirm(
       `Are you sure you want to delete this task: ${name} from ${selectedDay
         .charAt(0)
         .toUpperCase()}${selectedDay.slice(1)}?`
@@ -789,6 +792,7 @@ export default function EditRoutine({
       await updateRoutine(auth.email, auth.routine);
       setMessage({ type: "success", text: "Saved!" });
       setHasUnsavedChanges(false); // ← IMPORTANT: Reset after save
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       setMessage({ type: "error", text: "Save failed" });
     } finally {
@@ -1200,6 +1204,7 @@ export default function EditRoutine({
               {taskSearchQuery.trim() ? "No matching tasks" : "No tasks"}
             </p>
           ) : (
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             filteredTasks.map((task, index) => {
               // IMPORTANT: We need the original index in the full tasks array
               // for editing/deleting correctly

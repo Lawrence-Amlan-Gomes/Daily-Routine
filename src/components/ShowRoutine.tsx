@@ -6,9 +6,9 @@ import { useAuth } from "@/app/hooks/useAuth";
 import { IRoutineItem } from "@/store/features/auth/authSlice";
 import { useEffect, useState } from "react";
 import { useRef } from "react";
-import { set } from "mongoose";
 
 // ← ADD THESE TWO LINES HERE
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const daysOfWeek = [
   "saturday",
   "sunday",
@@ -67,6 +67,7 @@ const getDurationFromTimeRange = (timeRange: string): number => {
 };
 
 export default function ShowRoutine({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isSidebarOpen,
   setIsSidebarOpen,
   setSelectedDay,
@@ -166,6 +167,10 @@ export default function ShowRoutine({
     });
   };
 
+  useEffect(() => {
+    console.log(`Zoom level changed to: ${zoomLevel}`);
+  }, [zoomLevel]);
+
   // Generate dynamic time slots
   const timeSlots: string[] = [];
   for (let hour = 0; hour < 24; hour++) {
@@ -179,18 +184,28 @@ export default function ShowRoutine({
 
   if (!auth) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-lg opacity-70">
-          Please log in to view your routine.
-        </p>
+      <div className="flex h-full items-center justify-center">
+        <p className="text-lg opacity-70">Please log in to view your routine</p>
       </div>
     );
   }
 
-  useEffect(() => {
-    console.log(`Zoom level changed to: ${zoomLevel}`);
-  }, [zoomLevel]);
+  if (!auth.routine) {
+    return (
+      <div className="flex h-full items-center justify-center text-center px-6">
+        <div className="max-w-md">
+          <p className="text-lg font-medium mb-3">Routine not loaded yet</p>
+          <p className="text-sm opacity-70">
+            {auth.firstTimeLogin
+              ? "Let's create your weekly schedule!"
+              : "Your routine data is being loaded..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
+  // Now it's safe
   const routine = auth.routine;
 
   return (
@@ -478,7 +493,9 @@ export default function ShowRoutine({
           const sortedTasksWithGap: IRoutineItem[] = [];
           let previousEndMinutes = 0; // Start from midnight (or adjust if day starts later)
 
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           sortedTasks.forEach((task, i) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const [startTimeStr, endTimeStr] = task.time.split(" - ");
             const startMinutes = timeToMinutes(startTimeStr);
             const durationMinutes = getDurationFromTimeRange(task.time);
@@ -488,6 +505,7 @@ export default function ShowRoutine({
             if (startMinutes > previousEndMinutes) {
               const gapStartMinutes = previousEndMinutes;
               const gapEndMinutes = startMinutes;
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const gapDuration = gapEndMinutes - gapStartMinutes;
 
               sortedTasksWithGap.push({
@@ -515,8 +533,8 @@ export default function ShowRoutine({
             >
               <div className="">
                 {sortedTasksWithGap.map((task, i) => {
-                  let minutes = getDurationFromTimeRange(task.time);
-                  let height = minutes * pxPerMinute;
+                  const minutes = getDurationFromTimeRange(task.time);
+                  const height = minutes * pxPerMinute;
                   return (
                     <div
                       key={i}

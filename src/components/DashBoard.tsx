@@ -4,7 +4,7 @@ import colors from "@/app/color/color";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useTheme } from "@/app/hooks/useTheme";
 import { AnimatePresence, motion } from "framer-motion";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   MdKeyboardDoubleArrowLeft,
   MdKeyboardDoubleArrowRight,
@@ -15,6 +15,7 @@ import EditRoutine from "@/components/EditRoutine";
 import ShowRoutine from "./ShowRoutine";
 
 // ← ADD THESE TWO LINES HERE
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const daysOfWeek = [
   "saturday",
   "sunday",
@@ -34,7 +35,7 @@ export default function DashBoard() {
   const [hasMounted, setHasMounted] = useState(false);
   const [taskSearchQuery, setTaskSearchQuery] = useState("");
   const { theme } = useTheme();
-  const { user: auth } = useAuth();
+  const { user: auth, setAuth } = useAuth();
   const router = useRouter();
   console.log("Auth User:", auth);
 
@@ -42,11 +43,18 @@ export default function DashBoard() {
     if (auth === null && hasMounted) {
       router.push("/login");
     }
-  }, []);
+  }, [auth, hasMounted, router]);
+
+  useEffect(() => {
+    if (auth && !auth.routine) {
+      setAuth(null); 
+    }
+  }, [auth, setAuth]);
   // --------------------------------------------------------------
   // 1. Mark component as mounted after first render
   // --------------------------------------------------------------
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHasMounted(true);
   }, []);
 
