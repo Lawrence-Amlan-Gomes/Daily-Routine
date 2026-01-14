@@ -108,26 +108,52 @@ export default function EditRoutine({
   setSelectedDay,
   taskSearchQuery,
   setTaskSearchQuery,
+  isPortalOpen,
+  setIsPortalOpen,
+  newName,
+  setNewName,
+  fromHour,
+  setFromHour,
+  fromMinute,
+  setFromMinute,
+  fromPeriod,
+  setFromPeriod,
+  toHour,
+  setToHour,
+  toMinute,
+  setToMinute,
+  toPeriod,
+  setToPeriod,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  suggestTime,
 }: {
   selectedDay: Day;
   setSelectedDay: React.Dispatch<React.SetStateAction<Day>>;
   taskSearchQuery: string;
   setTaskSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  isPortalOpen: boolean;
+  setIsPortalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  newName: string;
+  setNewName: React.Dispatch<React.SetStateAction<string>>;
+  fromHour: string;
+  setFromHour: React.Dispatch<React.SetStateAction<string>>;
+  fromMinute: string;
+  setFromMinute: React.Dispatch<React.SetStateAction<string>>;
+  fromPeriod: "AM" | "PM";
+  setFromPeriod: React.Dispatch<React.SetStateAction<"AM" | "PM">>;
+  toHour: string;
+  setToHour: React.Dispatch<React.SetStateAction<string>>;
+  toMinute: string;
+  setToMinute: React.Dispatch<React.SetStateAction<string>>;
+  toPeriod: "AM" | "PM";
+  setToPeriod: React.Dispatch<React.SetStateAction<"AM" | "PM">>;
+  suggestTime: (start?: string, end?: string) => void;
 }) {
   const { theme } = useTheme();
   const { user: auth, setAuth } = useAuth();
-
   const [tasks, setTasks] = useState<IRoutineItem[]>([]);
-  const [isPortalOpen, setIsPortalOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [fromHour, setFromHour] = useState("");
-  const [fromMinute, setFromMinute] = useState("");
-  const [fromPeriod, setFromPeriod] = useState<"AM" | "PM">("AM");
-  const [toHour, setToHour] = useState("");
-  const [toMinute, setToMinute] = useState("");
-  const [toPeriod, setToPeriod] = useState<"AM" | "PM">("AM");
   const [selectedDaysForMultiAdd, setSelectedDaysForMultiAdd] = useState<
     Set<Day>
   >(new Set());
@@ -169,7 +195,8 @@ export default function EditRoutine({
     setToPeriod("AM");
     setIsPortalOpen(false);
     setEditingIndex(null);
-  }, [selectedDay, auth?.routine]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDay, auth]);
 
   const resetEditForm = () => {
     setNewName("");
@@ -255,7 +282,7 @@ export default function EditRoutine({
     if (hasOverlap) return "Time overlaps with an existing task on this day";
 
     return null;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     newName,
     fromHour,
@@ -485,7 +512,7 @@ export default function EditRoutine({
     }
 
     return null;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     newName,
     fromHour,
@@ -792,7 +819,7 @@ export default function EditRoutine({
       await updateRoutine(auth.email, auth.routine);
       setMessage({ type: "success", text: "Saved!" });
       setHasUnsavedChanges(false); // ← IMPORTANT: Reset after save
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       setMessage({ type: "error", text: "Save failed" });
     } finally {
@@ -1022,8 +1049,8 @@ export default function EditRoutine({
                       <div className="flex gap-2">
                         <input
                           type="text"
-                          maxLength={2}
                           placeholder="HH"
+                          maxLength={2}
                           value={toHour}
                           onChange={(e) =>
                             setToHour(
