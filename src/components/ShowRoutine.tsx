@@ -67,16 +67,15 @@ const getDurationFromTimeRange = (timeRange: string): number => {
 };
 
 export default function ShowRoutine({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  isSidebarOpen,
   setIsSidebarOpen,
   setSelectedDay,
   setTaskSearchQuery,
+  onFreeTimeClick,
 }: {
-  isSidebarOpen?: boolean;
   setIsSidebarOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedDay?: React.Dispatch<React.SetStateAction<Day>>;
   setTaskSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  onFreeTimeClick?: (start: string, end: string) => void;
 }) {
   const { theme } = useTheme();
   const { user: auth } = useAuth();
@@ -546,6 +545,8 @@ export default function ShowRoutine({
                           setTaskSearchQuery(task.name);
                         } else {
                           setTaskSearchQuery("");
+                          const [start, end] = task.time.split(" - ");
+                          onFreeTimeClick?.(start.trim(), end.trim());
                         }
                       }}
                       className={`text-sm overflow-hidden border-t-[1px] pr-1 border-blue-600 transition-colors ${

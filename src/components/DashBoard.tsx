@@ -34,6 +34,14 @@ export default function DashBoard() {
   const [selectedDay, setSelectedDay] = useState<Day>("saturday");
   const [hasMounted, setHasMounted] = useState(false);
   const [taskSearchQuery, setTaskSearchQuery] = useState("");
+  const [isPortalOpen, setIsPortalOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [fromHour, setFromHour] = useState("");
+  const [fromMinute, setFromMinute] = useState("");
+  const [fromPeriod, setFromPeriod] = useState<"AM" | "PM">("AM");
+  const [toHour, setToHour] = useState("");
+  const [toMinute, setToMinute] = useState("");
+  const [toPeriod, setToPeriod] = useState<"AM" | "PM">("AM");
   const { theme } = useTheme();
   const { user: auth, setAuth } = useAuth();
   const router = useRouter();
@@ -47,7 +55,7 @@ export default function DashBoard() {
 
   useEffect(() => {
     if (auth && !auth.routine) {
-      setAuth(null); 
+      setAuth(null);
     }
   }, [auth, setAuth]);
   // --------------------------------------------------------------
@@ -77,6 +85,25 @@ export default function DashBoard() {
   // 4. Conditional transition – **false** on mount AND on mobile
   // --------------------------------------------------------------
   const transition = hasMounted ? spring : undefined;
+  const suggestTime = (startStr?: string, endStr?: string) => {
+    if (startStr) {
+      const match = startStr.match(/(\d{1,2}):(\d{2}) (AM|PM)/);
+      if (match) {
+        setFromHour(match[1]);
+        setFromMinute(match[2]);
+        setFromPeriod(match[3] as "AM" | "PM");
+      }
+    }
+    if (endStr) {
+      const match = endStr.match(/(\d{1,2}):(\d{2}) (AM|PM)/);
+      if (match) {
+        setToHour(match[1]);
+        setToMinute(match[2]);
+        setToPeriod(match[3] as "AM" | "PM");
+      }
+    }
+    setIsPortalOpen(true);
+  };
 
   return auth?.isEmailVerified ? (
     <div className="h-full w-full overflow-hidden fixed">
@@ -109,6 +136,23 @@ export default function DashBoard() {
                 setSelectedDay={setSelectedDay}
                 taskSearchQuery={taskSearchQuery}
                 setTaskSearchQuery={setTaskSearchQuery}
+                isPortalOpen={isPortalOpen}
+                setIsPortalOpen={setIsPortalOpen}
+                newName={newName}
+                setNewName={setNewName}
+                fromHour={fromHour}
+                setFromHour={setFromHour}
+                fromMinute={fromMinute}
+                setFromMinute={setFromMinute}
+                fromPeriod={fromPeriod}
+                setFromPeriod={setFromPeriod}
+                toHour={toHour}
+                setToHour={setToHour}
+                toMinute={toMinute}
+                setToMinute={setToMinute}
+                toPeriod={toPeriod}
+                setToPeriod={setToPeriod}
+                suggestTime={suggestTime} // ← renamed function to avoid confusion
               />
             </motion.div>
           )}
@@ -148,6 +192,7 @@ export default function DashBoard() {
           setIsSidebarOpen={setIsSidebarOpen}
           setSelectedDay={setSelectedDay}
           setTaskSearchQuery={setTaskSearchQuery}
+          onFreeTimeClick={suggestTime}
         />
       </motion.div>
 
