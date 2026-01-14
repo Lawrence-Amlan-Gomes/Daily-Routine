@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import ProfileIcon from "./ProfileIcon";
 import ToogleTheme from "./ToogleTheme";
+import { findUserByEmail } from "@/app/actions";
 
 // ──────────────────────────────────────────────────────────────
 //  ONLY ADDED: Props interface + type annotation
@@ -46,7 +47,7 @@ const NavItem = ({ href, label, active, onClick, theme }: NavItemProps) => (
 
 const TopNavbar = () => {
   const { theme } = useTheme();
-  const { user: auth } = useAuth();
+  const { user: auth, setAuth } = useAuth();
   const [active, setActive] = useState("home");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -64,9 +65,36 @@ const TopNavbar = () => {
     ? [...baseNavItems, { href: "/admin", label: "Admin", activeKey: "admin" }]
     : baseNavItems;
 
+  // ──────────────────────────────────────────────────────────────
+  // Fetch fresh user data from DB **only once** on first render
+  // ──────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const syncAuthWithDB = async () => {
+      if (!auth?.email) return; // no user logged in → skip
+
+      try {
+        const freshUser = await findUserByEmail(auth.email);
+
+        if (freshUser) {
+          // Only update if something changed (optional optimization)
+          // You can compare fields if you want, but usually just set it
+          setAuth({
+            ...freshUser,
+            paymentType: freshUser.paymentType ?? "Free One Week", // ← or "Basic", "Expired", whatever your default should be
+          });
+        }
+      } catch (err) {
+        console.error("Failed to sync auth with DB:", err);
+        // Optionally show toast or ignore silently
+      }
+    };
+
+    syncAuthWithDB();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // ← empty deps = run only once on mount
+
   useEffect(() => {
     if (trimedPathname) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActive(trimedPathname);
     } else {
       setActive("home");

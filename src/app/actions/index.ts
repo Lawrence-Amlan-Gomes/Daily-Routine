@@ -16,6 +16,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 type LeanUser = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   _id: any;
   name: string;
   email: string;
