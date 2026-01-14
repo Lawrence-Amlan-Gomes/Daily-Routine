@@ -49,6 +49,7 @@ const TopNavbar = () => {
   const { theme } = useTheme();
   const { user: auth, setAuth } = useAuth();
   const [active, setActive] = useState("home");
+  const [firstTime, setFirstTime] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
   const trimedPathname = pathname.split("/").pop();
@@ -65,12 +66,18 @@ const TopNavbar = () => {
     ? [...baseNavItems, { href: "/admin", label: "Admin", activeKey: "admin" }]
     : baseNavItems;
 
+  useEffect(() => {
+    setFirstTime(false);
+  }, []);
+
   // ──────────────────────────────────────────────────────────────
   // Fetch fresh user data from DB **only once** on first render
   // ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const syncAuthWithDB = async () => {
-      if (!auth?.email) return; // no user logged in → skip
+      console.log("Syncing auth with DB...");
+      console.log("Current auth:", auth);
+      if (!auth) return; // no user logged in → skip
 
       try {
         const freshUser = await findUserByEmail(auth.email);
@@ -82,6 +89,7 @@ const TopNavbar = () => {
             ...freshUser,
             paymentType: freshUser.paymentType ?? "Free One Week", // ← or "Basic", "Expired", whatever your default should be
           });
+          console.log("Auth synced with DB:", freshUser);
         }
       } catch (err) {
         console.error("Failed to sync auth with DB:", err);
@@ -91,7 +99,7 @@ const TopNavbar = () => {
 
     syncAuthWithDB();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // ← empty deps = run only once on mount
+  }, [firstTime]); // ← empty deps = run only once on mount
 
   useEffect(() => {
     if (trimedPathname) {
