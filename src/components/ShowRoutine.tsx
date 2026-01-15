@@ -90,6 +90,14 @@ export default function ShowRoutine({
     { full: "Friday", short: "Fri" },
   ]);
   const [nowHeight, setNowHeight] = useState(183);
+  // Add near other states
+  const [currentTime, setCurrentTime] = useState(
+    new Date().toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    })
+  );
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const today = new Date().toLocaleString("en-US", { weekday: "long" }); // e.g., "Monday"
   const pxPerMinute = zoomLevel;
@@ -137,6 +145,23 @@ export default function ShowRoutine({
       behavior: "smooth",
     });
   };
+
+  useEffect(() => {
+    const updateTime = () => {
+      setCurrentTime(
+        new Date().toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        })
+      );
+    };
+
+    updateTime(); // immediate
+    const interval = setInterval(updateTime, 60000); // every minute
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Set up the interval (runs every 1 minute)
   useEffect(() => {
@@ -275,13 +300,9 @@ export default function ShowRoutine({
           : "bg-green-700 text-white hover:bg-green-800"
       }`}
           >
-            {`Go to Now: ${new Date()
-              .toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              })
-              .replace(/AM|PM/, (match) => match.toUpperCase())}`}
+            {`Go to Now: ${currentTime.replace(/(?<!\d)(AM|PM)/gi, (m) =>
+              m.toUpperCase()
+            )}`}
           </button>
           {/* Right side: Week rotation controls */}
           <div className="flex items-center gap-4">
