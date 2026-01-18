@@ -13,6 +13,7 @@ export const authOptions = {
   pages: {
     signIn: '/login',
   },
+  trustHost: true,
 };
 
 export const { auth, handlers, signIn, signOut } = NextAuth(authOptions);
