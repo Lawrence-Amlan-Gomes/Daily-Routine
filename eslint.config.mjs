@@ -13,14 +13,6 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
-
-  // NEW: Override the any rule (add this last so it takes precedence)
-  {
-    files: ["**/*.{ts,tsx}"],
-    rules: {
-      "@typescript-eslint/no-explicit-any": "off",  // Change to "warn" if you want yellow warnings instead of disabling
-    },
-  },
 ]);
 
 export default eslintConfig;
