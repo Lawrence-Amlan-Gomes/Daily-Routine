@@ -1,4 +1,5 @@
 // src/app/layout.tsx
+// This is the root layout for the Next.js application.
 import { Roboto } from "next/font/google";
 import ClientLayout from "./ClientLayout";
 import "./globals.css";
