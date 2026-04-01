@@ -1,6 +1,14 @@
-// src/app/dashBoard/page.tsx
 import DashBoard from "@/components/DashBoard";
+import HasNotRegisteredWrapper from "@/components/HasNotRegisteredWrapper";
+import HasExpired from "@/components/HasExpired";
 
 export default function Page() {
-  return <DashBoard />;
+
+  return (
+    <HasNotRegisteredWrapper>
+      <HasExpired>
+        <DashBoard />
+      </HasExpired>
+    </HasNotRegisteredWrapper>
+  )
 }

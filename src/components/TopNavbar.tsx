@@ -1,15 +1,19 @@
+/* eslint-disable @next/next/no-img-element */
 // TopNavbar component
 "use client";
 
+import { findUserByEmail } from "@/app/actions";
 import colors from "@/app/color/color";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useTheme } from "@/app/hooks/useTheme";
+import { logout } from "@/store/features/auth/authSlice";
+import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 import ProfileIcon from "./ProfileIcon";
 import ToogleTheme from "./ToogleTheme";
-import { findUserByEmail } from "@/app/actions";
 
 // ──────────────────────────────────────────────────────────────
 //  ONLY ADDED: Props interface + type annotation
@@ -35,8 +39,8 @@ const NavItem = ({ href, label, active, onClick, theme }: NavItemProps) => (
               ? colors.keyText
               : "text-[#555555] hover:text-[#000000]"
             : active
-            ? colors.keyText
-            : "text-[#cccccc] hover:text-[#ffffff]"
+              ? colors.keyText
+              : "text-[#cccccc] hover:text-[#ffffff]"
         } `}
       >
         {label}
@@ -48,6 +52,7 @@ const NavItem = ({ href, label, active, onClick, theme }: NavItemProps) => (
 const TopNavbar = () => {
   const { theme } = useTheme();
   const { user: auth, setAuth } = useAuth();
+  const dispatch = useDispatch();
   const [active, setActive] = useState("home");
   const [firstTime, setFirstTime] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -57,8 +62,11 @@ const TopNavbar = () => {
   // Define base navItems
   const baseNavItems = [
     { href: "/home", label: "Home", activeKey: "home" },
-    // { href: "/pricing", label: "Pricing", activeKey: "pricing" },
     { href: "/dashBoard", label: "DashBoard", activeKey: "dashBoard" },
+    { href: "/ai-routine", label: "AI Routine", activeKey: "ai-routine" },
+    { href: "/stats", label: "Stats", activeKey: "stats" },
+    { href: "/goals", label: "Goals", activeKey: "goals" },
+    { href: "/pricing", label: "Pricing", activeKey: "pricing" },
   ];
 
   // Conditionally add Admin route if user is admin
@@ -75,9 +83,12 @@ const TopNavbar = () => {
   // ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const syncAuthWithDB = async () => {
-      console.log("Syncing auth with DB...");
-      console.log("Current auth:", auth);
       if (!auth) return; // no user logged in → skip
+      if (!auth.routine) {
+        dispatch(logout());
+        await signOut({ redirect: false });
+        return;
+      }
 
       try {
         const freshUser = await findUserByEmail(auth.email);
@@ -87,9 +98,11 @@ const TopNavbar = () => {
           // You can compare fields if you want, but usually just set it
           setAuth({
             ...freshUser,
-            paymentType: freshUser.paymentType ?? "Free One Week", // ← or "Basic", "Expired", whatever your default should be
           });
-          console.log("Auth synced with DB:", freshUser);
+        }
+        if (!freshUser || !freshUser.routine) {
+          dispatch(logout());
+          await signOut({ redirect: false });
         }
       } catch (err) {
         console.error("Failed to sync auth with DB:", err);
@@ -117,20 +130,27 @@ const TopNavbar = () => {
     <>
       {/* Desktop Navbar */}
       <nav
-        className={`fixed top-0 z-50 w-[99%] h-12 sm:h-14 md:h-16 hidden sm:flex items-center justify-between border-b-[1px] pl-[10%] pr-[11%] bg-opacity-65 backdrop-blur-xl ${
+        className={`fixed top-0 z-50 w-[100%] h-12 sm:h-14 md:h-16 hidden lg:flex items-center justify-between border-b-[1px] pl-[10%] pr-[11%] bg-opacity-65 backdrop-blur-xl ${
           theme
-            ? "bg-[#ffffff] border-[#dddddd]"
-            : "bg-[#000000] border-[#222222]"
+            ? "bg-[#ffffff] border-gray-200"
+            : "bg-[#000000] border-gray-800"
         }`}
       >
         {/* Logo */}
         <Link href="/home">
-          <div
-            className={`text-lg sm:text-lg md:text-xl lg:text-2xl font-bold tracking-wide ${
-              theme ? "text-[#222222]" : "text-[#dadada]"
-            }`}
-          >
-            Daily Routine
+          <div className="flex items-center gap-2 sm:gap-3">
+            <img
+              src="/Icon.png"
+              alt="My Daily Routine Logo"
+              className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 object-contain"
+            />
+            <div
+              className={`text-lg sm:text-lg md:text-xl lg:text-2xl font-bold tracking-wide ${
+                theme ? "text-[#222222]" : "text-[#dadada]"
+              }`}
+            >
+              My Daily Routine
+            </div>
           </div>
         </Link>
 
@@ -148,34 +168,43 @@ const TopNavbar = () => {
           ))}
           <div className="flex items-center">
             <ToogleTheme />
-            <ProfileIcon />
+            <ProfileIcon
+              active={active === "profile" ? "profile" : undefined}
+            />
           </div>
         </div>
       </nav>
 
       {/* Mobile Navbar */}
       <nav
-        className={`fixed top-0 z-50 w-full h-14 flex sm:hidden items-center justify-between px-[10%] bg-opacity-50 backdrop-blur-md ${
+        className={`fixed top-0 z-50 w-full h-14 flex lg:hidden border-b-[1px] items-center justify-between px-[10%] bg-opacity-50 backdrop-blur-md ${
           theme
-            ? "bg-[#ffffff] border-[#dddddd]"
-            : "bg-[#000000] border-[#222222]"
+            ? "bg-[#ffffff] border-gray-200"
+            : "bg-[#000000] border-gray-800"
         }`}
       >
         {/* Logo */}
         <Link href="/home">
-          <div
-            className={`text-[12px] font-bold tracking-wide ${
-              theme ? "text-[#222222]" : "text-[#dadada]"
-            }`}
-          >
-            Daily Routine
+          <div className="flex items-center gap-2">
+            <img
+              src="/Icon.png"
+              alt="My Daily Routine Logo"
+              className="h-6 w-6 sm:h-7 sm:w-7 object-contain"
+            />
+            <div
+              className={`text-[12px] sm:text-[18px] font-bold tracking-wide ${
+                theme ? "text-[#222222]" : "text-[#dadada]"
+              }`}
+            >
+              My Daily Routine
+            </div>
           </div>
         </Link>
 
         {/* Hamburger Menu Button */}
         <div className="flex items-center">
           <ToogleTheme />
-          <ProfileIcon />
+          <ProfileIcon active={active === "profile" ? "profile" : undefined} />
           <button
             onClick={toggleMenu}
             className={`focus:outline-none ml-2 ${

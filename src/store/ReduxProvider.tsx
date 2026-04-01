@@ -4,7 +4,7 @@
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { ReactNode, useEffect } from 'react';
-import { setAuth, setGoogleAuth } from './features/auth/authSlice';
+import { setAuth } from './features/auth/authSlice';
 
 export default function ReduxProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
@@ -13,9 +13,8 @@ export default function ReduxProvider({ children }: { children: ReactNode }) {
     const loadAuth = async () => {
       const storedUser = localStorage.getItem('authUser');
       const storedToken = localStorage.getItem('authToken');
-      const storedGoogleUser = localStorage.getItem('authGoogleUser');
 
-      // ─── 1. Primary: authUser (email or Google) ───────────────────────
+      // ─── 1. Primary: authUser ─────────────────────────────────────────
       if (storedUser) {
         try {
           const user = JSON.parse(storedUser);
@@ -44,16 +43,6 @@ export default function ReduxProvider({ children }: { children: ReactNode }) {
         } catch (err) {
           console.error('JWT verification failed:', err);
           localStorage.removeItem('authToken');
-        }
-      }
-
-      // ─── 3. Google metadata (only after we have a main user) ───────
-      if (storedGoogleUser) {
-        try {
-          const google = JSON.parse(storedGoogleUser);
-          store.dispatch(setGoogleAuth(google));
-        } catch {
-          localStorage.removeItem('authGoogleUser');
         }
       }
     };

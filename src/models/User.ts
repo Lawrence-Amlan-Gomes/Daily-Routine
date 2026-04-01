@@ -22,13 +22,13 @@ export interface IUser extends Document {
   email: string;
   password: string;
   photo?: string;
-  firstTimeLogin: boolean;
+  isRegisteredWithGoogle: boolean;
   createdAt: Date;
   expiredAt?: Date;
   isAdmin: boolean;
   paymentType: string;
-  isEmailVerified: boolean;
   routine: IRoutine;
+  todayPremiumResponses: string;
 }
 
 const UserSchema = new mongoose.Schema<IUser>(
@@ -43,12 +43,11 @@ const UserSchema = new mongoose.Schema<IUser>(
     },
     password: { type: String, required: true },
     photo: { type: String, default: "" },
-    firstTimeLogin: { type: Boolean, default: true },
+    isRegisteredWithGoogle: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
     expiredAt: { type: Date },
     isAdmin: { type: Boolean, default: false },
     paymentType: { type: String, default: "Free One Week" },
-    isEmailVerified: { type: Boolean, default: false },
     routine: {
       type: {
         saturday: {
@@ -56,6 +55,7 @@ const UserSchema = new mongoose.Schema<IUser>(
             {
               name: { type: String, required: true, trim: true },
               time: { type: String, required: true, trim: true },
+              category: { type: String, default: "", trim: true },
             },
           ],
           default: [],
@@ -66,6 +66,7 @@ const UserSchema = new mongoose.Schema<IUser>(
             {
               name: { type: String, required: true, trim: true },
               time: { type: String, required: true, trim: true },
+              category: { type: String, default: "", trim: true },
             },
           ],
           default: [],
@@ -76,6 +77,7 @@ const UserSchema = new mongoose.Schema<IUser>(
             {
               name: { type: String, required: true, trim: true },
               time: { type: String, required: true, trim: true },
+              category: { type: String, default: "", trim: true },
             },
           ],
           default: [],
@@ -86,6 +88,7 @@ const UserSchema = new mongoose.Schema<IUser>(
             {
               name: { type: String, required: true, trim: true },
               time: { type: String, required: true, trim: true },
+              category: { type: String, default: "", trim: true },
             },
           ],
           default: [],
@@ -96,6 +99,7 @@ const UserSchema = new mongoose.Schema<IUser>(
             {
               name: { type: String, required: true, trim: true },
               time: { type: String, required: true, trim: true },
+              category: { type: String, default: "", trim: true },
             },
           ],
           default: [],
@@ -106,6 +110,7 @@ const UserSchema = new mongoose.Schema<IUser>(
             {
               name: { type: String, required: true, trim: true },
               time: { type: String, required: true, trim: true },
+              category: { type: String, default: "", trim: true },
             },
           ],
           default: [],
@@ -116,6 +121,7 @@ const UserSchema = new mongoose.Schema<IUser>(
             {
               name: { type: String, required: true, trim: true },
               time: { type: String, required: true, trim: true },
+              category: { type: String, default: "", trim: true },
             },
           ],
           default: [],
@@ -125,11 +131,74 @@ const UserSchema = new mongoose.Schema<IUser>(
       default: {},
       _id: false,
     },
+    todayPremiumResponses: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    goals: {
+      type: [
+        {
+          id: { type: String, required: true, trim: true },
+          name: { type: String, required: true, trim: true },
+          description: { type: String, default: "", trim: true },
+          priority: {
+            type: String,
+            enum: ["low", "medium", "high", "critical"],
+            default: "medium",
+          },
+          status: {
+            type: String,
+            enum: ["todo", "in-progress", "done", "archived"],
+            default: "todo",
+          },
+          category: { type: String, default: "", trim: true },
+          dueDate: { type: String, default: "" },
+          time: { type: String, default: "" },
+          reminderAt: { type: String, default: "" },
+          repeat: {
+            type: String,
+            enum: ["none", "daily", "weekly", "monthly"],
+            default: "none",
+          },
+          tags: [{ type: String, trim: true }],
+          subtasks: {
+            type: [
+              {
+                id: { type: String, required: true },
+                name: { type: String, required: true, trim: true },
+                isDone: { type: Boolean, default: false },
+              },
+            ],
+            default: [],
+            _id: false,
+          },
+          createdAt: { type: String, default: "" },
+          finishedAt: { type: String, default: "" },
+          pinned: { type: Boolean, default: false },
+          color: { type: String, default: "" },
+        },
+      ],
+      default: [],
+      _id: false,
+    },
+    stats: {
+      type: [
+        {
+          date: { type: String, required: true, trim: true },
+          day: { type: String, required: true, trim: true },
+          totalTasks: { type: Number, required: true, default: 0 },
+          completedTasks: [{ type: String, trim: true }],
+        },
+      ],
+      default: [],
+      _id: false,
+    },
   },
   {
     versionKey: false,
     timestamps: false,
-  }
+  },
 );
 
 export const User =

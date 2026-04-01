@@ -1,7 +1,7 @@
 // src/components/ProfilePic.tsx
 "use client";
 
-import { changePhoto, updateUser } from "@/app/actions";
+import { updateUser } from "@/app/actions";
 import colors from "@/app/color/color";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useTheme } from "@/app/hooks/useTheme";
@@ -106,8 +106,6 @@ export default function ProfilePic() {
       // Optimistic UI update
       setImage(imageData);
       setAuth({ ...auth, photo: imageData });
-
-      await changePhoto(auth.email, imageData);
       await updateUser(auth.email, { firstTimeLogin: false });
       alert("Profile picture updated!");
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -128,7 +126,6 @@ export default function ProfilePic() {
     setAuth({ ...auth, photo: "" });
 
     try {
-      await changePhoto(auth.email, "");
       await updateUser(auth.email, { firstTimeLogin: false });
       alert("Profile picture removed!");
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

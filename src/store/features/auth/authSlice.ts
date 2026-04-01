@@ -4,6 +4,39 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 export interface IRoutineItem {
   name: string;
   time: string;
+  category?: string;
+}
+
+export interface ISubtask {
+  id: string;
+  name: string;
+  isDone: boolean;
+}
+
+export interface IGoal {
+  id: string;
+  name: string;
+  description: string;
+  priority: "low" | "medium" | "high" | "critical";
+  status: "todo" | "in-progress" | "done" | "archived";
+  category: string;
+  dueDate: string;
+  time: string;
+  reminderAt: string;
+  repeat: "none" | "daily" | "weekly" | "monthly";
+  tags: string[];
+  subtasks: ISubtask[];
+  createdAt: string;
+  finishedAt: string;
+  pinned: boolean;
+  color: string;
+}
+
+export interface IStatEntry {
+  date: string;              // "YYYY-MM-DD"
+  day: string;               // "saturday"
+  totalTasks: number;        // total tasks scheduled that day
+  completedTasks: string[];  // task names completed
 }
 
 export interface IRoutine {
@@ -21,29 +54,23 @@ export interface CleanUser {
   name: string;
   email: string;
   photo: string;
-  firstTimeLogin: boolean;
+  isRegisteredWithGoogle: boolean;
   isAdmin: boolean;
   createdAt: string;
   expiredAt: string;
   paymentType: string;
-  isEmailVerified: boolean;
   routine: IRoutine;
-}
-
-export interface CleanGoogleUser {
-  name: string;
-  email: string;
-  image: string;
+  todayPremiumResponses: string;
+  stats: IStatEntry[];
+  goals: IGoal[];
 }
 
 interface AuthState {
   user: CleanUser | null;
-  googleUser: CleanGoogleUser | null;
 }
 
 const initialState: AuthState = {
   user: null,
-  googleUser: null,
 };
 
 const authSlice = createSlice({
@@ -60,27 +87,15 @@ const authSlice = createSlice({
         }
       }
     },
-    setGoogleAuth: (state, action: PayloadAction<CleanGoogleUser | null>) => {
-      state.googleUser = action.payload;
-      if (typeof window !== "undefined") {
-        if (action.payload) {
-          localStorage.setItem("authGoogleUser", JSON.stringify(action.payload));
-        } else {
-          localStorage.removeItem("authGoogleUser");
-        }
-      }
-    },
     logout: (state) => {
       state.user = null;
-      state.googleUser = null;
       if (typeof window !== "undefined") {
         localStorage.removeItem("authUser");
         localStorage.removeItem("authToken");
-        localStorage.removeItem("authGoogleUser");
       }
     },
   },
 });
 
-export const { setAuth, setGoogleAuth, logout } = authSlice.actions;
+export const { setAuth, logout } = authSlice.actions;
 export default authSlice.reducer;

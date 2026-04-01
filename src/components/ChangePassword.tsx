@@ -131,7 +131,7 @@ const ChangePassword = () => {
   }
 
   return (
-    <div className="w-full sm:p-0 p-[5%] overflow-y-auto lg:overflow-hidden lg:flex lg:justify-center lg:items-center sm:pt-[12%]">
+    <div className="w-full sm:p-0 p-[5%] pt-[80px] overflow-y-auto lg:overflow-hidden lg:flex lg:justify-center lg:items-center sm:pt-[12%]">
       <div
         className={`p-10 overflow-hidden rounded-lg sm:my-[5%] sm:w-[80%] sm:mx-[10%] lg:w-[700px] xl:w-[800px] 2xl:w-[900px] lg:my-0 text-center ${
           theme ? colors.cardLight : colors.cardDark
@@ -195,12 +195,12 @@ const ChangePassword = () => {
           <button
             onClick={submitForm}
             disabled={!noError || isLoading}
-            className={`text-[18px] cursor-pointer rounded-lg mt-10 py-2 px-6 mb-5 shadow-md w-full ${
+            className={`text-[12px] rounded-lg mt-10 py-2 px-6 mb-5 shadow-md w-full ${
               noError && !isLoading
-                ? "bg-green-700 text-white"
+                ? "bg-green-700 text-white cursor-pointer"
                 : theme
-                ? "bg-[#dbdbdb] text-[#808080]"
-                : "bg-[#1a1a1a] text-[#696969]"
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-gray-900 text-gray-500 cursor-not-allowed"
             }`}
           >
             {isLoading ? "Changing…" : "Change Password"}
@@ -249,12 +249,12 @@ const ChangePassword = () => {
             <button
               onClick={submitForm}
               disabled={!noError || isLoading}
-              className={`text-[12px] lg:text-[16px] 2xl:text-[25px] cursor-pointer rounded-lg mt-10 py-2 px-6 mb-5 w-full ${
+              className={`text-[12px] lg:text-[16px] 2xl:text-[25px] rounded-lg ${confirmPassword ? "sm:mt-[40px] lg:mt-[48px]" : "mt-5"} py-2 px-6 mb-5 w-full ${
                 noError && !isLoading
-                  ? "bg-green-700 text-white"
+                  ? "bg-green-700 text-white cursor-pointer"
                   : theme
-                  ? "bg-[#dbdbdb] text-[#808080]"
-                  : "bg-[#1a1a1a] text-[#696969]"
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-gray-900 text-gray-500 cursor-not-allowed"
               }`}
             >
               {isLoading ? "Changing…" : "Change Password"}
