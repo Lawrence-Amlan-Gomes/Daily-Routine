@@ -1,7 +1,7 @@
 // src/app/admin/page.tsx
-import Admin from "@/components/Admin";
-import HasNotRegisteredWrapper from "@/components/HasNotRegisteredWrapper";
+import Admin from "@/components/AdminNew";
 import HasAdminWrapper from "@/components/HasAdminWrapper";
+import HasNotRegisteredWrapper from "@/components/HasNotRegisteredWrapper";
 
 export default function Page() {
   return (

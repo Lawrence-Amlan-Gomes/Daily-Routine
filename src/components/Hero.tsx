@@ -40,17 +40,17 @@ export default function Hero() {
       const target = videoRef.current ?? containerRef.current;
       if (target?.requestFullscreen) {
         await target.requestFullscreen();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } else if ((target as any)?.webkitRequestFullscreen) {
         // Safari
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (target as any).webkitRequestFullscreen();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } else if ((target as any)?.mozRequestFullScreen) {
         // Firefox
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (target as any).mozRequestFullScreen();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } else if ((target as any)?.msRequestFullscreen) {
         // IE/Edge
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -108,8 +108,8 @@ export default function Hero() {
             ${theme ? "text-[#0a0a0a]" : "text-[#ebebeb]"}
           `}
         >
-          Turn Every Day Into a{" "}
-          <span className={`${colors.keyText}`}>Well-Planned</span> Success
+          Let&apos;s Get {" "}
+          <span className={`${colors.keyText}`}>Disciplined</span>
         </h1>
 
         <p
@@ -255,7 +255,9 @@ export default function Hero() {
                   }
                   transition-all duration-200 shadow-md
                 `}
-                aria-label={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                aria-label={
+                  isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"
+                }
               >
                 {isFullscreen ? (
                   // Compress / exit fullscreen icon

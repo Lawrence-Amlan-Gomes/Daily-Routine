@@ -6,7 +6,7 @@
 import { updateRoutine, updateStats, getAIRoutineDoc } from "@/app/actions";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useTheme } from "@/app/hooks/useTheme";
-import { IRoutineItem, IStatEntry } from "@/store/features/auth/authSlice";
+import { IRoutine, IRoutineItem, IStatEntry } from "@/store/features/auth/authSlice";
 import { useEffect, useMemo, useState } from "react";
 
 const CATEGORIES = [
@@ -242,9 +242,7 @@ interface EditRoutineProps {
   toPeriod: "AM" | "PM";
   setToPeriod: React.Dispatch<React.SetStateAction<"AM" | "PM">>;
   suggestTime: (start?: string, end?: string) => void;
-  updateRoutineWithHistory: (
-    newRoutine: Record<string, IRoutineItem[]>,
-  ) => void;
+  updateRoutineWithHistory: (newRoutine: IRoutine) => void;
   saveTrigger: number;
   settingsMode: boolean;
   setSettingsMode: React.Dispatch<React.SetStateAction<boolean>>;

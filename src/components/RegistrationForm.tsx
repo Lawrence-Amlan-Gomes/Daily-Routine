@@ -15,8 +15,6 @@ const RegistrationForm = () => {
   const { theme } = useTheme();
   const router = useRouter();
   const { data: session } = useSession();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [isLoading, setIsLoading] = useState(false);
   const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
   const [isGoogleClicked, setIsGoogleClicked] = useState(false);
 
@@ -202,7 +200,13 @@ const RegistrationForm = () => {
 
       // 2. Create user (isEmailVerified will be set true by OTP success)
       const { name: n, email: e, password: p } = pendingUserData.current;
-      await createUser({ name: n, email: e, password: p, photo: "" });
+      await createUser({
+        name: n,
+        email: e,
+        password: p,
+        photo: "",
+        isEmailVerified: true,
+      });
       setSuccessMessage(`${e} successfully registered`);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
@@ -226,15 +230,30 @@ const RegistrationForm = () => {
     setIsGoogleClicked(true);
     if (!session?.user) {
       await signIn("google");
+      return;
     }
-    setIsLoadingGoogle(false);
   };
+
+  const renderSpinner = () => (
+    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+    </svg>
+  );
 
   /* ------------------------------------------------------------------ */
   /*  Google-auth registration – now fully type-safe                     */
   /* ------------------------------------------------------------------ */
   useEffect(() => {
     if (session?.user && isGoogleClicked) {
+      setIsLoadingGoogle(true);
       const user = session.user; // Now guaranteed to be defined
 
       const run = async () => {
@@ -257,6 +276,7 @@ const RegistrationForm = () => {
             password: "",
             photo: "",
             isRegisteredWithGoogle: true,
+            isEmailVerified: true,
           });
           setSuccessMessage(`${userEmail} successfully registered`);
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -273,6 +293,7 @@ const RegistrationForm = () => {
             });
           }
         } finally {
+          setIsLoadingGoogle(false);
           setIsGoogleClicked(false);
         }
       };
@@ -367,6 +388,7 @@ const RegistrationForm = () => {
           />
           <button
             onClick={submitForm}
+            disabled={!noError || isSendingOtp}
             className={`
     text-[12px] lg:text-[16px] 2xl:text-[25px]
     ${noError ? "cursor-pointer" : "cursor-not-allowed"} rounded-lg mt-6 sm:mt-12 py-2 sm:py-2.5 md:py-3 px-5 sm:px-6 md:px-8
@@ -384,7 +406,14 @@ const RegistrationForm = () => {
     }
   `}
           >
-            {isLoading ? `Registering...` : `Register`}
+            {isSendingOtp ? (
+              <span className="flex items-center justify-center gap-2">
+                {renderSpinner()}
+                Registering...
+              </span>
+            ) : (
+              "Register"
+            )}
           </button>
         </div>
 
@@ -432,6 +461,7 @@ const RegistrationForm = () => {
           />
           <button
             onClick={submitForm}
+            disabled={!noError || isSendingOtp}
             className={`
     text-[12px] lg:text-[16px] 2xl:text-[25px]
     ${noError ? "cursor-pointer" : "cursor-not-allowed"} rounded-lg ${password ? "lg:mt-[45px] mt-[35px]" : "mt-[15px] lg:mt-[15px]"} py-2 sm:py-2.5 md:py-3 px-5 sm:px-6 md:px-8
@@ -449,7 +479,14 @@ const RegistrationForm = () => {
     }
   `}
           >
-            {isLoading ? `Registering...` : `Register`}
+            {isSendingOtp ? (
+              <span className="flex items-center justify-center gap-2">
+                {renderSpinner()}
+                Registering...
+              </span>
+            ) : (
+              "Register"
+            )}
           </button>
         </div>
 
@@ -645,11 +682,12 @@ const RegistrationForm = () => {
         >
           <button
             onClick={handleGoogleRegister}
+            disabled={isLoadingGoogle || isGoogleClicked}
             className={`text-[12px] lg:text-[16px] 2xl:text-[25px] flex items-center gap-4 lg:h-[60px] h-[40px] cursor-pointer rounded-md mt-10 py-2 px-4 lg:px-6 ${
               theme
                 ? `${colors.keyBg} ${colors.keyHoverBg}`
                 : `${colors.keyBg} ${colors.keyHoverBg}`
-            } text-white`}
+            } text-white disabled:opacity-70 disabled:cursor-not-allowed`}
           >
             <div className="h-full flex justify-center items-center">
               <div className="h-[30px] sm:h-[50px] w-[30px] sm:w-[50px] relative">
@@ -666,7 +704,12 @@ const RegistrationForm = () => {
             <div className="h-full text-center flex justify-center items-center">
               <div>
                 {isLoadingGoogle
-                  ? `Registering...`
+                  ? (
+                    <span className="flex items-center justify-center gap-2">
+                      {renderSpinner()}
+                      Registering...
+                    </span>
+                  )
                   : session
                     ? `${session.user?.email}`
                     : `Register with Google`}

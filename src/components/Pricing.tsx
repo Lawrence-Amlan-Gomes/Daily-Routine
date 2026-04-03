@@ -52,8 +52,8 @@ export default function Pricing() {
       id: "standard",
       title: "Standard",
       description: "Ideal for serious routine planning",
-      priceMonthly: 4,
-      priceAnnual: 36,
+      priceMonthly: 5,
+      priceAnnual: 55,
       features: [
         { name: "routine", value: "Full routine editor & visual timeline" },
         { name: "multi-day", value: "Add/edit tasks across multiple days" },
@@ -68,19 +68,39 @@ export default function Pricing() {
       id: "premium",
       title: "Premium",
       description: "Routine builder + unlimited AI assistant",
-      priceMonthly: 7,
-      priceAnnual: 72,
+      priceMonthly: 10,
+      priceAnnual: 110,
       features: [
         { name: "routine", value: "Full routine editor & visual timeline" },
         { name: "multi-day", value: "Add/edit tasks across multiple days" },
         { name: "shift", value: "Shift tasks time on selected days" },
         { name: "free-time", value: "Click free gaps to add tasks" },
         { name: "ai", value: "AI routine suggestions" },
-        { name: "ai-responses", value: "30 AI responses per day" },
+        { name: "ai-responses", value: "100 AI responses per month" },
       ],
       cta: "Go Premium",
       isMostPopular: false,
     },
+    ...(auth?.isAdmin
+      ? [
+          {
+            id: "test",
+            title: "Test",
+            description: "Admin test pricing card",
+            priceMonthly: 1,
+            priceAnnual: 1, // Same as monthly - always monthly
+            features: [
+              { name: "admin", value: "Admin only test plan" },
+              { name: "test", value: "For testing purposes" },
+              { name: "debug", value: "Debug payment flow" },
+              { name: "billing", value: "Monthly billing only" },
+            ],
+            cta: "Test Purchase",
+            isMostPopular: false,
+            badge: "Admin Only",
+          },
+        ]
+      : []),
   ];
 
   const getPrice = (planId: string) => {
@@ -159,7 +179,9 @@ export default function Pricing() {
         </div>
 
         {/* Plans Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+        <div
+          className={`grid grid-cols-1 ${plans.length === 4 ? "md:grid-cols-4" : "md:grid-cols-3"} gap-4 sm:gap-5`}
+        >
           {plans.map((plan) => {
             const priceLabel = getPriceLabel(plan.id);
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -189,16 +211,18 @@ export default function Pricing() {
                   >
                     {plan.title}
                   </h3>
-                  {plan.isMostPopular && (
+                  {(plan.isMostPopular || plan.badge) && (
                     <div className="ml-3 sm:ml-4">
                       <span
                         className={`inline-block px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs sm:text-sm font-semibold ${
-                          theme
-                            ? `${colors.keyBg} text-[#ffffff]`
-                            : `${colors.keyBg} text-[#ffffff]`
+                          plan.badge === "Admin Only"
+                            ? "bg-orange-500 text-white"
+                            : theme
+                              ? `${colors.keyBg} text-[#ffffff]`
+                              : `${colors.keyBg} text-[#ffffff]`
                         }`}
                       >
-                        Most Popular
+                        {plan.badge || "Most Popular"}
                       </span>
                     </div>
                   )}

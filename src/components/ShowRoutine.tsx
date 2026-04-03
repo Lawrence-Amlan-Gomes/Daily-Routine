@@ -5,7 +5,7 @@
 
 import { useAuth } from "@/app/hooks/useAuth";
 import { useTheme } from "@/app/hooks/useTheme";
-import { IRoutineItem } from "@/store/features/auth/authSlice";
+import { IRoutine, IRoutineItem } from "@/store/features/auth/authSlice";
 import { useEffect, useRef, useState } from "react";
 import {
   FaArrowLeft,
@@ -25,7 +25,7 @@ const daysOfWeek = [
   "friday",
 ] as const;
 
-const CATEGORY_DOT = {
+const CATEGORY_DOT: Record<string, string> = {
   // Health-related → various calming / fresh greens
   Health: "bg-emerald-500", // nice vibrant green
   Meals: "bg-green-500", // food/health adjacent
@@ -102,9 +102,7 @@ interface ShowRoutineProps {
   setSelectedDay?: React.Dispatch<React.SetStateAction<Day>>;
   setTaskSearchQuery: React.Dispatch<React.SetStateAction<string>>;
   onFreeTimeClick?: (start: string, end: string) => void;
-  updateRoutineWithHistory?: (
-    newRoutine: Record<string, IRoutineItem[]>,
-  ) => void;
+  updateRoutineWithHistory?: (newRoutine: IRoutine) => void;
   syncDrag?: boolean;
 }
 
@@ -725,18 +723,26 @@ export default function ShowRoutine({
           <></>
         ) : height < 16 ? (
           <div className="font-medium text-[7px] truncate ml-2.5 mt-[-2px] flex items-center gap-1">
-            {task.name !== "dummy" &&
-            task.category &&
-            CATEGORY_DOT[task.category] ? (
-              <span className="flex items-center gap-0.5 flex-shrink-0">
-                <span
-                  className={`w-[6px] h-[6px] rounded-full ${CATEGORY_DOT[task.category]}`}
-                />
-                {isCompletedToday && (
-                  <span className={`${CATEGORY_TEXT[task.category!] ?? "text-gray-400"} font-bold text-[7px] leading-none`}>✓</span>
-                )}
-              </span>
-            ) : null}
+            {(() => {
+              const categoryKey =
+                task.category && task.category in CATEGORY_DOT
+                  ? (task.category as keyof typeof CATEGORY_DOT)
+                  : null;
+              return task.name !== "dummy" && categoryKey ? (
+                <span className="flex items-center gap-0.5 flex-shrink-0">
+                  <span
+                    className={`w-[6px] h-[6px] rounded-full ${CATEGORY_DOT[categoryKey]}`}
+                  />
+                  {isCompletedToday && (
+                    <span
+                      className={`${CATEGORY_TEXT[task.category!] ?? "text-gray-400"} font-bold text-[7px] leading-none`}
+                    >
+                      ✓
+                    </span>
+                  )}
+                </span>
+              ) : null;
+            })()}
             <div className="truncate">
               {task.name}
               <span className="text-[7px] opacity-80 ml-1">({task.time})</span>
@@ -1215,7 +1221,7 @@ export default function ShowRoutine({
                     }
 
                     if (updateRoutineWithHistory) {
-                      updateRoutineWithHistory(updated as Record<string, IRoutineItem[]>);
+                      updateRoutineWithHistory(updated as IRoutine);
                     } else {
                       setAuth({ ...auth, routine: updated });
                       setHasUnsavedChanges(true);
@@ -1660,7 +1666,7 @@ export default function ShowRoutine({
                     });
 
                     if (updateRoutineWithHistory) {
-                      updateRoutineWithHistory(updated as Record<string, IRoutineItem[]>);
+                      updateRoutineWithHistory(updated as IRoutine);
                     } else {
                       setAuth({ ...auth, routine: updated });
                       setHasUnsavedChanges(true);

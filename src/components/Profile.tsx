@@ -31,7 +31,7 @@ const Profile = () => {
     setIsEditing(false);
 
     try {
-      await updateUser(auth.email, { name, firstTimeLogin: false });
+      await updateUser(auth.email, { name });
       setAuth({ ...auth, name });
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {

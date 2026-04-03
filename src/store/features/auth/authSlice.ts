@@ -33,10 +33,10 @@ export interface IGoal {
 }
 
 export interface IStatEntry {
-  date: string;              // "YYYY-MM-DD"
-  day: string;               // "saturday"
-  totalTasks: number;        // total tasks scheduled that day
-  completedTasks: string[];  // task names completed
+  date: string; // "YYYY-MM-DD"
+  day: string; // "saturday"
+  totalTasks: number; // total tasks scheduled that day
+  completedTasks: string[]; // task names completed
 }
 
 export interface IRoutine {
@@ -55,12 +55,14 @@ export interface CleanUser {
   email: string;
   photo: string;
   isRegisteredWithGoogle: boolean;
+  isEmailVerified: boolean;
+  firstTimeLogin?: boolean;
   isAdmin: boolean;
   createdAt: string;
   expiredAt: string;
   paymentType: string;
   routine: IRoutine;
-  todayPremiumResponses: string;
+  thisMonthPremiumResponses: string;
   stats: IStatEntry[];
   goals: IGoal[];
 }

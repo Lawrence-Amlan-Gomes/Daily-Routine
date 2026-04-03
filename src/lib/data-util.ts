@@ -1,6 +1,66 @@
 // src/lib/data-util.ts
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const cleanUserForClient = (user: any) => {
+import { IRoutine, IRoutineItem } from "@/store/features/auth/authSlice";
+
+// Raw interfaces for data from database
+interface RawRoutineItem {
+  name?: unknown;
+  time?: unknown;
+  category?: unknown;
+}
+
+interface RawRoutine {
+  saturday?: RawRoutineItem[];
+  sunday?: RawRoutineItem[];
+  monday?: RawRoutineItem[];
+  tuesday?: RawRoutineItem[];
+  wednesday?: RawRoutineItem[];
+  thursday?: RawRoutineItem[];
+  friday?: RawRoutineItem[];
+}
+
+interface RawSubtask {
+  id?: unknown;
+  name?: unknown;
+  isDone?: unknown;
+}
+
+interface RawGoal {
+  id?: unknown;
+  name?: unknown;
+  description?: unknown;
+  priority?: unknown;
+  status?: unknown;
+  category?: unknown;
+  dueDate?: unknown;
+  time?: unknown;
+  reminderAt?: unknown;
+  repeat?: unknown;
+  tags?: unknown;
+  subtasks?: RawSubtask[];
+  createdAt?: unknown;
+  finishedAt?: unknown;
+  pinned?: unknown;
+  color?: unknown;
+}
+
+interface RawUser {
+  _id?: unknown;
+  id?: unknown;
+  name?: unknown;
+  email?: unknown;
+  photo?: unknown;
+  isRegisteredWithGoogle?: unknown;
+  isAdmin?: unknown;
+  createdAt?: unknown;
+  expiredAt?: unknown;
+  paymentType?: unknown;
+  routine?: RawRoutine;
+  thisMonthPremiumResponses?: unknown;
+  stats?: unknown;
+  goals?: RawGoal[];
+}
+
+export const cleanUserForClient = (user: RawUser) => {
   if (!user) return null;
   // Set expiredAt to 7 days from now
   const expiredAt = new Date();
@@ -9,8 +69,7 @@ export const cleanUserForClient = (user: any) => {
   // Helper to clean routine items
 
   // Helper to clean routine items — NOW includes category
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cleanRoutine = (routine: any): IRoutine => {
+  const cleanRoutine = (routine: RawRoutine): IRoutine => {
     if (!routine) {
       return {
         saturday: [],
@@ -23,11 +82,10 @@ export const cleanUserForClient = (user: any) => {
       };
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mapItem = (item: any): IRoutineItem => ({
-      name: String(item.name || ""),
-      time: String(item.time || ""),
-      category: String(item.category || ""), // ← this line was missing
+    const mapItem = (item: RawRoutineItem): IRoutineItem => ({
+      name: String(item.name ?? ""),
+      time: String(item.time ?? ""),
+      category: String(item.category ?? ""),
     });
 
     return {
@@ -48,45 +106,60 @@ export const cleanUserForClient = (user: any) => {
     photo: user.photo || "",
     isRegisteredWithGoogle: user.isRegisteredWithGoogle ?? false,
     isAdmin: user.isAdmin || false,
-    createdAt: user.createdAt
-      ? new Date(user.createdAt).toISOString()
-      : new Date().toISOString(),
-    expiredAt: user.expiredAt?.toISOString() || expiredAt.toISOString(),
+    createdAt:
+      user.createdAt &&
+      typeof user.createdAt === "string" &&
+      user.createdAt !== ""
+        ? new Date(user.createdAt as string).toISOString()
+        : new Date().toISOString(),
+    expiredAt:
+      (user.expiredAt && typeof user.expiredAt === "string"
+        ? new Date(user.expiredAt).toISOString()
+        : null) || expiredAt.toISOString(),
     paymentType: user.paymentType || "Free One Week", // ← add fallback if needed
-    routine: cleanRoutine(user.routine),
-    todayPremiumResponses: user.todayPremiumResponses || "",
+    routine: cleanRoutine(user.routine || {}),
+    thisMonthPremiumResponses: user.thisMonthPremiumResponses || "",
     stats: Array.isArray(user.stats) ? user.stats : [],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    goals: Array.isArray(user.goals) ? user.goals.map((g: any) => ({
-      id: String(g.id ?? ""),
-      name: String(g.name ?? ""),
-      description: String(g.description ?? ""),
-      priority: String(g.priority ?? "medium"),
-      status: String(g.status ?? "todo"),
-      category: String(g.category ?? ""),
-      dueDate: String(g.dueDate ?? ""),
-      time: String(g.time ?? ""),
-      reminderAt: String(g.reminderAt ?? ""),
-      repeat: String(g.repeat ?? "none"),
-      tags: Array.isArray(g.tags) ? g.tags.map((t: unknown) => String(t)) : [],
-      subtasks: Array.isArray(g.subtasks)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ? g.subtasks.map((s: any) => ({
-            id: String(s.id ?? ""),
-            name: String(s.name ?? ""),
-            isDone: Boolean(s.isDone ?? false),
-          }))
-        : [],
-      createdAt: String(g.createdAt ?? ""),
-      finishedAt: String(g.finishedAt ?? ""),
-      pinned: Boolean(g.pinned ?? false),
-      color: String(g.color ?? ""),
-    })) : [],
+
+    goals: Array.isArray(user.goals)
+      ? user.goals.map((g: RawGoal) => ({
+          id: String(g.id ?? ""),
+          name: String(g.name ?? ""),
+          description: String(g.description ?? ""),
+          priority: String(g.priority ?? "medium"),
+          status: String(g.status ?? "todo"),
+          category: String(g.category ?? ""),
+          dueDate: String(g.dueDate ?? ""),
+          time: String(g.time ?? ""),
+          reminderAt: String(g.reminderAt ?? ""),
+          repeat: String(g.repeat ?? "none"),
+          tags: Array.isArray(g.tags)
+            ? g.tags.map((t: unknown) => String(t))
+            : [],
+          subtasks: Array.isArray(g.subtasks)
+            ? g.subtasks.map((s: RawSubtask) => ({
+                id: String(s.id ?? ""),
+                name: String(s.name ?? ""),
+                isDone: Boolean(s.isDone ?? false),
+              }))
+            : [],
+          createdAt: String(g.createdAt ?? ""),
+          finishedAt: String(g.finishedAt ?? ""),
+          pinned: Boolean(g.pinned ?? false),
+          color: String(g.color ?? ""),
+        }))
+      : [],
   };
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const cleanGoogleUserForClient = (googleUser: any) => {
+interface RawGoogleUser {
+  name?: unknown;
+  email?: unknown;
+  picture?: unknown;
+  image?: unknown;
+}
+
+export const cleanGoogleUserForClient = (googleUser: RawGoogleUser) => {
   if (!googleUser) return null;
 
   return {

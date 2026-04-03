@@ -1,36 +1,32 @@
 "use client";
 
+import { updateGoals } from "@/app/actions";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useTheme } from "@/app/hooks/useTheme";
-import { updateGoals } from "@/app/actions";
 import { IGoal, ISubtask } from "@/store/features/auth/authSlice";
-import { useState, useMemo, useEffect, useRef } from "react";
 import {
-  Plus,
-  Pin,
-  PinOff,
-  Trash2,
+  AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  Bell,
+  Calendar,
   CheckCircle2,
-  Circle,
   ChevronDown,
   ChevronUp,
-  Tag,
-  Calendar,
-  Bell,
+  Circle,
   Clock,
-  RefreshCw,
-  Flame,
-  AlertTriangle,
-  ArrowUp,
-  ArrowDown,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  Archive,
-  Search,
-  X,
   Edit3,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  Check,
+  Flame,
+  Pin,
+  PinOff,
+  Plus,
+  RefreshCw,
+  Search,
+  Tag,
+  Trash2,
+  X,
 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -574,8 +570,16 @@ function GoalCard({
   theme: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const pc = PRIORITY_CONFIG[goal.priority];
-  const sc = STATUS_CONFIG[goal.status];
+  const priorityKey =
+    goal.priority in PRIORITY_CONFIG
+      ? (goal.priority as keyof typeof PRIORITY_CONFIG)
+      : "medium";
+  const statusKey =
+    goal.status in STATUS_CONFIG
+      ? (goal.status as keyof typeof STATUS_CONFIG)
+      : "todo";
+  const pc = PRIORITY_CONFIG[priorityKey];
+  const sc = STATUS_CONFIG[statusKey];
   const overdue = isOverdue(goal);
   const dueToday = isDueToday(goal);
   const subtasksDone = goal.subtasks.filter((s) => s.isDone).length;
@@ -1209,10 +1213,10 @@ export default function Goals() {
                     }}
                     className={`whitespace-nowrap px-4 py-1.5 text-xs font-medium rounded-md transition-all border ${
                       isActive
-                        ? "text-white shadow-sm"
+                        ? "bg-indigo-600 border-indigo-700 text-white shadow-sm"
                         : theme
-                          ? "text-gray-700 hover:bg-gray-50 active:bg-gray-100"
-                          : "text-gray-300 hover:bg-gray-700 active:bg-gray-600"
+                          ? "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 active:bg-gray-100"
+                          : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 active:bg-gray-600"
                     }`}
                     style={{
                       background: isActive
@@ -1225,7 +1229,6 @@ export default function Goals() {
                         : theme
                           ? "#d1d5db"
                           : "#374151",
-                      color: isActive ? "#ffffff" : undefined,
                     }}
                   >
                     {cfg.label}
@@ -1369,13 +1372,17 @@ export default function Goals() {
               ×
             </button>
             <div className="text-2xl mb-2">🎯</div>
-            <p className={`text-xs font-medium mb-1 ${theme ? "text-gray-500" : "text-gray-400"}`}>
+            <p
+              className={`text-xs font-medium mb-1 ${theme ? "text-gray-500" : "text-gray-400"}`}
+            >
               Goal Reminder
             </p>
             <p className="text-sm font-semibold leading-snug">
               Today is the reminder date for
             </p>
-            <p className={`text-base font-bold mt-0.5 ${theme ? "text-orange-600" : "text-orange-400"}`}>
+            <p
+              className={`text-base font-bold mt-0.5 ${theme ? "text-orange-600" : "text-orange-400"}`}
+            >
               {goalAlert.name}
             </p>
             {goalAlert.dueDate && (

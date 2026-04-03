@@ -18,7 +18,7 @@ import {
   MdKeyboardDoubleArrowLeft,
   MdKeyboardDoubleArrowRight,
 } from "react-icons/md";
-import { IRoutineItem } from "@/store/features/auth/authSlice";
+import { IRoutine } from "@/store/features/auth/authSlice";
 
 // ─── Module-level audio persistence (survives route changes) ──
 let _persistedAudio: HTMLAudioElement | null = null;
@@ -45,12 +45,8 @@ export default function DashBoard() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [selectedDay, setSelectedDay] = useState<Day>("saturday");
   const [hasMounted, setHasMounted] = useState(false);
-  const [undoStack, setUndoStack] = useState<Record<string, IRoutineItem[]>[]>(
-    [],
-  );
-  const [redoStack, setRedoStack] = useState<Record<string, IRoutineItem[]>[]>(
-    [],
-  );
+  const [undoStack, setUndoStack] = useState<IRoutine[]>([]);
+  const [redoStack, setRedoStack] = useState<IRoutine[]>([]);
   const [saveTrigger, setSaveTrigger] = useState(0);
   const [syncDrag, setSyncDrag] = useState(false);
   const [settingsMode, setSettingsMode] = useState(false);
@@ -160,17 +156,15 @@ export default function DashBoard() {
     setHasUnsavedChanges(true);
   }, [auth?.routine, auth, setAuth, setHasUnsavedChanges]);
 
-  const updateRoutineWithHistory = (
-    newRoutine: Record<string, IRoutineItem[]>,
-  ) => {
+  const updateRoutineWithHistory = (newRoutine: IRoutine) => {
     if (auth?.routine) {
       setUndoStack((prev) => [
         ...prev.slice(-20),
-        auth.routine as Record<string, IRoutineItem[]>,
+        auth.routine,
       ]);
       setRedoStack([]);
     }
-    if (auth) setAuth({ ...auth, routine: newRoutine as typeof auth.routine });
+    if (auth) setAuth({ ...auth, routine: newRoutine });
     setHasUnsavedChanges(true);
   };
 
@@ -178,7 +172,7 @@ export default function DashBoard() {
     if (undoStack.length === 0 || !auth) return;
     const previous = undoStack[undoStack.length - 1];
     setRedoStack((prev) => [
-      auth.routine as Record<string, IRoutineItem[]>,
+      auth.routine,
       ...prev,
     ]);
     setUndoStack((prev) => prev.slice(0, -1));
@@ -191,7 +185,7 @@ export default function DashBoard() {
     const next = redoStack[0];
     setUndoStack((prev) => [
       ...prev,
-      auth.routine as Record<string, IRoutineItem[]>,
+      auth.routine,
     ]);
     setRedoStack((prev) => prev.slice(1));
     setAuth({ ...auth, routine: next as typeof auth.routine });

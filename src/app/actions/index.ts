@@ -1,42 +1,86 @@
 // src/app/actions/index.ts
 "use server";
 
-import { signOut } from "@/app/auth";
+import { auth as getNextAuthSession, signOut } from "@/app/auth";
 import { cleanUserForClient } from "@/lib/data-util";
-import { CleanUser, IRoutine } from "@/store/features/auth/authSlice";
 import { dbConnect } from "@/lib/mongo";
-import { sendWelcomeEmail } from "@/lib/server/email";
+import { sendOtpEmail, sendWelcomeEmail } from "@/lib/server/email";
 import { generateToken, verifyToken } from "@/lib/server/jwt";
-import { User } from "@/models/User";
 import { Feedback } from "@/models/Feedback";
+import { OtpCode } from "@/models/OtpCode";
+import { User } from "@/models/User";
+import { CleanUser, IRoutine } from "@/store/features/auth/authSlice";
 import bcrypt from "bcrypt";
-import { revalidatePath, unstable_noStore as noStore } from "next/cache";
+import { unstable_noStore as noStore, revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-type LeanUser = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  _id: any;
-  name: string;
+type LeanFeedback = {
+  _id: { toString: () => string };
   email: string;
-  password?: string;
-  photo?: string;
-  isRegisteredWithGoogle?: boolean;
-  isAdmin?: boolean;
+  userName?: string;
+  rating: number;
+  comment?: string;
   createdAt?: Date;
-  expiredAt?: Date;
-  paymentType?: string;
-  routine?: {
-    saturday: { name: string; time: string; category?: string }[];
-    sunday: { name: string; time: string; category?: string }[];
-    monday: { name: string; time: string; category?: string }[];
-    tuesday: { name: string; time: string; category?: string }[];
-    wednesday: { name: string; time: string; category?: string }[];
-    thursday: { name: string; time: string; category?: string }[];
-    friday: { name: string; time: string; category?: string }[];
-  };
-  todayPremiumResponses?: string;
-  __v?: number;
+  updatedAt?: Date;
+  user?: {
+    name?: string;
+    email?: string;
+  } | null;
 };
+
+type ActionActor = {
+  email: string;
+  isAdmin: boolean;
+};
+
+async function setAuthCookie(token: string) {
+  const cookieStore = await cookies();
+  cookieStore.set("authToken", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
+  });
+}
+
+async function getActionActor(): Promise<ActionActor> {
+  const session = await getNextAuthSession();
+  const sessionEmail = session?.user?.email?.toLowerCase().trim();
+
+  if (sessionEmail) {
+    await dbConnect();
+    const dbUser = await User.findOne({ email: sessionEmail }).select(
+      "email isAdmin",
+    );
+    return {
+      email: dbUser?.email ?? sessionEmail,
+      isAdmin: Boolean(dbUser?.isAdmin),
+    };
+  }
+
+  const cookieStore = await cookies();
+  const token = cookieStore.get("authToken")?.value;
+  if (!token) throw new Error("UNAUTHORIZED");
+
+  const tokenUser = await verifyToken(token);
+  if (!tokenUser?.email) throw new Error("UNAUTHORIZED");
+
+  return {
+    email: tokenUser.email.toLowerCase().trim(),
+    isAdmin: Boolean(tokenUser.isAdmin),
+  };
+}
+
+async function assertActorCanAccessEmail(targetEmail: string) {
+  const actor = await getActionActor();
+  const normalizedTarget = String(targetEmail).toLowerCase().trim();
+  if (!actor.isAdmin && actor.email !== normalizedTarget) {
+    throw new Error("FORBIDDEN");
+  }
+  return actor;
+}
 
 // ==================== AUTH ACTIONS ====================
 
@@ -51,6 +95,7 @@ export async function performLogin({
 
   const user = await User.findOne({ email }).select("+password");
   if (!user) return null;
+  if (!user.isEmailVerified) throw new Error("EMAIL_NOT_VERIFIED");
 
   const match = await bcrypt.compare(password, user.password!);
   if (!match) return null;
@@ -64,6 +109,7 @@ export async function performLogin({
     email: user.email,
     photo: user.photo || "",
     isRegisteredWithGoogle: user.isRegisteredWithGoogle || false,
+    isEmailVerified: user.isEmailVerified ?? false,
     isAdmin: user.isAdmin || false,
     createdAt: user.createdAt?.toISOString() || new Date().toISOString(),
     expiredAt: user.expiredAt?.toISOString() || expiredAt.toISOString(),
@@ -129,12 +175,13 @@ export async function performLogin({
           thursday: [],
           friday: [],
         },
-    todayPremiumResponses: user.todayPremiumResponses || "",
+    thisMonthPremiumResponses: user.thisMonthPremiumResponses || "",
     stats: Array.isArray(user.stats) ? user.stats : [],
     goals: Array.isArray(user.goals) ? user.goals : [],
   };
 
   const token = await generateToken(cleanUser);
+  await setAuthCookie(token);
 
   return { user: cleanUser, token };
 }
@@ -145,12 +192,13 @@ export async function createUser(data: {
   password: string;
   photo?: string;
   isRegisteredWithGoogle?: boolean;
+  isEmailVerified?: boolean;
 }) {
   await dbConnect();
 
   const { email } = data;
 
-  const existingUser = await User.findOne({ email }).lean<LeanUser>();
+  const existingUser = await User.findOne({ email }).lean();
   if (existingUser) {
     throw new Error("EMAIL_ALREADY_EXISTS");
   }
@@ -166,6 +214,8 @@ export async function createUser(data: {
     expiredAt,
     password: hashed,
     isRegisteredWithGoogle: data.isRegisteredWithGoogle ?? false,
+    isEmailVerified:
+      data.isEmailVerified ?? Boolean(data.isRegisteredWithGoogle),
     // routine will use schema default, but explicitly setting is safer
     routine: {
       saturday: [],
@@ -186,8 +236,30 @@ export async function createUser(data: {
   return cleanUserForClient(user.toObject());
 }
 
+export async function verifyUserEmail(email: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  await dbConnect();
+
+  const normalizedEmail = String(email).toLowerCase().trim();
+  const user = await User.findOne({ email: normalizedEmail });
+
+  if (!user) {
+    return { success: false, error: "User not found" };
+  }
+
+  if (user.isEmailVerified) {
+    return { success: true };
+  }
+
+  user.isEmailVerified = true;
+  await user.save();
+  return { success: true };
+}
 
 export async function changePhoto(email: string, photo: string) {
+  await assertActorCanAccessEmail(email);
   await dbConnect();
   await User.updateOne({ email }, { photo });
   revalidatePath("/profile");
@@ -197,51 +269,104 @@ export async function updatePaymentType(
   email: string,
   paymentType: string,
   expiredAt: Date,
+  options?: { bypassAuth?: boolean },
 ) {
+  if (!options?.bypassAuth) {
+    const actor = await getActionActor();
+    if (!actor.isAdmin) throw new Error("FORBIDDEN");
+  }
   await dbConnect();
   await User.updateOne({ email }, { paymentType, expiredAt });
   revalidatePath("/");
 }
 
-export async function incrementTodayPremiumCount(
+export async function incrementThisMonthPremiumCount(
   email: string,
-  todayPremiumResponses: string,
+  thisMonthPremiumResponses: string,
 ) {
-  await dbConnect();
-  await User.updateOne({ email }, { todayPremiumResponses });
-  revalidatePath("/");
-}
+  try {
+    await assertActorCanAccessEmail(email);
+    await dbConnect();
 
+    const result = await User.updateOne(
+      { email },
+      { thisMonthPremiumResponses },
+    );
+
+    if (result.matchedCount === 0) {
+      throw new Error(`User not found with email: ${email}`);
+    }
+
+    if (result.modifiedCount === 0) {
+      console.log(
+        `No changes made to thisMonthPremiumResponses for ${email}. Current value may already be: ${thisMonthPremiumResponses}`,
+      );
+    } else {
+      console.log(
+        `Successfully updated thisMonthPremiumResponses for ${email} to: ${thisMonthPremiumResponses}`,
+      );
+    }
+
+    revalidatePath("/");
+    return {
+      success: true,
+      matchedCount: result.matchedCount,
+      modifiedCount: result.modifiedCount,
+    };
+  } catch (error) {
+    console.error(
+      `Failed to update thisMonthPremiumResponses for ${email}:`,
+      error,
+    );
+    throw error;
+  }
+}
 
 export async function resetPassword(email: string, newPassword: string) {
   await dbConnect();
+  const normalizedEmail = String(email).toLowerCase().trim();
+  const otpRecord = await OtpCode.findOne({ email: normalizedEmail });
+  if (
+    !otpRecord?.verifiedUntil ||
+    otpRecord.verifiedUntil.getTime() < Date.now()
+  ) {
+    throw new Error("RESET_NOT_VERIFIED");
+  }
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email: normalizedEmail });
   if (!user) throw new Error("USER_NOT_FOUND");
 
   const hashed = await bcrypt.hash(newPassword, 12);
-  await User.updateOne({ email }, { password: hashed });
+  await User.updateOne({ email: normalizedEmail }, { password: hashed });
+  await OtpCode.deleteOne({ email: normalizedEmail });
 }
 
 export async function updateUser(
   email: string,
   updates: {
     name?: string;
+    firstTimeLogin?: boolean;
   },
 ) {
+  await assertActorCanAccessEmail(email);
   await dbConnect();
   await User.updateOne({ email }, { $set: updates });
   revalidatePath("/");
 }
 
 export async function findUserByEmail(email: string) {
+  await assertActorCanAccessEmail(email);
   await dbConnect();
 
-  const user = await User.findOne({ email }).lean<LeanUser>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const user = (await User.findOne({ email }).lean()) as any;
   if (!user) return null;
 
   const expiredAt = new Date();
   expiredAt.setDate(expiredAt.getDate() + 7);
+  const allowedPriority = ["low", "medium", "high", "critical"] as const;
+  const allowedStatus = ["todo", "in-progress", "done", "archived"] as const;
+  const allowedRepeat = ["none", "daily", "weekly", "monthly"] as const;
 
   return {
     id: user._id.toString(),
@@ -249,36 +374,68 @@ export async function findUserByEmail(email: string) {
     email: user.email,
     photo: user.photo || "",
     isRegisteredWithGoogle: user.isRegisteredWithGoogle || false,
+    isEmailVerified: user.isEmailVerified ?? false,
     isAdmin: user.isAdmin || false,
     createdAt: user.createdAt?.toISOString() || new Date().toISOString(),
     expiredAt: user.expiredAt?.toISOString() || expiredAt.toISOString(),
     paymentType: user.paymentType,
-    todayPremiumResponses: user.todayPremiumResponses || "",
-    stats: Array.isArray((user as {stats?: unknown[]}).stats) ? (user as {stats: {date:string;day:string;totalTasks:number;completedTasks:string[]}[]}).stats : [],
-    goals: Array.isArray((user as {goals?: unknown[]}).goals)
-  ? (user as {goals: {id:string;name:string;description:string;priority:string;status:string;category:string;dueDate:string;time:string;reminderAt:string;repeat:string;tags:string[];subtasks:{id:string;name:string;isDone:boolean}[];createdAt:string;finishedAt:string;pinned:boolean;color:string}[]}).goals.map((g) => ({
-      id: g.id,
-      name: g.name,
-      description: g.description,
-      priority: g.priority,
-      status: g.status,
-      category: g.category,
-      dueDate: g.dueDate,
-      time: g.time ?? "",
-      reminderAt: g.reminderAt,
-      repeat: g.repeat,
-      tags: [...(g.tags || [])],
-      subtasks: (g.subtasks || []).map((s) => ({
-        id: s.id,
-        name: s.name,
-        isDone: s.isDone,
-      })),
-      createdAt: g.createdAt,
-      finishedAt: g.finishedAt,
-      pinned: g.pinned,
-      color: g.color,
-    }))
-  : [],
+    thisMonthPremiumResponses: user.thisMonthPremiumResponses || "",
+    stats: Array.isArray(user.stats) ? user.stats : [],
+    goals: Array.isArray(user.goals)
+      ? user.goals.map(
+          (g: {
+            id: string;
+            name: string;
+            description: string;
+            priority: string;
+            status: string;
+            category: string;
+            dueDate: string;
+            time: string;
+            reminderAt: string;
+            repeat: string;
+            tags: string[];
+            subtasks: { id: string; name: string; isDone: boolean }[];
+            createdAt: string;
+            finishedAt: string;
+            pinned: boolean;
+            color: string;
+          }) => ({
+            id: g.id,
+            name: g.name,
+            description: g.description,
+            priority: allowedPriority.includes(
+              g.priority as (typeof allowedPriority)[number],
+            )
+              ? (g.priority as (typeof allowedPriority)[number])
+              : "medium",
+            status: allowedStatus.includes(
+              g.status as (typeof allowedStatus)[number],
+            )
+              ? (g.status as (typeof allowedStatus)[number])
+              : "todo",
+            category: g.category,
+            dueDate: g.dueDate,
+            time: g.time ?? "",
+            reminderAt: g.reminderAt,
+            repeat: allowedRepeat.includes(
+              g.repeat as (typeof allowedRepeat)[number],
+            )
+              ? (g.repeat as (typeof allowedRepeat)[number])
+              : "none",
+            tags: [...(g.tags || [])],
+            subtasks: (g.subtasks || []).map((s) => ({
+              id: s.id,
+              name: s.name,
+              isDone: s.isDone,
+            })),
+            createdAt: g.createdAt,
+            finishedAt: g.finishedAt,
+            pinned: g.pinned,
+            color: g.color,
+          }),
+        )
+      : [],
     routine: user.routine
       ? {
           saturday: user.routine.saturday.map(
@@ -348,6 +505,7 @@ export async function verifyAndChangePassword(
   oldPassword: string,
   newPassword: string,
 ) {
+  await assertActorCanAccessEmail(email);
   await dbConnect();
 
   const user = await User.findOne({ email }).select("+password");
@@ -363,6 +521,7 @@ export async function verifyAndChangePassword(
 }
 
 export async function updateRoutine(email: string, routine: IRoutine) {
+  await assertActorCanAccessEmail(email);
   await dbConnect();
   await User.updateOne({ email }, { routine });
   revalidatePath("/dashBoard");
@@ -370,8 +529,14 @@ export async function updateRoutine(email: string, routine: IRoutine) {
 
 export async function updateStats(
   email: string,
-  stats: { date: string; day: string; totalTasks: number; completedTasks: string[] }[],
+  stats: {
+    date: string;
+    day: string;
+    totalTasks: number;
+    completedTasks: string[];
+  }[],
 ) {
+  await assertActorCanAccessEmail(email);
   await dbConnect();
   await User.updateOne({ email }, { stats });
   revalidatePath("/dashBoard");
@@ -398,6 +563,7 @@ export async function updateGoals(
     color: string;
   }[],
 ) {
+  await assertActorCanAccessEmail(email);
   await dbConnect();
   await User.updateOne({ email }, { goals });
   revalidatePath("/goals");
@@ -407,7 +573,9 @@ export async function updateGoals(
 
 export async function generateJwtForGoogle(user: CleanUser): Promise<string> {
   "use server";
-  return await generateToken(user);
+  const token = await generateToken(user);
+  await setAuthCookie(token);
+  return token;
 }
 
 export async function verifyJwtToken(token: string): Promise<CleanUser | null> {
@@ -419,6 +587,8 @@ export async function verifyJwtToken(token: string): Promise<CleanUser | null> {
 
 export async function logoutUser() {
   "use server";
+  const cookieStore = await cookies();
+  cookieStore.delete("authToken");
   await signOut({ redirect: false });
   redirect("/login");
 }
@@ -440,6 +610,7 @@ export async function submitFeedback({
   rating: number;
   comment?: string;
 }) {
+  await assertActorCanAccessEmail(email);
   await dbConnect();
 
   if (!email || typeof email !== "string" || !email.includes("@")) {
@@ -468,15 +639,20 @@ export async function submitFeedback({
 
     feedback.rating = rating;
     feedback.comment = trimmedComment;
+    if (!feedback.userName) {
+      const currentUser = await User.findOne({ email }).select("name");
+      feedback.userName = currentUser?.name || feedback.userName || "";
+    }
     await feedback.save();
     revalidatePath("/feedback");
     return { success: true, message: "Feedback updated successfully" };
   }
 
   // Create new
-  const userDoc = await User.findOne({ email }).select("_id");
+  const userDoc = await User.findOne({ email }).select("_id name");
   feedback = new Feedback({
     email,
+    userName: userDoc?.name || "",
     user: userDoc?._id,
     rating,
     comment: trimmedComment,
@@ -492,14 +668,15 @@ export async function submitFeedback({
  * Get the current user's existing feedback (if any)
  */
 export async function getMyFeedback(email: string) {
+  await assertActorCanAccessEmail(email);
   noStore();
   await dbConnect();
 
   if (!email || typeof email !== "string") return null;
 
-  const feedback = await Feedback.findOne({ email })
+  const feedback = (await Feedback.findOne({ email })
     .lean()
-    .select("rating comment createdAt updatedAt");
+    .select("rating comment createdAt updatedAt")) as LeanFeedback | null;
 
   if (!feedback) return null;
 
@@ -515,22 +692,21 @@ export async function getMyFeedback(email: string) {
  * Admin only: Get all feedback entries
  */
 export async function getAllFeedbacks(adminEmail: string) {
+  void adminEmail;
+  const actor = await getActionActor();
+  if (!actor.isAdmin) return [];
   await dbConnect();
-
-  if (!adminEmail) return [];
-
-  const admin = await User.findOne({ email: adminEmail }).select("isAdmin");
-  if (!admin?.isAdmin) return [];
 
   const feedbacks = await Feedback.find()
     .sort({ updatedAt: -1 })
     .populate("user", "name email")
-    .lean(); // ← .lean() is very helpful here
+    .lean<LeanFeedback[]>(); // ← .lean() is very helpful here
 
   // Explicitly convert to plain objects + stringify dates
   return feedbacks.map((doc) => ({
-    _id: doc._id.toString(),                    // convert ObjectId → string
+    _id: doc._id.toString(), // convert ObjectId → string
     email: doc.email,
+    userName: doc.userName || "",
     rating: doc.rating,
     comment: doc.comment || "",
     createdAt: doc.createdAt?.toISOString() ?? null,
@@ -544,6 +720,60 @@ export async function getAllFeedbacks(adminEmail: string) {
         }
       : null,
   }));
+}
+
+/**
+ * Admin only: Get all users with their subscription info
+ */
+export async function getAllUsers(adminEmail: void) {
+  void adminEmail;
+  const actor = await getActionActor();
+  if (!actor.isAdmin) return [];
+  await dbConnect();
+
+  const users = await User.find()
+    .select(
+      "name email createdAt expiredAt paymentType isEmailVerified isRegisteredWithGoogle",
+    )
+    .sort({ createdAt: -1 })
+    .lean();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return users.map((doc: any) => ({
+    _id: doc._id.toString(),
+    name: doc.name,
+    email: doc.email,
+    createdAt: doc.createdAt?.toISOString() ?? null,
+    expiredAt: doc.expiredAt?.toISOString() ?? null,
+    paymentType: doc.paymentType || "Free",
+    isEmailVerified: doc.isEmailVerified,
+    isRegisteredWithGoogle: doc.isRegisteredWithGoogle,
+  }));
+}
+
+export async function getPublicFeedbacks() {
+  noStore();
+  await dbConnect();
+
+  const feedbacks = await Feedback.find({
+    rating: { $gte: 1, $lte: 5 },
+  })
+    .sort({ updatedAt: -1 })
+    .limit(40)
+    .lean<LeanFeedback[]>();
+
+  return feedbacks
+    .filter((doc) => (doc.comment || "").trim().length > 0)
+    .map((doc) => ({
+      _id: doc._id.toString(),
+      userName:
+        (doc.userName || "").trim() ||
+        doc.email.split("@")[0] ||
+        "Daily Routine User",
+      rating: doc.rating,
+      comment: (doc.comment || "").trim(),
+      updatedAt: doc.updatedAt?.toISOString() ?? null,
+    }));
 }
 
 // ==================== AI ROUTINE ACTIONS ====================
@@ -580,14 +810,24 @@ type AIRoutineDoc = {
   chatHistory?: ChatSession[];
 };
 
-export async function getAIRoutineDoc(email: string): Promise<{ aiRoutine: AIRoutineData; chatHistory: ChatSession[] }> {
+export async function getAIRoutineDoc(
+  email: string,
+): Promise<{ aiRoutine: AIRoutineData; chatHistory: ChatSession[] }> {
+  await assertActorCanAccessEmail(email);
   await dbConnect();
   const { AIRoutine } = await import("@/models/AIRoutine");
-  const doc = await AIRoutine.findOne({ email }).lean() as AIRoutineDoc | null;
+  const doc = (await AIRoutine.findOne({
+    email,
+  }).lean()) as AIRoutineDoc | null;
   return {
     aiRoutine: doc?.aiRoutine ?? {
-      saturday: [], sunday: [], monday: [], tuesday: [],
-      wednesday: [], thursday: [], friday: [],
+      saturday: [],
+      sunday: [],
+      monday: [],
+      tuesday: [],
+      wednesday: [],
+      thursday: [],
+      friday: [],
     },
     chatHistory: doc?.chatHistory ?? [],
   };
@@ -597,6 +837,7 @@ export async function upsertAIRoutine(
   email: string,
   aiRoutine: AIRoutineData,
 ): Promise<void> {
+  await assertActorCanAccessEmail(email);
   await dbConnect();
   const { AIRoutine } = await import("@/models/AIRoutine");
   await AIRoutine.findOneAndUpdate(
@@ -612,6 +853,7 @@ export async function appendChatMessage(
   date: string,
   message: ChatMessage,
 ): Promise<void> {
+  await assertActorCanAccessEmail(email);
   await dbConnect();
   const { AIRoutine } = await import("@/models/AIRoutine");
   // Try to push into existing session for that date
@@ -634,10 +876,52 @@ export async function clearChatSession(
   email: string,
   date: string,
 ): Promise<void> {
+  await assertActorCanAccessEmail(email);
   await dbConnect();
   const { AIRoutine } = await import("@/models/AIRoutine");
   await AIRoutine.findOneAndUpdate(
     { email },
     { $pull: { chatHistory: { date } } },
   );
+}
+
+// ==================== EMAIL VERIFICATION HELPERS ====================
+
+export async function checkEmailVerificationStatus(email: string): Promise<{
+  success: boolean;
+  isEmailVerified: boolean;
+}> {
+  await assertActorCanAccessEmail(email);
+  await dbConnect();
+  const normalizedEmail = String(email).toLowerCase().trim();
+  const user = await User.findOne({ email: normalizedEmail }).select(
+    "isEmailVerified",
+  );
+  return {
+    success: true,
+    isEmailVerified: Boolean(user?.isEmailVerified),
+  };
+}
+
+export async function resendVerificationEmail(
+  email: string,
+  name: string,
+): Promise<{ success: boolean; error?: string }> {
+  await assertActorCanAccessEmail(email);
+  await dbConnect();
+  const normalizedEmail = String(email).toLowerCase().trim();
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const codeHash = await bcrypt.hash(code, 12);
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+  await OtpCode.findOneAndUpdate(
+    { email: normalizedEmail },
+    { $set: { codeHash, expiresAt, attempts: 0, verifiedUntil: null } },
+    { upsert: true, new: true },
+  );
+
+  const sendResult = await sendOtpEmail(normalizedEmail, name || "User", code);
+  return sendResult.success
+    ? { success: true }
+    : { success: false, error: "Failed to send verification code" };
 }

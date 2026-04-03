@@ -30,10 +30,11 @@ export default function Feedback() {
 
   useEffect(() => {
     if (!user?.email) return;
+    const userEmail = user.email;
 
     async function load() {
       try {
-        const data = await getMyFeedback(user.email);
+        const data = await getMyFeedback(userEmail);
         if (data) {
           setRating(data.rating);
           setComment(data.comment);

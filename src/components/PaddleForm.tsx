@@ -1,12 +1,12 @@
 // src/components/PaddleForm.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import { initializePaddle, Paddle } from "@paddle/paddle-js";
 import { useAuth } from "@/app/hooks/useAuth";
 import { usePrice } from "@/app/hooks/usePrice";
-import { useRouter } from "next/navigation";
 import { useTheme } from "@/app/hooks/useTheme";
+import { initializePaddle, Paddle } from "@paddle/paddle-js";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function PaddleForm() {
   const { user: auth, setAuth } = useAuth();
@@ -27,8 +27,13 @@ export default function PaddleForm() {
       console.log("🔄 Calculating payment details...");
 
       const type = wantToPaymentType?.trim();
+      // Test plan always uses monthly duration regardless of billing period selection
       const duration =
-        wantToPaymentDuration === "monthly" ? "monthly" : "annual";
+        type === "Test"
+          ? "monthly"
+          : wantToPaymentDuration === "monthly"
+            ? "monthly"
+            : "annual";
 
       if (!type || !duration) {
         console.warn("⚠️ Missing payment type or duration");
@@ -38,7 +43,7 @@ export default function PaddleForm() {
 
       const expiredAt = new Date();
       expiredAt.setDate(
-        expiredAt.getDate() + (duration === "monthly" ? 30 : 365)
+        expiredAt.getDate() + (duration === "monthly" ? 30 : 365),
       );
 
       const paymentString = `${type} ${
@@ -110,8 +115,13 @@ export default function PaddleForm() {
       paddleInstance = instance;
 
       const type = wantToPaymentType?.trim();
+      // Test plan always uses monthly duration regardless of billing period selection
       const duration =
-        wantToPaymentDuration === "monthly" ? "monthly" : "annual";
+        type === "Test"
+          ? "monthly"
+          : wantToPaymentDuration === "monthly"
+            ? "monthly"
+            : "annual";
 
       if (!type || !duration) {
         alert("No plan selected. Returning to pricing.");
@@ -126,6 +136,7 @@ export default function PaddleForm() {
         "Standard annual": "pri_01kdjma54e1vmzkgzv92qjejs9",
         "Premium monthly": "pri_01kdjm8f8qqe5cmaa34769mhyc",
         "Premium annual": "pri_01kdjm6drxvy46rs9gp0v2qsvg",
+        "Test monthly": "pri_01kn9tb18t1hgh5n59p85xakkm",
       };
 
       const priceId = priceIdMap[key];
@@ -197,8 +208,13 @@ export default function PaddleForm() {
           {showSuccess ? (
             <div className="flex items-center justify-center py-20">
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-green-600 mb-2">Payment Successful!</h2>
-                <p className="text-gray-600">Thank you for your purchase. Redirecting to home in 5 seconds...</p>
+                <h2 className="text-2xl font-bold text-green-600 mb-2">
+                  Payment Successful!
+                </h2>
+                <p className="text-gray-600">
+                  Thank you for your purchase. Redirecting to home in 5
+                  seconds...
+                </p>
               </div>
             </div>
           ) : (

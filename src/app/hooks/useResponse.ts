@@ -39,6 +39,7 @@ export const useResponse = () => {
     setClickedDate: (date: string) => dispatch(setClickedDate(date)),
     setInputOutputPair: (pairs: [string, string][]) =>
       dispatch(setInputOutputPair(pairs)),
+    clearInputOutputPairs: () => dispatch(clearInputOutputPairs()),
 
   };
 };

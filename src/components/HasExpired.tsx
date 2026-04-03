@@ -57,7 +57,9 @@ export default function HasExpired({
 
     if (shouldUpdate && newPaymentType !== auth.paymentType) {
       setAuth({ ...auth, paymentType: newPaymentType });
-      updatePaymentType(auth.email, newPaymentType, auth.expiredAt).catch(
+      const nextExpiry =
+        typeof auth.expiredAt === "string" ? new Date(auth.expiredAt) : new Date();
+      updatePaymentType(auth.email, newPaymentType, nextExpiry).catch(
         (err) => console.error("[HasExpired] Server update failed:", err),
       );
     }

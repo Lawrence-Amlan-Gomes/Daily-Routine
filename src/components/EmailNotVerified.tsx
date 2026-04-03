@@ -69,6 +69,20 @@ export default function EmailNotVerified() {
     }
   }
 
+  const renderSpinner = () => (
+    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+    </svg>
+  );
+
   return (
     <div
       className={`h-screen w-full overflow-hidden flex justify-center items-center`}
@@ -105,7 +119,14 @@ export default function EmailNotVerified() {
                 : "text-black bg-white hover:bg-black hover:text-white border-white"
             } px-3 py-2 rounded-md text-center border-[1px] disabled:opacity-50 disabled:cursor-not-allowed transition-all`}
           >
-            {loading ? "Sending..." : "Resend It"}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                {renderSpinner()}
+                Sending...
+              </span>
+            ) : (
+              "Resend It"
+            )}
           </button>
         </div>
 

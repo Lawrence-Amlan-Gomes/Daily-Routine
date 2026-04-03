@@ -9,7 +9,7 @@ import {
 import colors from "@/app/color/color";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useTheme } from "@/app/hooks/useTheme";
-import { CleanUser } from "@/store/features/auth/authSlice";
+import { CleanUser, IGoal } from "@/store/features/auth/authSlice";
 import { signIn, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -95,11 +95,16 @@ const LoginForm = () => {
           error: "Email or password is incorrect",
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Login error:", err);
+      const message =
+        err instanceof Error ? err.message : "Something went wrong. Try again.";
       setMainError({
         isError: true,
-        error: "Something went wrong. Try again.",
+        error:
+          message === "EMAIL_NOT_VERIFIED"
+            ? "Please verify your email before logging in."
+            : "Something went wrong. Try again.",
       });
     } finally {
       setIsLoading(false);
@@ -118,10 +123,42 @@ const LoginForm = () => {
       const user = await findUserByEmail(userEmail);
 
       if (user) {
+        const allowedPriority: IGoal["priority"][] = [
+          "low",
+          "medium",
+          "high",
+          "critical",
+        ];
+        const allowedStatus: IGoal["status"][] = [
+          "todo",
+          "in-progress",
+          "done",
+          "archived",
+        ];
+        const allowedRepeat: IGoal["repeat"][] = [
+          "none",
+          "daily",
+          "weekly",
+          "monthly",
+        ];
+
         // Normalize paymentType to satisfy CleanUser type
         const cleanUser: CleanUser = {
           ...user,
           paymentType: user.paymentType ?? "Expired",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          goals: (user.goals || []).map((g: any) => ({
+            ...g,
+            priority: allowedPriority.includes(g.priority as IGoal["priority"])
+              ? (g.priority as IGoal["priority"])
+              : "medium",
+            status: allowedStatus.includes(g.status as IGoal["status"])
+              ? (g.status as IGoal["status"])
+              : "todo",
+            repeat: allowedRepeat.includes(g.repeat as IGoal["repeat"])
+              ? (g.repeat as IGoal["repeat"])
+              : "none",
+          })),
         };
 
         const token = await generateJwtForGoogle(cleanUser);
@@ -152,6 +189,24 @@ const LoginForm = () => {
       setIsLoadingGoogle(false);
     }
   };
+
+  const renderSpinner = () => (
+    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8v8z"
+      />
+    </svg>
+  );
   return (
     <div
       onKeyDown={(event) => {
@@ -255,17 +310,25 @@ const LoginForm = () => {
     }
   `}
         >
-          {isLoading ? "Logging in..." : "Login"}
+          {isLoading ? (
+            <span className="flex items-center justify-center gap-2">
+              {renderSpinner()}
+              Logging in...
+            </span>
+          ) : (
+            "Login"
+          )}
         </button>
 
         <div className="w-full flex flex-col items-center justify-center">
           <button
             onClick={handleGoogleSignIn}
+            disabled={isLoadingGoogle}
             className={`text-[12px] lg:text-[16px] 2xl:text-[25px] flex items-center gap-4 lg:h-[60px] h-[40px] cursor-pointer rounded-md mt-10 py-2 px-4 lg:px-6 ${
               theme
                 ? `${colors.keyBg} ${colors.keyHoverBg}`
                 : `${colors.keyBg} ${colors.keyHoverBg}`
-            } text-white`}
+            } text-white disabled:opacity-70 disabled:cursor-not-allowed`}
           >
             <div className="h-full flex justify-center items-center">
               <div className="h-[30px] sm:h-[50px] w-[30px] sm:w-[50px] relative">
@@ -281,11 +344,16 @@ const LoginForm = () => {
             </div>
             <div className="h-full text-center flex justify-center items-center">
               <div>
-                {isLoadingGoogle
-                  ? `Logging...`
-                  : session
-                    ? `${session.user?.email}`
-                    : `Login with Google`}
+                {isLoadingGoogle ? (
+                  <span className="flex items-center justify-center gap-2">
+                    {renderSpinner()}
+                    Logging...
+                  </span>
+                ) : session ? (
+                  `${session.user?.email}`
+                ) : (
+                  `Login with Google`
+                )}
               </div>
             </div>
           </button>

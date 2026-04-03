@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface IFeedback extends Document {
   email: string;
+  userName?: string;
   user?: mongoose.Types.ObjectId;
   rating: number;
   comment: string;
@@ -21,6 +22,12 @@ const FeedbackSchema = new Schema<IFeedback>(
       trim: true,
       lowercase: true,
       index: true,
+    },
+    userName: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 120,
     },
     user: {
       type: Schema.Types.ObjectId,

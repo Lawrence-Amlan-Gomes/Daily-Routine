@@ -12,8 +12,8 @@ type FeedbackItem = {
   email: string;
   rating: number;
   comment: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string | null;
+  updatedAt: string | null;
   user?: { name: string; email: string } | null;
 };
 
@@ -25,11 +25,15 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!auth?.email || !auth.isAdmin) return;
+    if (!auth?.email || !auth.isAdmin) {
+      setLoading(false);
+      return;
+    }
+    const adminEmail = auth.email;
 
     async function load() {
       try {
-        const data = await getAllFeedbacks(auth.email);
+        const data = await getAllFeedbacks(adminEmail);
         setFeedbacks(data);
       } catch (err) {
         console.error("Failed to load feedbacks:", err);
@@ -114,7 +118,9 @@ export default function Admin() {
                       {fb.user?.name || "—"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm opacity-80">
-                      {format(new Date(fb.updatedAt), "MMM d, yyyy HH:mm")}
+                      {fb.updatedAt
+                        ? format(new Date(fb.updatedAt), "MMM d, yyyy HH:mm")
+                        : "—"}
                     </td>
                   </tr>
                 ))}

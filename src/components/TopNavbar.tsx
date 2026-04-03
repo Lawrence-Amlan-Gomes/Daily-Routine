@@ -98,6 +98,7 @@ const TopNavbar = () => {
           // You can compare fields if you want, but usually just set it
           setAuth({
             ...freshUser,
+            paymentType: freshUser.paymentType ?? "Expired",
           });
         }
         if (!freshUser || !freshUser.routine) {

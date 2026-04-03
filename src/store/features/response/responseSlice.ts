@@ -22,7 +22,7 @@ const initialState: ResponseState = {
   inputOutputPair: [],
   today: "",
   clickedDate: "",
-  generationLimit: { free: 3, standard: 9, premium: 19 },
+  generationLimit: { free: 3, standard: 9, premium: 99 },
 };
 
 const responseSlice = createSlice({

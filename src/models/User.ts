@@ -4,6 +4,39 @@ import mongoose, { Document } from "mongoose";
 export interface IRoutineItem {
   name: string;
   time: string;
+  category?: string;
+}
+
+export interface ISubtask {
+  id: string;
+  name: string;
+  isDone: boolean;
+}
+
+export interface IGoal {
+  id: string;
+  name: string;
+  description: string;
+  priority: "low" | "medium" | "high" | "critical";
+  status: "todo" | "in-progress" | "done" | "archived";
+  category: string;
+  dueDate: string;
+  time: string;
+  reminderAt: string;
+  repeat: "none" | "daily" | "weekly" | "monthly";
+  tags: string[];
+  subtasks: ISubtask[];
+  createdAt: string;
+  finishedAt: string;
+  pinned: boolean;
+  color: string;
+}
+
+export interface IStatEntry {
+  date: string;
+  day: string;
+  totalTasks: number;
+  completedTasks: string[];
 }
 
 export interface IRoutine {
@@ -28,7 +61,10 @@ export interface IUser extends Document {
   isAdmin: boolean;
   paymentType: string;
   routine: IRoutine;
-  todayPremiumResponses: string;
+  thisMonthPremiumResponses: string;
+  isEmailVerified: boolean;
+  goals: IGoal[];
+  stats: IStatEntry[];
 }
 
 const UserSchema = new mongoose.Schema<IUser>(
@@ -131,11 +167,12 @@ const UserSchema = new mongoose.Schema<IUser>(
       default: {},
       _id: false,
     },
-    todayPremiumResponses: {
+    thisMonthPremiumResponses: {
       type: String,
       default: "",
       trim: true,
     },
+    isEmailVerified: { type: Boolean, default: true },
     goals: {
       type: [
         {

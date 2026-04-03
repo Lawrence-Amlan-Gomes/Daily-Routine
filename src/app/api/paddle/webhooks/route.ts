@@ -1,8 +1,10 @@
 // src/app/api/paddle/webhooks/route.ts
 // MOST RELIABLE VERSION - Respond immediately, process later
-import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
 import { updatePaymentType } from "@/app/actions";
+import { dbConnect } from "@/lib/mongo";
+import { PaddleWebhookEvent } from "@/models/PaddleWebhookEvent";
+import crypto from "crypto";
+import { NextRequest, NextResponse } from "next/server";
 
 const PADDLE_WEBHOOK_SECRET = process.env.PADDLE_WEBHOOK_SECRET!;
 
@@ -31,7 +33,10 @@ function verifyPaddleSignature(
     hmac.update(signedPayload);
     const computed = hmac.digest("hex");
 
-    return computed === signature;
+    const computedBuffer = Buffer.from(computed, "hex");
+    const signatureBuffer = Buffer.from(signature, "hex");
+    if (computedBuffer.length !== signatureBuffer.length) return false;
+    return crypto.timingSafeEqual(computedBuffer, signatureBuffer);
   } catch (error) {
     console.error("Signature verification error:", error);
     return false;
@@ -46,6 +51,7 @@ const PRICE_ID_TO_PLAN: Record<
   pri_01kdjma54e1vmzkgzv92qjejs9: { type: "Standard", duration: "annual" },
   pri_01kdjm8f8qqe5cmaa34769mhyc: { type: "Premium", duration: "monthly" },
   pri_01kdjm6drxvy46rs9gp0v2qsvg: { type: "Premium", duration: "annual" },
+  pri_01kn9tb18t1hgh5n59p85xakkm: { type: "Test", duration: "monthly" },
 };
 
 export async function POST(req: NextRequest) {
@@ -62,22 +68,46 @@ export async function POST(req: NextRequest) {
 
     if (!isValid) {
       console.warn("⚠️ Invalid signature");
-      // Even for invalid signatures, return 200 to stop retries
-      // But log it for investigation
       return NextResponse.json(
         { received: true, verified: false },
-        { status: 200 },
+        { status: 401 },
       );
     }
 
     // Step 3: Parse event (fast)
     const text = new TextDecoder().decode(bodyBuffer);
     const event: PaddleWebhookEvent = JSON.parse(text);
+    await dbConnect();
 
     console.log(`📨 Webhook: ${event.event_type} (verified)`);
 
-    // Step 4: Process the event first, then return 200
+    if (!event.event_id) {
+      return NextResponse.json(
+        { received: false, error: "missing_event_id" },
+        { status: 400 },
+      );
+    }
+
+    const existingEvent = await PaddleWebhookEvent.findOne({
+      eventId: event.event_id,
+    });
+    if (existingEvent) {
+      return NextResponse.json(
+        {
+          received: true,
+          verified: true,
+          duplicate: true,
+          event_type: event.event_type,
+        },
+        { status: 200 },
+      );
+    }
+
     await processWebhookEvent(event);
+    await PaddleWebhookEvent.create({
+      eventId: event.event_id,
+      eventType: event.event_type,
+    });
 
     return NextResponse.json(
       {
@@ -90,13 +120,12 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error("Webhook error:", error);
-    // Always return 200 to prevent retries
     return NextResponse.json(
       {
-        received: true,
+        received: false,
         error: "processing",
       },
-      { status: 200 },
+      { status: 500 },
     );
   }
 }
@@ -136,68 +165,132 @@ async function processWebhookEvent(event: PaddleWebhookEvent) {
   const processingStart = Date.now();
 
   try {
-
     if (event.event_type === "transaction.completed") {
-      const transaction = event.data;
-
-      const priceId =
-        transaction.items?.[0]?.price_id ?? transaction.items?.[0]?.price?.id;
-      console.log("🔍 Price ID extracted:", priceId);
-
-      const plan = PRICE_ID_TO_PLAN[priceId];
-      console.log("🔍 Plan found:", plan);
-
-      if (!plan) {
-        console.warn("❌ Unknown price ID:", priceId);
-        console.warn("❌ Available price IDs:", Object.keys(PRICE_ID_TO_PLAN));
-        return;
-      }
-
-      const email =
-        transaction.custom_data?.userEmail || transaction.customer?.email;
-      console.log("🔍 Email extracted:", email);
-
-      if (!email) {
-        console.warn("❌ No email in payload");
-        console.warn("❌ custom_data:", transaction.custom_data);
-        console.warn("❌ customer:", transaction.customer);
-        return;
-      }
-
-      const expiredAt = new Date();
-      expiredAt.setDate(
-        expiredAt.getDate() + (plan.duration === "monthly" ? 30 : 365),
-      );
-
-      const paymentString = `${plan.type} ${plan.duration === "monthly" ? "Monthly" : "Annually"}`;
-      console.log("🔍 About to call updatePaymentType:", {
-        email,
-        paymentString,
-        expiredAt,
-      });
-
-      await updatePaymentType(email, paymentString, expiredAt);
-
-      const processingTime = Date.now() - processingStart;
-      console.log(
-        `✅ Updated ${email} → ${paymentString} (${processingTime}ms)`,
-      );
+      await handleTransactionCompleted(event.data);
+    } else if (event.event_type === "subscription.activated") {
+      await handleSubscriptionActivated(event.data);
     } else if (event.event_type === "subscription.canceled") {
       const email =
         event.data.custom_data?.userEmail || event.data.customer?.email;
 
       if (email) {
-        await updatePaymentType(email, "Expired", new Date());
+        await updatePaymentType(email, "Expired", new Date(), {
+          bypassAuth: true,
+        });
         console.log(`✅ Canceled: ${email}`);
       }
     }
   } catch (error) {
+    const processingTime = Date.now() - processingStart;
     console.error("❌ Processing failed:", error);
     console.error(
       "❌ Error details:",
       JSON.stringify(error, Object.getOwnPropertyNames(error)),
     );
+    console.error(`❌ Processing time: ${processingTime}ms`);
   }
+}
+
+async function handleTransactionCompleted(transaction: PaddleTransaction) {
+  const priceId =
+    transaction.items?.[0]?.price_id ?? transaction.items?.[0]?.price?.id;
+  console.log("🔍 Price ID extracted:", priceId);
+
+  if (!priceId) {
+    console.warn("❌ Missing price ID in payload");
+    return;
+  }
+
+  const plan = PRICE_ID_TO_PLAN[priceId];
+  console.log("🔍 Plan found:", plan);
+
+  if (!plan) {
+    console.warn("❌ Unknown price ID:", priceId);
+    console.warn("❌ Available price IDs:", Object.keys(PRICE_ID_TO_PLAN));
+    return;
+  }
+
+  const email =
+    transaction.custom_data?.userEmail || transaction.customer?.email;
+  console.log("🔍 Email extracted:", email);
+
+  if (!email) {
+    console.warn("❌ No email in payload");
+    console.warn("❌ custom_data:", transaction.custom_data);
+    console.warn("❌ customer:", transaction.customer);
+    return;
+  }
+
+  const processingStart = Date.now();
+  const expiredAt = new Date();
+  expiredAt.setDate(
+    expiredAt.getDate() + (plan.duration === "monthly" ? 30 : 365),
+  );
+
+  const paymentString = `${plan.type} ${plan.duration === "monthly" ? "Monthly" : "Annually"}`;
+  console.log("🔍 About to call updatePaymentType:", {
+    email,
+    paymentString,
+    plan,
+    expiredAt,
+  });
+
+  await updatePaymentType(email, paymentString, expiredAt, {
+    bypassAuth: true,
+  });
+
+  const processingTime = Date.now() - processingStart;
+  console.log(`✅ Updated ${email} → ${paymentString} (${processingTime}ms)`);
+}
+
+async function handleSubscriptionActivated(subscription: PaddleTransaction) {
+  // For subscription events, we need to extract the price ID differently
+  const priceId = subscription.items?.[0]?.price?.id;
+  console.log("🔍 Subscription Price ID extracted:", priceId);
+
+  if (!priceId) {
+    console.warn("❌ Missing price ID in subscription payload");
+    return;
+  }
+
+  const plan = PRICE_ID_TO_PLAN[priceId];
+  console.log("🔍 Subscription Plan found:", plan);
+
+  if (!plan) {
+    console.warn("❌ Unknown subscription price ID:", priceId);
+    console.warn("❌ Available price IDs:", Object.keys(PRICE_ID_TO_PLAN));
+    return;
+  }
+
+  const email =
+    subscription.custom_data?.userEmail || subscription.customer?.email;
+  console.log("🔍 Subscription Email extracted:", email);
+
+  if (!email) {
+    console.warn("❌ No email in subscription payload");
+    console.warn("❌ custom_data:", subscription.custom_data);
+    console.warn("❌ customer:", subscription.customer);
+    return;
+  }
+
+  const expiredAt = new Date();
+  expiredAt.setDate(
+    expiredAt.getDate() + (plan.duration === "monthly" ? 30 : 365),
+  );
+
+  const paymentString = `${plan.type} ${plan.duration === "monthly" ? "Monthly" : "Annually"}`;
+  console.log("🔍 About to call updatePaymentType for subscription:", {
+    email,
+    paymentString,
+    plan,
+    expiredAt,
+  });
+
+  await updatePaymentType(email, paymentString, expiredAt, {
+    bypassAuth: true,
+  });
+
+  console.log(`✅ Updated ${email} → ${paymentString} (subscription)`);
 }
 
 export const dynamic = "force-dynamic";
