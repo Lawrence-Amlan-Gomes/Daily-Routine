@@ -1,10 +1,10 @@
 "use client";
 
+import { updatePaymentType } from "@/app/actions";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useTheme } from "@/app/hooks/useTheme";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { updatePaymentType } from "@/app/actions";
 
 export default function HasExpired({
   children,
@@ -15,7 +15,7 @@ export default function HasExpired({
   const { theme } = useTheme();
   const router = useRouter();
   const [hasMounted, setHasMounted] = useState(false);
-  const FREE_LIMIT_DAYS = 7;
+  const FREE_LIMIT_DAYS = 30;
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -58,9 +58,11 @@ export default function HasExpired({
     if (shouldUpdate && newPaymentType !== auth.paymentType) {
       setAuth({ ...auth, paymentType: newPaymentType });
       const nextExpiry =
-        typeof auth.expiredAt === "string" ? new Date(auth.expiredAt) : new Date();
-      updatePaymentType(auth.email, newPaymentType, nextExpiry).catch(
-        (err) => console.error("[HasExpired] Server update failed:", err),
+        typeof auth.expiredAt === "string"
+          ? new Date(auth.expiredAt)
+          : new Date();
+      updatePaymentType(auth.email, newPaymentType, nextExpiry).catch((err) =>
+        console.error("[HasExpired] Server update failed:", err),
       );
     }
   }, [auth, setAuth]);

@@ -114,7 +114,7 @@ export async function generateToken(user: CleanUser): Promise<string> {
     isAdmin: user.isAdmin,
     createdAt: user.createdAt,
     expiredAt: user.expiredAt,
-    paymentType: user.paymentType ?? "Free One Week",
+    paymentType: user.paymentType ?? "Free One Month",
     routine: plainRoutine,
     thisMonthPremiumResponses: user.thisMonthPremiumResponses ?? "",
     stats: plainStats,

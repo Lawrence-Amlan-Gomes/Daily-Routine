@@ -83,7 +83,7 @@ const UserSchema = new mongoose.Schema<IUser>(
     createdAt: { type: Date, default: Date.now },
     expiredAt: { type: Date },
     isAdmin: { type: Boolean, default: false },
-    paymentType: { type: String, default: "Free One Week" },
+    paymentType: { type: String, default: "Free One Month" },
     routine: {
       type: {
         saturday: {

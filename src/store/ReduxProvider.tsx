@@ -1,18 +1,25 @@
 // src/store/ReduxProvider.tsx
-'use client';
+"use client";
 
-import { Provider } from 'react-redux';
-import { store } from './store';
-import { ReactNode, useEffect } from 'react';
-import { setAuth } from './features/auth/authSlice';
+import { ReactNode, useEffect } from "react";
+import { Provider } from "react-redux";
+import { setAuth } from "./features/auth/authSlice";
+import { setTheme } from "./features/theme/themeSlice";
+import { store } from "./store";
 
 export default function ReduxProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
+
+    // Load theme from localStorage
+    const storedTheme = localStorage.getItem("theme");
+    if (storedTheme) {
+      store.dispatch(setTheme(storedTheme === "true"));
+    }
 
     const loadAuth = async () => {
-      const storedUser = localStorage.getItem('authUser');
-      const storedToken = localStorage.getItem('authToken');
+      const storedUser = localStorage.getItem("authUser");
+      const storedToken = localStorage.getItem("authToken");
 
       // ─── 1. Primary: authUser ─────────────────────────────────────────
       if (storedUser) {
@@ -20,34 +27,56 @@ export default function ReduxProvider({ children }: { children: ReactNode }) {
           const user = JSON.parse(storedUser);
           store.dispatch(setAuth(user));
         } catch {
-          localStorage.removeItem('authUser');
+          localStorage.removeItem("authUser");
         }
       }
 
       // ─── 2. Fallback: Verify JWT (only if authUser missing) ───────────
       if (!storedUser && storedToken) {
         try {
-          const res = await fetch('/api/verify-jwt', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const res = await fetch("/api/verify-jwt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ token: storedToken }),
           });
 
           if (res.ok) {
             const user = await res.json();
             store.dispatch(setAuth(user));
-            localStorage.setItem('authUser', JSON.stringify(user));
+            localStorage.setItem("authUser", JSON.stringify(user));
           } else {
-            localStorage.removeItem('authToken');
+            localStorage.removeItem("authToken");
           }
         } catch (err) {
-          console.error('JWT verification failed:', err);
-          localStorage.removeItem('authToken');
+          console.error("JWT verification failed:", err);
+          localStorage.removeItem("authToken");
         }
       }
     };
 
     loadAuth();
+  }, []);
+
+  // Subscribe to theme changes and apply to DOM
+  useEffect(() => {
+    const unsubscribe = store.subscribe(() => {
+      const state = store.getState();
+      const theme = state.theme.theme;
+
+      // Save to localStorage
+      localStorage.setItem("theme", String(theme));
+
+      // Apply to DOM
+      if (theme) {
+        document.documentElement.classList.add("light");
+        document.documentElement.classList.remove("dark");
+      } else {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+      }
+    });
+
+    return unsubscribe;
   }, []);
 
   return <Provider store={store}>{children}</Provider>;

@@ -62,9 +62,9 @@ interface RawUser {
 
 export const cleanUserForClient = (user: RawUser) => {
   if (!user) return null;
-  // Set expiredAt to 7 days from now
+  // Set expiredAt to 30 days from now
   const expiredAt = new Date();
-  expiredAt.setDate(expiredAt.getDate() + 7);
+  expiredAt.setDate(expiredAt.getDate() + 30);
 
   // Helper to clean routine items
 
@@ -116,7 +116,7 @@ export const cleanUserForClient = (user: RawUser) => {
       (user.expiredAt && typeof user.expiredAt === "string"
         ? new Date(user.expiredAt).toISOString()
         : null) || expiredAt.toISOString(),
-    paymentType: user.paymentType || "Free One Week", // ← add fallback if needed
+    paymentType: user.paymentType || "Free One Month", // ← add fallback if needed
     routine: cleanRoutine(user.routine || {}),
     thisMonthPremiumResponses: user.thisMonthPremiumResponses || "",
     stats: Array.isArray(user.stats) ? user.stats : [],

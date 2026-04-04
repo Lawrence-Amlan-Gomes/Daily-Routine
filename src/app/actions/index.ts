@@ -101,7 +101,7 @@ export async function performLogin({
   if (!match) return null;
 
   const expiredAt = new Date();
-  expiredAt.setDate(expiredAt.getDate() + 7);
+  expiredAt.setDate(expiredAt.getDate() + 30);
 
   const cleanUser: CleanUser = {
     id: user._id.toString(),
@@ -113,7 +113,7 @@ export async function performLogin({
     isAdmin: user.isAdmin || false,
     createdAt: user.createdAt?.toISOString() || new Date().toISOString(),
     expiredAt: user.expiredAt?.toISOString() || expiredAt.toISOString(),
-    paymentType: user.paymentType || "Free One Week",
+    paymentType: user.paymentType || "Free One Month",
     routine: user.routine
       ? {
           saturday: user.routine.saturday.map(
@@ -205,7 +205,7 @@ export async function createUser(data: {
 
   const hashed = await bcrypt.hash(data.password, 12);
   const expiredAt = new Date();
-  expiredAt.setDate(expiredAt.getDate() + 7);
+  expiredAt.setDate(expiredAt.getDate() + 30);
 
   // Check if it's Google registration (no password means Google)
 
@@ -213,6 +213,7 @@ export async function createUser(data: {
     ...data,
     expiredAt,
     password: hashed,
+    paymentType: "Free One Month",
     isRegisteredWithGoogle: data.isRegisteredWithGoogle ?? false,
     isEmailVerified:
       data.isEmailVerified ?? Boolean(data.isRegisteredWithGoogle),
@@ -273,7 +274,11 @@ export async function updatePaymentType(
 ) {
   if (!options?.bypassAuth) {
     const actor = await getActionActor();
-    if (!actor.isAdmin) throw new Error("FORBIDDEN");
+    const normalizedTarget = String(email).toLowerCase().trim();
+    // Allow users to update their own payment type or admins to update any
+    if (!actor.isAdmin && actor.email !== normalizedTarget) {
+      throw new Error("FORBIDDEN");
+    }
   }
   await dbConnect();
   await User.updateOne({ email }, { paymentType, expiredAt });
@@ -363,7 +368,7 @@ export async function findUserByEmail(email: string) {
   if (!user) return null;
 
   const expiredAt = new Date();
-  expiredAt.setDate(expiredAt.getDate() + 7);
+  expiredAt.setDate(expiredAt.getDate() + 30);
   const allowedPriority = ["low", "medium", "high", "critical"] as const;
   const allowedStatus = ["todo", "in-progress", "done", "archived"] as const;
   const allowedRepeat = ["none", "daily", "weekly", "monthly"] as const;
