@@ -36,13 +36,26 @@ const ProfileIcon = ({ active }: ProfileIconProps) => {
   // ───────────────────────────────────────────────
   let content;
 
-  if (auth && auth.name && auth.name.trim()) {
-    // Show first letter of name (uppercase)
+  if (auth && auth.photo) {
+    // Show profile photo
+    content = (
+      <Image
+        src={auth.photo}
+        alt="Profile"
+        fill
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 30vw"
+        className="object-cover"
+      />
+    );
+  } else if (auth && auth.name && auth.name.trim()) {
+    // Show first letter of name (uppercase) - only when no photo
     const firstLetter = auth.name.trim()[0].toUpperCase();
     content = <span>{firstLetter}</span>;
   } else if (!auth) {
     // Not logged in → show default icon
-    const defaultIcon = theme ? "/profileIconLight.png" : "/profileIconDark.png";
+    const defaultIcon = theme
+      ? "/profileIconLight.png"
+      : "/profileIconDark.png";
     content = (
       <Image
         priority
@@ -62,16 +75,14 @@ const ProfileIcon = ({ active }: ProfileIconProps) => {
   const linkHref = auth
     ? "/profile"
     : pathname === "/login"
-    ? "/register"
-    : "/login";
+      ? "/register"
+      : "/login";
 
   return (
     <div>
       <Link href={linkHref}>
         <div className="flex justify-center items-center h-full">
-          <div className={profileStyle}>
-            {content}
-          </div>
+          <div className={profileStyle}>{content}</div>
         </div>
       </Link>
     </div>

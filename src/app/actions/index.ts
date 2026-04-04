@@ -4,6 +4,7 @@
 import { auth as getNextAuthSession, signOut } from "@/app/auth";
 import { cleanUserForClient } from "@/lib/data-util";
 import { dbConnect } from "@/lib/mongo";
+import { deleteFromS3, uploadToS3 } from "@/lib/photoService";
 import { sendOtpEmail, sendWelcomeEmail } from "@/lib/server/email";
 import { generateToken, verifyToken } from "@/lib/server/jwt";
 import { Feedback } from "@/models/Feedback";
@@ -929,4 +930,40 @@ export async function resendVerificationEmail(
   return sendResult.success
     ? { success: true }
     : { success: false, error: "Failed to send verification code" };
+}
+
+export async function uploadPhoto(email: string, formData: FormData) {
+  await assertActorCanAccessEmail(email);
+  await dbConnect();
+
+  const file = formData.get("photo") as File;
+  if (!file) throw new Error("No file provided");
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("User not found");
+
+  // Delete old photo from S3
+  if (user.photoKey) await deleteFromS3(user.photoKey);
+
+  const { url, key } = await uploadToS3(user._id.toString(), buffer);
+
+  await User.updateOne({ email }, { photo: url, photoKey: key });
+  revalidatePath("/profile");
+
+  return { photo: url };
+}
+
+export async function deletePhoto(email: string) {
+  await assertActorCanAccessEmail(email);
+  await dbConnect();
+
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("User not found");
+
+  if (user.photoKey) await deleteFromS3(user.photoKey);
+
+  await User.updateOne({ email }, { photo: "", photoKey: "" });
+  revalidatePath("/profile");
 }

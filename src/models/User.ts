@@ -55,6 +55,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   photo?: string;
+  photoKey?: string;
   isRegisteredWithGoogle: boolean;
   createdAt: Date;
   expiredAt?: Date;
@@ -79,6 +80,7 @@ const UserSchema = new mongoose.Schema<IUser>(
     },
     password: { type: String, required: true },
     photo: { type: String, default: "" },
+    photoKey: { type: String, default: "" },
     isRegisteredWithGoogle: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
     expiredAt: { type: Date },

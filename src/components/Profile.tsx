@@ -1,14 +1,15 @@
 // src/components/Profile.tsx
 "use client";
 
-import { updateUser } from "@/app/actions";
+import { deletePhoto, updateUser, uploadPhoto } from "@/app/actions";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useTheme } from "@/app/hooks/useTheme";
 import { logout } from "@/store/features/auth/authSlice";
 import { signOut } from "next-auth/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 
 const Profile = () => {
@@ -18,10 +19,11 @@ const Profile = () => {
   const { user: auth, setAuth } = useAuth();
   const [name, setName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (auth) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(auth.name || "");
     }
   }, [auth]);
@@ -45,6 +47,54 @@ const Profile = () => {
       handleUpdate();
     } else {
       setIsEditing(true);
+    }
+  };
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !auth) return;
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Photo must be smaller than 5MB");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    setPhotoLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("photo", file);
+      const { photo } = await uploadPhoto(auth.email, formData);
+      setAuth({ ...auth, photo });
+    } catch {
+      alert("Failed to upload photo.");
+    } finally {
+      setPhotoLoading(false);
+      // reset input so same file can be re-selected
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDeletePhoto = async () => {
+    if (!auth || !auth.photo) return;
+    if (!confirm("Remove profile photo?")) return;
+
+    setPhotoLoading(true);
+    try {
+      await deletePhoto(auth.email);
+      setAuth({ ...auth, photo: "" });
+    } catch {
+      alert("Failed to delete photo.");
+    } finally {
+      setPhotoLoading(false);
     }
   };
 
@@ -94,12 +144,72 @@ const Profile = () => {
           backdrop-blur-md border rounded-2xl overflow-hidden
         `}
       >
-        {/* Header */}
+        {/* Header with photo */}
         <div
           className={`px-5 sm:px-6 pt-6 sm:pt-8 pb-5 sm:pb-6 border-b ${
             theme ? "border-gray-200" : "border-gray-900"
           } text-center`}
         >
+          {/* Profile Photo */}
+          <div className="flex flex-col items-center mb-4">
+            <div className="relative group">
+              {/* Avatar */}
+              <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-300 dark:border-gray-700 bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
+                {photoLoading ? (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : auth.photo ? (
+                  <Image
+                    src={auth.photo}
+                    alt="Profile"
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span
+                    className={`text-2xl font-bold ${theme ? "text-gray-500" : "text-gray-400"}`}
+                  >
+                    {auth.name?.[0]?.toUpperCase() || "U"}
+                  </span>
+                )}
+              </div>
+
+              {/* Overlay on hover */}
+              {!photoLoading && (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                >
+                  <span className="text-white text-xs font-medium">
+                    {auth.photo ? "Change" : "Upload"}
+                  </span>
+                </button>
+              )}
+            </div>
+
+            {/* Delete button */}
+            {auth.photo && !photoLoading && (
+              <button
+                onClick={handleDeletePhoto}
+                className="mt-2 text-xs text-red-500 hover:text-red-400 transition-colors"
+              >
+                Remove photo
+              </button>
+            )}
+
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoChange}
+            />
+          </div>
+
+          {/* Name */}
           {isEditing ? (
             <input
               autoFocus

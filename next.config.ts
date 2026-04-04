@@ -9,10 +9,21 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "minio-cezyrqekons4e540xqif99sh.185.201.8.71.sslip.io",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
   /* config options here */
   reactCompiler: true,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: 10 * 1024 * 1024, // 10MB for photo uploads
+    },
+  },
   async headers() {
     return [
       {
