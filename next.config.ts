@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "minio-cezyrqekons4e540xqif99sh.185.201.8.71.sslip.io",
+        hostname: "minio-w9cs7x7mnuwctiv2hjuo6m5s.185.201.8.71.sslip.io",
         port: "",
         pathname: "/**",
       },
