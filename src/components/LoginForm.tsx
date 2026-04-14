@@ -142,7 +142,6 @@ const LoginForm = () => {
           "monthly",
         ];
 
-        // Normalize paymentType to satisfy CleanUser type
         const cleanUser: CleanUser = {
           ...user,
           paymentType: user.paymentType ?? "Expired",
@@ -175,7 +174,7 @@ const LoginForm = () => {
       } else {
         setGoogleError({
           isError: true,
-          error: `Your email ${userEmail} hasn't registered yet`,
+          error: `No account found for ${userEmail}. Please register first.`,
         });
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -183,15 +182,17 @@ const LoginForm = () => {
       console.error("Google login error:", err);
       setGoogleError({
         isError: true,
-        error: err.message || "Google login failed. Try again.",
+        error: err.message || "Google sign-in failed. Please try again.",
       });
     } finally {
       setIsLoadingGoogle(false);
     }
   };
 
-  const renderSpinner = () => (
-    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+  const isFormValid = !emailError.iserror && !passwordError.iserror;
+
+  const renderSpinner = (size = "w-4 h-4") => (
+    <svg className={`animate-spin ${size}`} fill="none" viewBox="0 0 24 24">
       <circle
         className="opacity-25"
         cx="12"
@@ -207,27 +208,37 @@ const LoginForm = () => {
       />
     </svg>
   );
+
   return (
     <div
       onKeyDown={(event) => {
-        if (event.key === "Enter") {
-          submitForm();
-        }
+        if (event.key === "Enter") submitForm();
       }}
-      className={`h-screen w-full sm:pt-[5%] pt-[30%] sm:px-0 px-[10%] overflow-y-auto lg:overflow-hidden lg:flex lg:justify-center lg:items-center ${
+      className={`min-h-screen w-full flex items-center justify-center sm:px-0 px-6 pt-[80px] md:pt-[100px] ${
         theme ? `bg-white ${colors.bgLight}` : `bg-black ${colors.bgDark}`
       }`}
     >
       <div
-        className={`sm:p-10 p-5 rounded-md sm:my-[5%] sm:w-[50%] sm:mx-[25%] lg:w-[400px] xl:w-[450px] 2xl:w-[500px] lg:my-0 text-center ${
-          theme ? `${colors.cardLight}` : `${colors.cardDark}`
+        className={`w-full sm:w-[440px] lg:w-[460px] xl:w-[480px] rounded-xl p-8 sm:p-10 ${
+          theme ? colors.cardLight : colors.cardDark
         }`}
       >
-        <div className="text-[20px] lg:text-[25px] 2xl:text-[40px] font-bold sm:mb-10">
-          Login
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">
+            Welcome back
+          </h1>
+          <p
+            className={`mt-2 text-sm ${
+              theme ? "text-gray-500" : "text-gray-400"
+            }`}
+          >
+            Sign in to your account to continue
+          </p>
         </div>
 
-        <div className="opacity-0">
+        {/* Hidden honeypot fields to prevent autofill on real fields */}
+        <div className="opacity-0 h-0 overflow-hidden">
           <EachField
             label="fake"
             type="email"
@@ -252,6 +263,7 @@ const LoginForm = () => {
           />
         </div>
 
+        {/* Fields */}
         <EachField
           label="Email"
           type="email"
@@ -273,106 +285,177 @@ const LoginForm = () => {
           setValue={setPassword}
           iserror={passwordError.iserror}
           error={passwordError.error}
+          showToggle={true}
         />
 
+        {/* Main error */}
         {mainError.isError && (
-          <div className="mt-3 text-red-600 text-[10px] lg:text-[14px] 2xl:text-[22px]">
+          <div
+            className={`mt-3 flex items-start gap-2 text-sm rounded-lg px-3 py-2.5 ${
+              theme
+                ? "bg-red-50 text-red-700 border border-red-200"
+                : "bg-red-900/20 text-red-400 border border-red-800/40"
+            }`}
+          >
+            <svg
+              className="w-4 h-4 mt-0.5 shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+              />
+            </svg>
             {mainError.error}
           </div>
         )}
 
-        <div className="flex justify-end mt-1">
+        {/* Forgot password */}
+        <div className="flex justify-end mt-2">
           <Link
             href="/forgot-password"
-            className={`text-[10px] lg:text-[13px] 2xl:text-[20px] ${colors.keyText} ${colors.keyHoverText}`}
+            className={`text-xs lg:text-sm ${colors.keyText} ${colors.keyHoverText}`}
           >
             Forgot password?
           </Link>
         </div>
 
+        {/* Login button */}
         <button
           onClick={submitForm}
-          disabled={emailError.iserror || passwordError.iserror || isLoading}
+          disabled={!isFormValid || isLoading}
           className={`
-    text-[12px] lg:text-[16px] 2xl:text-[25px]
-    ${!emailError.iserror && !passwordError.iserror ? "cursor-pointer" : "cursor-not-allowed"} rounded-lg mt-6 sm:mt-12 py-2 sm:py-2.5 md:py-3 px-5 sm:px-6 md:px-8
-    font-medium transition-all duration-300 ease-out
-    shadow-sm hover:shadow-md active:scale-[0.98]
-    border border-transparent
-    ${
-      !emailError.iserror && !passwordError.iserror
-        ? theme
-          ? "bg-green-600 hover:bg-green-700 text-white"
-          : "bg-green-700 hover:bg-green-800 text-white"
-        : theme
-          ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-          : "bg-gray-800 text-gray-500 cursor-not-allowed"
-    }
-  `}
+            w-full mt-5 py-2.5 rounded-lg font-semibold text-sm lg:text-base
+            transition-all duration-200 active:scale-[0.98]
+            ${
+              isFormValid && !isLoading
+                ? theme
+                  ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer shadow-sm hover:shadow-md"
+                  : "bg-green-700 hover:bg-green-600 text-white cursor-pointer shadow-sm hover:shadow-md"
+                : theme
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-800 text-gray-500 cursor-not-allowed"
+            }
+          `}
         >
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">
               {renderSpinner()}
-              Logging in...
+              Signing in...
             </span>
           ) : (
-            "Login"
+            "Sign in"
           )}
         </button>
 
-        <div className="w-full flex flex-col items-center justify-center">
+        {/* Divider */}
+        <div className="relative my-6">
+          <div
+            className={`absolute inset-0 flex items-center`}
+            aria-hidden="true"
+          >
+            <div
+              className={`w-full border-t ${
+                theme ? "border-gray-200" : "border-gray-700"
+              }`}
+            />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span
+              className={`px-3 font-medium tracking-wider ${
+                theme
+                  ? "bg-white text-gray-400"
+                  : "bg-gray-900 text-gray-500"
+              }`}
+            >
+              or continue with
+            </span>
+          </div>
+        </div>
+
+        {/* Google button */}
+        <div className="flex flex-col items-center gap-2">
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoadingGoogle}
-            className={`text-[12px] lg:text-[16px] 2xl:text-[25px] flex items-center gap-4 lg:h-[60px] h-[40px] cursor-pointer rounded-md mt-10 py-2 px-4 lg:px-6 ${
-              theme
-                ? `${colors.keyBg} ${colors.keyHoverBg}`
-                : `${colors.keyBg} ${colors.keyHoverBg}`
-            } text-white disabled:opacity-70 disabled:cursor-not-allowed`}
+            className={`
+              w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-lg
+              border font-medium text-sm lg:text-base
+              transition-all duration-200 active:scale-[0.98]
+              disabled:opacity-60 disabled:cursor-not-allowed
+              ${
+                theme
+                  ? "border-gray-200 bg-white hover:bg-gray-50 text-gray-700 shadow-sm"
+                  : "border-gray-700 bg-gray-800/50 hover:bg-gray-800 text-gray-200"
+              }
+            `}
           >
-            <div className="h-full flex justify-center items-center">
-              <div className="h-[30px] sm:h-[50px] w-[30px] sm:w-[50px] relative">
-                <Image
-                  priority
-                  src="/googleIcon.png"
-                  alt="Google Icon"
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 30vw"
-                  className="object-cover"
-                />
-              </div>
+            <div className="w-5 h-5 relative shrink-0">
+              <Image
+                priority
+                src="/googleIcon.png"
+                alt="Google"
+                fill
+                sizes="20px"
+                className="object-contain"
+              />
             </div>
-            <div className="h-full text-center flex justify-center items-center">
-              <div>
-                {isLoadingGoogle ? (
-                  <span className="flex items-center justify-center gap-2">
-                    {renderSpinner()}
-                    Logging...
-                  </span>
-                ) : session ? (
-                  `${session.user?.email}`
-                ) : (
-                  `Login with Google`
-                )}
-              </div>
-            </div>
+            {isLoadingGoogle ? (
+              <span className="flex items-center gap-2">
+                {renderSpinner()}
+                Signing in...
+              </span>
+            ) : session?.user?.email ? (
+              session.user.email
+            ) : (
+              "Continue with Google"
+            )}
           </button>
+
           {googleError.isError && (
-            <div className="mt-2 text-red-600 text-[10px] lg:text-[14px] 2xl:text-[22px]">
+            <div
+              className={`w-full flex items-start gap-2 text-xs rounded-lg px-3 py-2 ${
+                theme
+                  ? "bg-red-50 text-red-700 border border-red-200"
+                  : "bg-red-900/20 text-red-400 border border-red-800/40"
+              }`}
+            >
+              <svg
+                className="w-3.5 h-3.5 mt-0.5 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                />
+              </svg>
               {googleError.error}
             </div>
           )}
         </div>
 
-        <div className="sm:mt-18 mt-5 text-[12px] lg:text-[16px] 2xl:text-[26px]">
-          No Account?{" "}
+        {/* Register link */}
+        <p
+          className={`mt-8 text-center text-sm ${
+            theme ? "text-gray-500" : "text-gray-400"
+          }`}
+        >
+          Don&apos;t have an account?{" "}
           <Link
             href="/register"
-            className={`${colors.keyText} ${colors.keyHoverText}`}
+            className={`font-semibold ${colors.keyText} ${colors.keyHoverText}`}
           >
-            Register
+            Create one
           </Link>
-        </div>
+        </p>
       </div>
     </div>
   );

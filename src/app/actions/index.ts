@@ -1,7 +1,7 @@
 // src/app/actions/index.ts
 "use server";
 
-import { auth as getNextAuthSession, signOut } from "@/app/auth";
+import { auth as getNextAuthSession, signOut } from "@/auth";
 import { cleanUserForClient } from "@/lib/data-util";
 import { dbConnect } from "@/lib/mongo";
 import { deleteFromS3, uploadToS3 } from "@/lib/photoService";

@@ -16,7 +16,7 @@ import { useAuth } from "@/app/hooks/useAuth";
 import { useTheme } from "@/app/hooks/useTheme";
 import { aiRoutineResponse } from "@/app/server";
 import { AnimatePresence, motion as m, motion, Variants } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FaArrowLeft,
   FaArrowRight,
@@ -247,6 +247,73 @@ const renderBold = (text: string) => {
   );
 };
 
+// ─── Chat Input (isolated so typing doesn't re-render parent) ─
+interface ChatInputAreaProps {
+  onSend: (text: string) => void;
+  isThinking: boolean;
+  theme: boolean;
+  suggestedText: { text: string; id: number };
+}
+
+const ChatInputArea = memo(function ChatInputArea({
+  onSend,
+  isThinking,
+  theme,
+  suggestedText,
+}: ChatInputAreaProps) {
+  const [text, setText] = useState("");
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (suggestedText.text) setText(suggestedText.text);
+  }, [suggestedText.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleSend = () => {
+    if (!text.trim() || isThinking) return;
+    onSend(text.trim());
+    setText("");
+  };
+
+  const handleKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  return (
+    <div
+      className={`relative flex items-end gap-1.5 p-1.5 rounded-lg border ${
+        theme ? "bg-white border-gray-300" : "bg-gray-950 border-gray-700"
+      }`}
+    >
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={handleKey}
+        placeholder={isThinking ? "Thinking..." : "Ask AI to update your routine..."}
+        rows={2}
+        className={`flex-1 resize-none text-xs outline-none bg-transparent py-0.5 px-1 ${
+          theme
+            ? "text-gray-900 placeholder:text-gray-400"
+            : "text-gray-100 placeholder:text-gray-600"
+        }`}
+      />
+      <button
+        onClick={handleSend}
+        disabled={!text.trim() || isThinking}
+        className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition ${
+          !text.trim() || isThinking
+            ? "bg-gray-300/40 cursor-not-allowed"
+            : "bg-purple-600 hover:bg-purple-700 text-white"
+        }`}
+      >
+        <FaArrowUp size={11} />
+      </button>
+    </div>
+  );
+});
+
 // ─── Main Component ────────────────────────────────────────
 export default function AIRoutineBoard() {
   const { theme } = useTheme();
@@ -303,7 +370,7 @@ export default function AIRoutineBoard() {
   const [activeDate, setActiveDate] = useState<string>(
     new Date().toLocaleDateString("en-CA"),
   );
-  const [inputText, setInputText] = useState("");
+  const [suggestedText, setSuggestedText] = useState({ text: "", id: 0 });
   const [isThinking, setIsThinking] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [hoveredTask, setHoveredTask] = useState<{
@@ -897,13 +964,11 @@ export default function AIRoutineBoard() {
   };
 
   // ── Send message ───────────────────────────────────────────
-  const sendMessage = async () => {
-    if (!inputText.trim() || isThinking || !auth?.email) return;
+  const sendMessage = useCallback(async (userMsg: string) => {
+    if (!userMsg.trim() || isThinking || !auth?.email) return;
     if (!isPremium() || isLimitReached) return;
 
-    const userMsg = inputText.trim();
     const timestamp = new Date().toISOString();
-    setInputText("");
     setIsThinking(true);
 
     const userMsgObj: ChatMessage = { role: "user", text: userMsg, timestamp };
@@ -1000,14 +1065,8 @@ export default function AIRoutineBoard() {
     } finally {
       setIsThinking(false);
     }
-  };
-
-  const handleKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth, activeDate, activeMessages, aiRoutine, isThinking, isLimitReached]);
 
   // ── Format helpers ─────────────────────────────────────────
   const formatTime = (iso: string) => {
@@ -1459,7 +1518,7 @@ export default function AIRoutineBoard() {
                 ].map((s) => (
                   <button
                     key={s}
-                    onClick={() => setInputText(s)}
+                    onClick={() => setSuggestedText((prev) => ({ text: s, id: prev.id + 1 }))}
                     className={`w-full text-left text-[10px] px-2 py-1.5 rounded border transition ${theme ? "border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-purple-300" : "border-gray-800 text-gray-400 hover:bg-gray-900 hover:border-purple-700"}`}
                   >
                     {s}
@@ -1538,29 +1597,12 @@ export default function AIRoutineBoard() {
             </div>
           ) : (
             <div>
-              <div
-                className={`relative flex items-end gap-1.5 p-1.5 rounded-lg border ${theme ? "bg-white border-gray-300" : "bg-gray-950 border-gray-700"}`}
-              >
-                <textarea
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  onKeyDown={handleKey}
-                  placeholder={
-                    isThinking
-                      ? "Thinking..."
-                      : "Ask AI to update your routine..."
-                  }
-                  rows={2}
-                  className={`flex-1 resize-none text-xs outline-none bg-transparent py-0.5 px-1 ${theme ? "text-gray-900 placeholder:text-gray-400" : "text-gray-100 placeholder:text-gray-600"}`}
-                />
-                <button
-                  onClick={sendMessage}
-                  disabled={!inputText.trim() || isThinking}
-                  className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition ${!inputText.trim() || isThinking ? "bg-gray-300/40 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700 text-white"}`}
-                >
-                  <FaArrowUp size={11} />
-                </button>
-              </div>
+              <ChatInputArea
+                onSend={sendMessage}
+                isThinking={isThinking}
+                theme={theme}
+                suggestedText={suggestedText}
+              />
               <div
                 className={`text-right text-[9px] mt-1 ${theme ? "text-gray-400" : "text-gray-600"}`}
               >

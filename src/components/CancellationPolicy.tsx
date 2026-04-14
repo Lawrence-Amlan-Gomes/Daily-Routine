@@ -11,7 +11,9 @@ export default function CancellationPolicy() {
       }`}
     >
       <div className="max-w-4xl mx-auto text-left">
-        <h1 className="text-3xl sm:text-4xl font-bold mb-4">Cancellation Policy</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold mb-4">
+          Cancellation Policy
+        </h1>
         <p className="text-sm sm:text-base opacity-80 mb-8">
           Last updated: {new Date().toLocaleDateString()}
         </p>
@@ -20,24 +22,27 @@ export default function CancellationPolicy() {
           <section>
             <h2 className="text-xl font-semibold mb-2">1. Cancel Anytime</h2>
             <p>
-              You can cancel your subscription at any time from your billing settings
-              or by contacting support.
+              You can cancel your subscription at any time from your billing
+              settings or by contacting support.
             </p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-2">2. Effective Date</h2>
             <p>
-              Cancellation takes effect at the end of your current billing period unless
-              otherwise stated by local law.
+              Cancellation takes effect at the end of your current billing
+              period unless otherwise stated by local law.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold mb-2">3. Access After Cancellation</h2>
+            <h2 className="text-xl font-semibold mb-2">
+              3. Access After Cancellation
+            </h2>
             <p>
-              You retain paid access until the period ends, then your account may move
-              to a free or restricted plan based on current product rules.
+              You retain paid access until the period ends, then your account
+              may move to a free or restricted plan based on current product
+              rules.
             </p>
           </section>
 
@@ -45,7 +50,7 @@ export default function CancellationPolicy() {
             <h2 className="text-xl font-semibold mb-2">4. Support</h2>
             <p>
               For cancellation help, email{" "}
-              <span className="font-medium">my.daily.routine.app@gmail.com</span>.
+              <span className="font-medium">amlan100ai@gmail.com</span>.
             </p>
           </section>
         </div>

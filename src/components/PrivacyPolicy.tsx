@@ -122,9 +122,7 @@ export default function PrivacyPolicy() {
               <h2 className="text-xl font-semibold mb-2">9. Contact</h2>
               <p>
                 For privacy questions or data requests, contact:{" "}
-                <span className="font-medium">
-                  my.daily.routine.app@gmail.com
-                </span>
+                <span className="font-medium">amlan100ai@gmail.com</span>
               </p>
             </section>
 

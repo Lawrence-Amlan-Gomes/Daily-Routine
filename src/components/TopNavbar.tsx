@@ -13,7 +13,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import ProfileIcon from "./ProfileIcon";
-import ToogleTheme from "./ToogleTheme";
+import ToggleTheme from "./ToggleTheme";
 
 // ──────────────────────────────────────────────────────────────
 //  ONLY ADDED: Props interface + type annotation
@@ -94,8 +94,6 @@ const TopNavbar = () => {
         const freshUser = await findUserByEmail(auth.email);
 
         if (freshUser) {
-          // Only update if something changed (optional optimization)
-          // You can compare fields if you want, but usually just set it
           setAuth({
             ...freshUser,
             paymentType: freshUser.paymentType ?? "Expired",
@@ -106,8 +104,14 @@ const TopNavbar = () => {
           await signOut({ redirect: false });
         }
       } catch (err) {
-        console.error("Failed to sync auth with DB:", err);
-        // Optionally show toast or ignore silently
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg === "UNAUTHORIZED" || msg === "FORBIDDEN") {
+          // Auth cookie expired — clear stale local state silently
+          dispatch(logout());
+          await signOut({ redirect: false });
+        } else {
+          console.error("Failed to sync auth with DB:", err);
+        }
       }
     };
 
@@ -168,7 +172,7 @@ const TopNavbar = () => {
             />
           ))}
           <div className="flex items-center">
-            <ToogleTheme />
+            <ToggleTheme />
             <ProfileIcon
               active={active === "profile" ? "profile" : undefined}
             />
@@ -204,7 +208,7 @@ const TopNavbar = () => {
 
         {/* Hamburger Menu Button */}
         <div className="flex items-center">
-          <ToogleTheme />
+          <ToggleTheme />
           <ProfileIcon active={active === "profile" ? "profile" : undefined} />
           <button
             onClick={toggleMenu}

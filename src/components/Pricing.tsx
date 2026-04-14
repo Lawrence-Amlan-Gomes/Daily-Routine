@@ -141,7 +141,7 @@ export default function Pricing() {
             title: "Test",
             description: "Admin test pricing card",
             priceMonthly: 1,
-            priceAnnual: 1, // Same as monthly - always monthly
+            priceAnnual: 1,
             features: [
               { name: "admin", value: "Admin only test plan" },
               { name: "test", value: "For testing purposes" },
@@ -161,240 +161,367 @@ export default function Pricing() {
     return billingPeriod === "annual" ? plan!.priceAnnual : plan!.priceMonthly;
   };
 
-  const getPriceLabel = (planId: string) => {
-    const price = getPrice(planId);
-    return `$${price}/${billingPeriod === "annual" ? "year" : "month"}`;
+  const getMonthlyEquivalent = (planId: string) => {
+    const plan = plans.find((p) => p.id === planId);
+    if (!plan || plan.priceAnnual === 0) return null;
+    return (plan.priceAnnual / 12).toFixed(2).replace(/\.00$/, "");
   };
+
+  const is = theme; // shorthand: true = light, false = dark
 
   return (
     <div
-      className={`h-full py-8 sm:pt-[8%] pt-[80px] px-4 sm:px-6 overflow-auto scrollbar relative ${
-        theme
-          ? "bg-[#ffffff] scrollbar-thumb-black scrollbar-track-[#eeeeee]"
-          : "bg-[#000000] scrollbar-thumb-white scrollbar-track-[#222222]"
+      className={`h-full py-8 sm:pt-[6%] pt-[80px] px-4 sm:px-6 overflow-auto scrollbar relative ${
+        is
+          ? "bg-[#f8f9fb] scrollbar-thumb-black scrollbar-track-[#eeeeee]"
+          : "bg-[#0a0a0f] scrollbar-thumb-white scrollbar-track-[#222222]"
       }`}
     >
-      <div className="max-w-4xl mb-[5%] sm:max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-6 sm:mb-8">
-          <h1
-            className={`text-2xl sm:text-3xl font-bold mb-3 sm:mb-4 ${
-              theme ? "text-[#0a0a0a]" : "text-[#ebebeb]"
+      <div className="max-w-5xl mb-[5%] mx-auto">
+
+        {/* ── Header ── */}
+        <div className="text-center mb-8 sm:mb-10">
+          <span
+            className={`inline-block mb-3 px-3 py-1 rounded-full text-xs font-semibold tracking-widest uppercase ${
+              is
+                ? "bg-blue-50 text-blue-600 border border-blue-100"
+                : "bg-blue-950/60 text-blue-400 border border-blue-900"
             }`}
           >
-            Choose Your Plan
+            Pricing
+          </span>
+          <h1
+            className={`text-3xl sm:text-4xl font-bold tracking-tight mb-3 ${
+              is ? "text-[#0a0a0a]" : "text-[#f0f0f0]"
+            }`}
+          >
+            Simple, transparent pricing
           </h1>
           <p
-            className={`text-base sm:text-xl ${
-              theme ? "text-[#0a0a0a]" : "text-[#ebebeb]"
+            className={`text-base sm:text-lg max-w-xl mx-auto ${
+              is ? "text-gray-500" : "text-gray-400"
             }`}
           >
-            Select a plan to get started.
+            Start free, upgrade when you&apos;re ready. No hidden fees.
           </p>
         </div>
 
-        {/* Toggle */}
-        <div className="flex justify-center mb-4 sm:mb-6">
+        {/* ── Billing toggle ── */}
+        <div className="flex justify-center items-center gap-3 mb-8 sm:mb-10">
           <div
-            className={`flex rounded-lg p-1 sm:p-2 ${
-              theme ? "bg-black" : "bg-white"
+            className={`flex rounded-xl p-1 ${
+              is ? "bg-gray-200/70" : "bg-gray-900"
             }`}
           >
             <button
               onClick={() => setBillingPeriod("monthly")}
-              className={`px-4 sm:px-5 py-1 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-all ${
+              className={`px-5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 billingPeriod === "monthly"
-                  ? theme
-                    ? "bg-[#ffffff] text-[#0a0a0a] shadow-sm"
-                    : "bg-[#000000] text-[#ebebeb] shadow-sm"
-                  : theme
-                    ? "text-[#ffffff]"
-                    : "text-[#000000]"
+                  ? is
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "bg-gray-700 text-white shadow-sm"
+                  : is
+                    ? "text-gray-500 hover:text-gray-700"
+                    : "text-gray-400 hover:text-gray-200"
               }`}
             >
               Monthly
             </button>
             <button
               onClick={() => setBillingPeriod("annual")}
-              className={`px-4 sm:px-5 py-1 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-all ${
+              className={`px-5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
                 billingPeriod === "annual"
-                  ? theme
-                    ? "bg-[#ffffff] text-[#0a0a0a] shadow-sm"
-                    : "bg-[#000000] text-[#ebebeb] shadow-sm"
-                  : theme
-                    ? "text-[#ffffff]"
-                    : "text-[#000000]"
+                  ? is
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "bg-gray-700 text-white shadow-sm"
+                  : is
+                    ? "text-gray-500 hover:text-gray-700"
+                    : "text-gray-400 hover:text-gray-200"
               }`}
             >
               Annually
+              <span
+                className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
+                  billingPeriod === "annual"
+                    ? "bg-green-500/20 text-green-600"
+                    : is
+                      ? "bg-green-100 text-green-600"
+                      : "bg-green-950 text-green-400"
+                }`}
+              >
+                Save 8%
+              </span>
             </button>
           </div>
         </div>
 
-        {/* Plans Grid */}
+        {/* ── Plans grid ── */}
         <div
-          className={`grid grid-cols-1 ${plans.length === 4 ? "md:grid-cols-4" : "md:grid-cols-3"} gap-4 sm:gap-5`}
+          className={`grid grid-cols-1 ${
+            plans.length === 4 ? "md:grid-cols-4" : "md:grid-cols-3"
+          } gap-4 sm:gap-5 items-start`}
         >
           {plans.map((plan) => {
-            const priceLabel = getPriceLabel(plan.id);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const price = getPrice(plan.id);
+            const monthlyEquiv = getMonthlyEquivalent(plan.id);
             const isSelected = selectedPlan === plan.id;
+
+            const cardBase = `relative flex flex-col rounded-2xl transition-all duration-200 overflow-hidden`;
+            const cardStyle = plan.isMostPopular
+              ? is
+                ? `${cardBase} bg-white border-2 border-blue-500 shadow-xl shadow-blue-100 ${isSelected ? "scale-[1.01]" : ""}`
+                : `${cardBase} bg-gray-950 border-2 border-blue-500 shadow-xl shadow-blue-950 ${isSelected ? "scale-[1.01]" : ""}`
+              : plan.badge === "Admin Only"
+                ? `${cardBase} ${is ? "bg-white border border-orange-300" : "bg-gray-950 border border-orange-900"}`
+                : is
+                  ? `${cardBase} bg-white border border-gray-200 hover:border-gray-300 hover:shadow-md ${isSelected ? "shadow-md" : ""}`
+                  : `${cardBase} bg-gray-950 border border-gray-800 hover:border-gray-700 hover:shadow-lg ${isSelected ? "shadow-lg" : ""}`;
 
             return (
               <div
                 key={plan.id}
-                className={`p-4 sm:p-6 rounded-lg ${
-                  theme
-                    ? plan.isMostPopular
-                      ? `bg-[#fafafa] border-[1px] ${colors.keyBorder} hover:cursor-pointer`
-                      : "bg-[#fafafa] border border-gray-300 hover:border-gray-400 hover:cursor-pointer"
-                    : plan.isMostPopular
-                      ? `bg-gray-950 border-[1px] ${colors.keyBorder} hover:cursor-pointer`
-                      : `bg-gray-950 border border-gray-900 hover:border-gray-800 hover:cursor-pointer`
-                }`}
+                className={`${cardStyle} cursor-pointer`}
                 onMouseEnter={() => setSelectedPlan(plan.id)}
                 onMouseLeave={() => setSelectedPlan(null)}
               >
-                {/* Title + Badge */}
-                <div className="flex justify-center items-center mb-2 sm:mb-3">
-                  <h3
-                    className={`text-xl sm:text-2xl font-bold ${
-                      theme ? "text-[#0a0a0a]" : "text-[#ebebeb]"
-                    }`}
-                  >
-                    {plan.title}
-                  </h3>
-                  {(plan.isMostPopular || plan.badge) && (
-                    <div className="ml-3 sm:ml-4">
+                {/* Top accent bar for popular / admin */}
+                {plan.isMostPopular && (
+                  <div className="h-1 w-full bg-blue-500" />
+                )}
+                {plan.badge === "Admin Only" && (
+                  <div className="h-1 w-full bg-orange-500" />
+                )}
+
+                <div className="p-5 sm:p-6 flex flex-col flex-1">
+                  {/* Title + Badge */}
+                  <div className="flex items-center justify-between mb-1">
+                    <h3
+                      className={`text-lg sm:text-xl font-bold ${
+                        is ? "text-gray-900" : "text-gray-100"
+                      }`}
+                    >
+                      {plan.title}
+                    </h3>
+                    {(plan.isMostPopular || plan.badge) && (
                       <span
-                        className={`inline-block px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs sm:text-sm font-semibold ${
+                        className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                           plan.badge === "Admin Only"
-                            ? "bg-orange-500 text-white"
-                            : theme
-                              ? `${colors.keyBg} text-[#ffffff]`
-                              : `${colors.keyBg} text-[#ffffff]`
+                            ? "bg-orange-100 text-orange-700"
+                            : "bg-blue-100 text-blue-700"
                         }`}
                       >
                         {plan.badge || "Most Popular"}
                       </span>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                {/* Description + Price + CTA */}
-                <div className="text-center mb-4 sm:mb-5">
+                  {/* Description */}
                   <p
-                    className={`text-sm sm:text-base ${
-                      theme ? "text-[#0a0a0a]" : "text-[#ebebeb]"
+                    className={`text-sm mb-5 ${
+                      is ? "text-gray-500" : "text-gray-400"
                     }`}
                   >
                     {plan.description}
                   </p>
-                  <div className="mt-2 sm:mt-3">
-                    <div
-                      className={`text-2xl sm:text-3xl font-bold ${
-                        theme ? "text-[#0a0a0a]" : "text-[#ebebeb]"
-                      }`}
-                    >
-                      {priceLabel}
-                    </div>
 
-                    {/* Free plan handling */}
+                  {/* Price */}
+                  <div className="mb-5">
                     {plan.id === "free" ? (
-                      isFreeTierExpired ? (
-                        <div className="flex flex-col gap-2 mt-3 sm:mt-5">
-                          <div className="w-full py-1.5 sm:py-2 rounded-md text-sm sm:text-base font-medium bg-red-700/80 text-white text-center">
-                            Free trial expired
-                          </div>
-                          <Link href={auth ? "/billing" : "/login"}>
-                            <button
-                              onClick={() =>
-                                setWantToPayment("Standard", billingPeriod)
-                              }
-                              className={`w-full py-1.5 sm:py-2 rounded-md text-sm font-medium transition ${
-                                theme
-                                  ? "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                                  : "bg-gray-900 text-gray-200 hover:bg-gray-800"
-                              }`}
-                            >
-                              Upgrade to continue →
-                            </button>
-                          </Link>
+                      <div className="flex items-end gap-1">
+                        <span
+                          className={`text-4xl font-extrabold ${
+                            is ? "text-gray-900" : "text-gray-100"
+                          }`}
+                        >
+                          $0
+                        </span>
+                        <span
+                          className={`text-sm mb-1.5 ${
+                            is ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        >
+                          / 30 days
+                        </span>
+                      </div>
+                    ) : billingPeriod === "annual" ? (
+                      <>
+                        <div className="flex items-end gap-1">
+                          <span
+                            className={`text-4xl font-extrabold ${
+                              is ? "text-gray-900" : "text-gray-100"
+                            }`}
+                          >
+                            ${price}
+                          </span>
+                          <span
+                            className={`text-sm mb-1.5 ${
+                              is ? "text-gray-400" : "text-gray-500"
+                            }`}
+                          >
+                            / year
+                          </span>
                         </div>
-                      ) : (
-                        <button
-                          className={`w-full py-1.5 sm:py-2 rounded-md mt-5 text-sm sm:text-base font-medium ${
-                            theme
-                              ? "bg-gray-200 text-[#0a0a0a] hover:bg-gray-300"
-                              : "bg-gray-900 text-[#ebebeb] hover:bg-gray-800"
-                          }`}
-                        >
-                          <Link href={auth ? "/dashBoard" : "/login"}>
-                            Use Now
-                          </Link>
-                        </button>
-                      )
-                    ) : auth ? (
-                      <Link href="/billing">
-                        <button
-                          onClick={() => {
-                            setWantToPayment(plan.title, billingPeriod);
-                          }}
-                          className={`w-full mt-3 sm:mt-5 py-1.5 sm:py-2 rounded-md text-sm sm:text-base font-medium ${
-                            plan.isMostPopular
-                              ? `${colors.keyBg} text-white hover:bg-blue-800`
-                              : theme
-                                ? "bg-gray-200 text-[#0a0a0a] hover:bg-gray-300"
-                                : "bg-gray-900 text-[#ebebeb] hover:bg-gray-800"
-                          }`}
-                        >
-                          {plan.isMostPopular ? "Get Started" : "Buy Plan"}
-                        </button>
-                      </Link>
+                        {monthlyEquiv && (
+                          <p
+                            className={`text-xs mt-0.5 ${
+                              is ? "text-gray-400" : "text-gray-500"
+                            }`}
+                          >
+                            ~${monthlyEquiv}/mo, billed annually
+                          </p>
+                        )}
+                      </>
                     ) : (
-                      <Link href="/login">
-                        <button
-                          onClick={() => {
-                            setWantToPayment(plan.title, billingPeriod);
-                          }}
-                          className={`w-full mt-3 sm:mt-5 py-1.5 sm:py-2 rounded-md text-sm sm:text-base font-medium ${
-                            plan.isMostPopular
-                              ? `${colors.keyBg} text-white hover:bg-blue-800`
-                              : theme
-                                ? "bg-gray-200 text-[#0a0a0a] hover:bg-gray-300"
-                                : "bg-gray-900 text-[#ebebeb] hover:bg-gray-800"
+                      <div className="flex items-end gap-1">
+                        <span
+                          className={`text-4xl font-extrabold ${
+                            is ? "text-gray-900" : "text-gray-100"
                           }`}
                         >
-                          {plan.isMostPopular ? "Get Started" : "Buy Plan"}
-                        </button>
-                      </Link>
+                          ${price}
+                        </span>
+                        <span
+                          className={`text-sm mb-1.5 ${
+                            is ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        >
+                          / month
+                        </span>
+                      </div>
                     )}
                   </div>
-                </div>
 
-                {/* Features list */}
-                <ul className="space-y-1 sm:space-y-2">
-                  {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-center">
-                      <div
-                        className={`w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full mr-1.5 sm:mr-2 ${
-                          theme ? "bg-green-600" : "bg-green-600"
-                        }`}
-                      />
-                      <span
-                        className={`text-sm sm:text-base ${
-                          theme ? "text-[#0a0a0a]" : "text-[#ebebeb]"
-                        }`}
-                      >
-                        {feature.value}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                  {/* CTA button */}
+                  {plan.id === "free" ? (
+                    isFreeTierExpired ? (
+                      <div className="flex flex-col gap-2 mb-5">
+                        <div className="w-full py-2 rounded-lg text-sm font-medium bg-red-500/10 text-red-500 border border-red-500/20 text-center">
+                          Free trial expired
+                        </div>
+                        <Link href={auth ? "/billing" : "/login"} className="w-full">
+                          <button
+                            onClick={() =>
+                              setWantToPayment("Standard", billingPeriod)
+                            }
+                            className={`w-full py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                              is
+                                ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                : "bg-gray-800 text-gray-200 hover:bg-gray-700"
+                            }`}
+                          >
+                            Upgrade to continue →
+                          </button>
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="mb-5">
+                        <Link href={auth ? "/dashBoard" : "/login"} className="w-full">
+                          <button
+                            className={`w-full py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                              is
+                                ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                : "bg-gray-800 text-gray-200 hover:bg-gray-700"
+                            }`}
+                          >
+                            Use Now
+                          </button>
+                        </Link>
+                      </div>
+                    )
+                  ) : auth ? (
+                    <div className="mb-5">
+                      <Link href="/billing" className="w-full">
+                        <button
+                          onClick={() =>
+                            setWantToPayment(plan.title, billingPeriod)
+                          }
+                          className={`w-full py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                            plan.isMostPopular
+                              ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-200"
+                              : plan.badge === "Admin Only"
+                                ? "bg-orange-500 text-white hover:bg-orange-600"
+                                : is
+                                  ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                  : "bg-gray-800 text-gray-200 hover:bg-gray-700"
+                          }`}
+                        >
+                          {plan.isMostPopular ? "Get Started" : plan.cta}
+                        </button>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="mb-5">
+                      <Link href="/login" className="w-full">
+                        <button
+                          onClick={() =>
+                            setWantToPayment(plan.title, billingPeriod)
+                          }
+                          className={`w-full py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                            plan.isMostPopular
+                              ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-200"
+                              : plan.badge === "Admin Only"
+                                ? "bg-orange-500 text-white hover:bg-orange-600"
+                                : is
+                                  ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                  : "bg-gray-800 text-gray-200 hover:bg-gray-700"
+                          }`}
+                        >
+                          {plan.isMostPopular ? "Get Started" : plan.cta}
+                        </button>
+                      </Link>
+                    </div>
+                  )}
+
+                  {/* Divider */}
+                  <div
+                    className={`h-px w-full mb-4 ${
+                      is ? "bg-gray-100" : "bg-gray-800"
+                    }`}
+                  />
+
+                  {/* Features list */}
+                  <ul className="space-y-2.5">
+                    {plan.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-2.5">
+                        <svg
+                          className="w-4 h-4 mt-0.5 shrink-0 text-green-500"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <circle cx="8" cy="8" r="8" className={is ? "fill-green-50" : "fill-green-950"} />
+                          <path
+                            d="M4.5 8.5L7 11L11.5 5.5"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        <span
+                          className={`text-sm leading-snug ${
+                            is ? "text-gray-600" : "text-gray-400"
+                          }`}
+                        >
+                          {feature.value}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             );
           })}
         </div>
+
+        {/* ── Footer note ── */}
+        <p
+          className={`text-center text-xs mt-8 ${
+            is ? "text-gray-400" : "text-gray-600"
+          }`}
+        >
+          All plans include SSL security. Cancel or change your plan at any time.
+        </p>
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import EachField from "./EachField";
+import OtpInput from "./OtpInput";
 
 const RegistrationForm = () => {
   const { theme } = useTheme();
@@ -24,6 +25,7 @@ const RegistrationForm = () => {
 
   // OTP state
   const [otpSent, setOtpSent] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [otpError, setOtpError] = useState("");
   const [otpSuccess, setOtpSuccess] = useState("");
@@ -31,7 +33,6 @@ const RegistrationForm = () => {
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // pendingUserData holds form values while awaiting OTP confirmation
   const pendingUserData = useRef<{
     name: string;
     email: string;
@@ -53,8 +54,6 @@ const RegistrationForm = () => {
   const [googleError, setGoogleError] = useState({ isError: false, error: "" });
   const [successMessage, setSuccessMessage] = useState("");
   const [noError, setNoError] = useState(false);
-
-  // No Google auth state sync needed
 
   // Validation
   useEffect(() => {
@@ -112,7 +111,6 @@ const RegistrationForm = () => {
     }
   }, [successMessage, router]);
 
-  // Cleanup countdown on unmount
   useEffect(() => {
     return () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
@@ -137,7 +135,6 @@ const RegistrationForm = () => {
     setIsSendingOtp(true);
     setOtpError("");
     setOtpSuccess("");
-    // Switch UI immediately so user sees the OTP screen while email sends
     setOtpSent(true);
     try {
       const res = await fetch("/api/send-otp", {
@@ -150,7 +147,6 @@ const RegistrationForm = () => {
         setOtpSuccess("Verification code sent! Check your inbox.");
         startCountdown();
       } else {
-        // Revert if sending actually failed
         setOtpSent(false);
         setOtpError(data.error || "Failed to send code.");
       }
@@ -164,15 +160,13 @@ const RegistrationForm = () => {
 
   const submitForm = async () => {
     if (!noError) return;
-    if (!confirm("Are you sure to Register?")) return;
-    // Store form values and send OTP — do NOT create user yet
     pendingUserData.current = { name, email, password };
     await sendOtp(name, email);
   };
 
   const verifyOtpAndRegister = async () => {
-    if (!otpCode || otpCode.length !== 6) {
-      setOtpError("Please enter the 6-digit code.");
+    if (otpCode.length !== 6) {
+      setOtpError("Please enter the full 6-digit code.");
       return;
     }
     if (!pendingUserData.current) return;
@@ -181,7 +175,6 @@ const RegistrationForm = () => {
     setOtpError("");
 
     try {
-      // 1. Verify OTP
       const res = await fetch("/api/send-otp", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -193,12 +186,11 @@ const RegistrationForm = () => {
       const data = await res.json();
 
       if (!data.success) {
-        setOtpError(data.error || "Invalid code.");
+        setOtpError(data.error || "Invalid code. Please try again.");
         setIsVerifying(false);
         return;
       }
 
-      // 2. Create user (isEmailVerified will be set true by OTP success)
       const { name: n, email: e, password: p } = pendingUserData.current;
       await createUser({
         name: n,
@@ -207,6 +199,8 @@ const RegistrationForm = () => {
         photo: "",
         isEmailVerified: true,
       });
+
+      setRegistrationSuccess(true);
       setSuccessMessage(`${e} successfully registered`);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
@@ -218,7 +212,7 @@ const RegistrationForm = () => {
         setOtpSent(false);
         setOtpCode("");
       } else {
-        setOtpError("Registration failed. Try again.");
+        setOtpError("Registration failed. Please try again.");
       }
     } finally {
       setIsVerifying(false);
@@ -234,8 +228,8 @@ const RegistrationForm = () => {
     }
   };
 
-  const renderSpinner = () => (
-    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+  const renderSpinner = (size = "w-4 h-4") => (
+    <svg className={`animate-spin ${size}`} fill="none" viewBox="0 0 24 24">
       <circle
         className="opacity-25"
         cx="12"
@@ -244,20 +238,20 @@ const RegistrationForm = () => {
         stroke="currentColor"
         strokeWidth="4"
       />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8v8z"
+      />
     </svg>
   );
 
-  /* ------------------------------------------------------------------ */
-  /*  Google-auth registration – now fully type-safe                     */
-  /* ------------------------------------------------------------------ */
   useEffect(() => {
     if (session?.user && isGoogleClicked) {
       setIsLoadingGoogle(true);
-      const user = session.user; // Now guaranteed to be defined
+      const user = session.user;
 
       const run = async () => {
-        // `user` is in scope and type-narrowed
         if (!user.email) {
           setGoogleError({
             isError: true,
@@ -284,12 +278,12 @@ const RegistrationForm = () => {
           if (err.message === "EMAIL_ALREADY_EXISTS") {
             setGoogleError({
               isError: true,
-              error: `${userEmail} is already registered. Please log in.`,
+              error: `${userEmail} is already registered. Please sign in instead.`,
             });
           } else {
             setGoogleError({
               isError: true,
-              error: "Auto-registration failed.",
+              error: "Registration failed. Please try again.",
             });
           }
         } finally {
@@ -302,200 +296,28 @@ const RegistrationForm = () => {
     }
   }, [session, isGoogleClicked]);
 
-  /* ------------------------------------------------------------------ */
-
   return (
     <div
-      onKeyDown={(e) => e.key === "Enter" && submitForm()}
-      className={`h-screen w-full ${otpSent ? "sm:pt-[10%] pt-[100px]" : "sm:pt-[5%] pt-[100px]"} sm:px-0 px-[10%] pb-[50px] overflow-y-auto lg:flex lg:justify-center lg:items-center scrollbar-thin ${
-        theme ? `bg-white ${colors.bgLight} scrollbar-track-white scrollbar-thumb-black` : `bg-black ${colors.bgDark} scrollbar-track-black scrollbar-thumb-white`
+      onKeyDown={(e) => e.key === "Enter" && !otpSent && submitForm()}
+      className={`min-h-screen w-full flex items-center justify-center sm:px-0 px-6 pt-[80px] md:pt-[100px] pb-10 ${
+        theme
+          ? `bg-white ${colors.bgLight}`
+          : `bg-black ${colors.bgDark}`
       }`}
     >
       <div
-        className={`sm:p-10 p-5 overflow-hidden rounded-lg sm:my-[5%] sm:w-[80%] sm:mx-[10%] lg:w-[700px] xl:w-[800px] 2xl:w-[900px] lg:my-0 text-center ${
-          theme ? `${colors.cardLight}` : `${colors.cardDark}`
+        className={`w-full sm:w-[480px] lg:w-[520px] rounded-xl p-8 sm:p-10 ${
+          theme ? colors.cardLight : colors.cardDark
         }`}
       >
-        <div className="w-full overflow-hidden">
-          {!otpSent && (
-            <div className="text-[20px] lg:text-[25px] 2xl:text-[40px] font-bold sm:mb-5 w-full float-left flex justify-center items-center">
-              Registration
-            </div>
-          )}
-
-          <div className="opacity-0">
-            <EachField
-              label="fake"
-              type="email"
-              name="email"
-              isReal={false}
-              placeholder="Enter your email"
-              value={email}
-              setValue={setEmail}
-              iserror={emailError.iserror}
-              error={emailError.error}
-            />
-            <EachField
-              label="fake"
-              type="password"
-              name="password"
-              isReal={false}
-              placeholder="Enter your password"
-              value={password}
-              setValue={setPassword}
-              iserror={passwordError.iserror}
-              error={passwordError.error}
-            />
-          </div>
-        </div>
-
-        {/* Mobile */}
-        <div
-          className={`w-full sm:hidden block overflow-hidden ${otpSent ? "hidden" : ""}`}
-        >
-          <EachField
-            label="Name"
-            type="name"
-            name="name"
-            isReal={true}
-            placeholder="Enter your name"
-            value={name}
-            setValue={setName}
-            iserror={nameError.iserror}
-            error={nameError.error}
-          />
-          <EachField
-            label="Email"
-            type="email"
-            name="email"
-            isReal={true}
-            placeholder="Enter your email"
-            value={email}
-            setValue={setEmail}
-            iserror={emailError.iserror}
-            error={emailError.error}
-          />
-          <EachField
-            label="Password"
-            type="password"
-            name="password"
-            isReal={true}
-            placeholder="Enter your password"
-            value={password}
-            setValue={setPassword}
-            iserror={passwordError.iserror}
-            error={passwordError.error}
-          />
-          <button
-            onClick={submitForm}
-            disabled={!noError || isSendingOtp}
-            className={`
-    text-[12px] lg:text-[16px] 2xl:text-[25px]
-    ${noError ? "cursor-pointer" : "cursor-not-allowed"} rounded-lg mt-6 sm:mt-12 py-2 sm:py-2.5 md:py-3 px-5 sm:px-6 md:px-8
-    font-medium transition-all duration-300 ease-out
-    shadow-sm hover:shadow-md active:scale-[0.98]
-    border border-transparent
-    ${
-      noError
-        ? theme
-          ? "bg-green-600 hover:bg-green-700 text-white"
-          : "bg-green-700 hover:bg-green-800 text-white"
-        : theme
-          ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-          : "bg-gray-800 text-gray-500 cursor-not-allowed"
-    }
-  `}
-          >
-            {isSendingOtp ? (
-              <span className="flex items-center justify-center gap-2">
-                {renderSpinner()}
-                Registering...
-              </span>
-            ) : (
-              "Register"
-            )}
-          </button>
-        </div>
-
-        {/* Desktop */}
-        <div
-          className={`float-left w-[50%] sm:block hidden pr-5 ${otpSent ? "!hidden" : ""}`}
-        >
-          <EachField
-            label="Email"
-            type="email"
-            name="email"
-            isReal={true}
-            placeholder="Enter your email"
-            value={email}
-            setValue={setEmail}
-            iserror={emailError.iserror}
-            error={emailError.error}
-          />
-          <EachField
-            label="Password"
-            type="password"
-            name="password"
-            isReal={true}
-            placeholder="Enter your password"
-            value={password}
-            setValue={setPassword}
-            iserror={passwordError.iserror}
-            error={passwordError.error}
-          />
-        </div>
-
-        <div
-          className={`float-left w-[50%] sm:block hidden pl-5 ${otpSent ? "!hidden" : ""}`}
-        >
-          <EachField
-            label="Name"
-            type="name"
-            name="name"
-            isReal={true}
-            placeholder="Enter your name"
-            value={name}
-            setValue={setName}
-            iserror={nameError.iserror}
-            error={nameError.error}
-          />
-          <button
-            onClick={submitForm}
-            disabled={!noError || isSendingOtp}
-            className={`
-    text-[12px] lg:text-[16px] 2xl:text-[25px]
-    ${noError ? "cursor-pointer" : "cursor-not-allowed"} rounded-lg ${password ? "lg:mt-[45px] mt-[35px]" : "mt-[15px] lg:mt-[15px]"} py-2 sm:py-2.5 md:py-3 px-5 sm:px-6 md:px-8
-    font-medium transition-all duration-300 ease-out
-    shadow-sm hover:shadow-md active:scale-[0.98]
-    border border-transparent
-    ${
-      noError
-        ? theme
-          ? "bg-green-600 hover:bg-green-700 text-white"
-          : "bg-green-700 hover:bg-green-800 text-white"
-        : theme
-          ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-          : "bg-gray-800 text-gray-500 cursor-not-allowed"
-    }
-  `}
-          >
-            {isSendingOtp ? (
-              <span className="flex items-center justify-center gap-2">
-                {renderSpinner()}
-                Registering...
-              </span>
-            ) : (
-              "Register"
-            )}
-          </button>
-        </div>
-
-        {/* OTP Section */}
-        {otpSent && (
-          <div className="w-full clear-both flex flex-col items-center justify-center py-2 px-4">
+        {/* ── OTP Step ───────────────────────────────────────────────── */}
+        {otpSent && !registrationSuccess && (
+          <div className="flex flex-col items-center py-2">
             {/* Icon */}
             <div
-              className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${theme ? "bg-green-50" : "bg-green-900/30"}`}
+              className={`w-16 h-16 rounded-full flex items-center justify-center mb-5 ${
+                theme ? "bg-green-50" : "bg-green-900/30"
+              }`}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -513,112 +335,115 @@ const RegistrationForm = () => {
               </svg>
             </div>
 
-            {/* Title */}
             <h2
-              className={`text-lg sm:text-xl lg:text-2xl font-bold mb-1 ${theme ? "text-gray-800" : "text-gray-100"}`}
+              className={`text-xl sm:text-2xl font-bold mb-2 ${
+                theme ? "text-gray-800" : "text-gray-100"
+              }`}
             >
               Check your inbox
             </h2>
-
-            {/* Subtitle */}
             <p
-              className={`text-xs sm:text-sm lg:text-base text-center mb-6 max-w-xs ${theme ? "text-gray-500" : "text-gray-400"}`}
+              className={`text-sm text-center mb-7 max-w-xs leading-relaxed ${
+                theme ? "text-gray-500" : "text-gray-400"
+              }`}
             >
-              We sent a 6-digit code to{" "}
+              We sent a 6-digit verification code to{" "}
               <span
-                className={`font-semibold ${theme ? "text-gray-700" : "text-gray-200"}`}
+                className={`font-semibold ${
+                  theme ? "text-gray-700" : "text-gray-200"
+                }`}
               >
                 {pendingUserData.current?.email}
               </span>
             </p>
 
-            {/* OTP Input */}
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
+            {/* 6-box OTP input */}
+            <OtpInput
               value={otpCode}
-              onChange={(e) => {
-                setOtpCode(e.target.value.replace(/\D/g, ""));
+              onChange={(val) => {
+                setOtpCode(val);
                 setOtpError("");
               }}
-              placeholder="• • • • • •"
-              className={`
-                w-48 sm:w-56 text-center tracking-[0.5em] text-2xl sm:text-3xl font-bold
-                rounded-xl px-4 py-3 border-2 outline-none transition-all duration-200
-                ${
-                  theme
-                    ? "bg-white border-gray-200 text-gray-900 focus:border-green-500 focus:shadow-[0_0_0_3px_rgba(22,163,74,0.15)]"
-                    : "bg-gray-800/60 border-gray-600 text-white focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(74,222,128,0.15)]"
-                }
-              `}
+              hasError={!!otpError}
             />
 
-            {/* Error / Success messages */}
-            <div className="h-5 mt-2 mb-1">
+            {/* Status messages */}
+            <div className="min-h-[28px] mt-3 mb-1 w-full flex justify-center">
               {otpError && (
                 <p
-                  className={`text-xs sm:text-sm font-medium ${theme ? "text-red-500" : "text-red-400"}`}
+                  className={`text-xs sm:text-sm font-medium flex items-center gap-1.5 ${
+                    theme ? "text-red-600" : "text-red-400"
+                  }`}
                 >
+                  <svg
+                    className="w-3.5 h-3.5 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                    />
+                  </svg>
                   {otpError}
                 </p>
               )}
               {otpSuccess && !otpError && (
                 <p
-                  className={`text-xs sm:text-sm font-medium ${theme ? "text-green-600" : "text-green-400"}`}
+                  className={`text-xs sm:text-sm font-medium flex items-center gap-1.5 ${
+                    theme ? "text-green-600" : "text-green-400"
+                  }`}
                 >
+                  <svg
+                    className="w-3.5 h-3.5 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
                   {otpSuccess}
                 </p>
               )}
             </div>
 
-            {/* Verify Button */}
+            {/* Verify button */}
             <button
               onClick={verifyOtpAndRegister}
               disabled={isVerifying || otpCode.length !== 6}
               className={`
-                w-48 sm:w-56 mt-4 py-2.5 sm:py-3 rounded-xl font-semibold text-sm sm:text-base
+                w-full mt-3 py-2.5 rounded-lg font-semibold text-sm sm:text-base
                 transition-all duration-200 active:scale-[0.98]
                 ${
-                  isVerifying || otpCode.length !== 6
+                  !isVerifying && otpCode.length === 6
                     ? theme
+                      ? "bg-green-600 hover:bg-green-700 text-white shadow-sm cursor-pointer"
+                      : "bg-green-600 hover:bg-green-500 text-white shadow-sm cursor-pointer"
+                    : theme
                       ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                       : "bg-gray-800 text-gray-500 cursor-not-allowed"
-                    : theme
-                      ? "bg-green-600 hover:bg-green-700 text-white shadow-sm hover:shadow-md cursor-pointer"
-                      : "bg-green-600 hover:bg-green-500 text-white shadow-sm hover:shadow-md cursor-pointer"
                 }
               `}
             >
               {isVerifying ? (
                 <span className="flex items-center justify-center gap-2">
-                  <svg
-                    className="animate-spin w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v8z"
-                    />
-                  </svg>
+                  {renderSpinner()}
                   Verifying...
                 </span>
               ) : (
-                "Verify & Register"
+                "Verify & Create Account"
               )}
             </button>
 
-            {/* Resend Button */}
+            {/* Resend button */}
             <button
               onClick={() =>
                 sendOtp(
@@ -628,7 +453,7 @@ const RegistrationForm = () => {
               }
               disabled={isSendingOtp || otpCountdown > 0}
               className={`
-                w-48 sm:w-56 mt-3 py-2.5 sm:py-3 rounded-xl font-medium text-sm sm:text-base
+                w-full mt-2.5 py-2.5 rounded-lg font-medium text-sm sm:text-base
                 border transition-all duration-200 active:scale-[0.98]
                 ${
                   isSendingOtp || otpCountdown > 0
@@ -636,7 +461,7 @@ const RegistrationForm = () => {
                       ? "border-gray-200 text-gray-400 cursor-not-allowed bg-transparent"
                       : "border-gray-700 text-gray-600 cursor-not-allowed bg-transparent"
                     : theme
-                      ? "border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50 cursor-pointer bg-transparent"
+                      ? "border-gray-300 text-gray-600 hover:border-gray-400 hover:bg-gray-50 cursor-pointer bg-transparent"
                       : "border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-800/50 cursor-pointer bg-transparent"
                 }
               `}
@@ -644,11 +469,11 @@ const RegistrationForm = () => {
               {isSendingOtp
                 ? "Sending..."
                 : otpCountdown > 0
-                  ? `Resend in ${otpCountdown}s`
+                  ? `Resend code in ${otpCountdown}s`
                   : "Resend Code"}
             </button>
 
-            {/* Back to Register link */}
+            {/* Back link */}
             <button
               onClick={() => {
                 setOtpSent(false);
@@ -658,89 +483,289 @@ const RegistrationForm = () => {
                 pendingUserData.current = null;
               }}
               className={`mt-5 text-xs sm:text-sm underline underline-offset-2 transition-colors duration-200 cursor-pointer bg-transparent border-none
-                ${theme ? "text-gray-400 hover:text-gray-600" : "text-gray-500 hover:text-gray-300"}
+                ${
+                  theme
+                    ? "text-gray-400 hover:text-gray-600"
+                    : "text-gray-500 hover:text-gray-300"
+                }
               `}
             >
-              ← Back to register
+              ← Back to registration
             </button>
 
-            {/* Already have an account */}
-            <p className={`mt-4 text-[12px] lg:text-[16px] 2xl:text-[26px]`}>
-              Already Have An Account?{" "}
+            <p
+              className={`mt-5 text-sm ${
+                theme ? "text-gray-500" : "text-gray-400"
+              }`}
+            >
+              Already have an account?{" "}
               <Link
                 href="/login"
-                className={`${colors.keyText} ${colors.keyHoverText}`}
+                className={`font-semibold ${colors.keyText} ${colors.keyHoverText}`}
               >
-                Login
+                Sign in
               </Link>
             </p>
           </div>
         )}
 
-        <div
-          className={`w-full flex flex-col items-center justify-center ${otpSent ? "hidden" : ""}`}
-        >
-          <button
-            onClick={handleGoogleRegister}
-            disabled={isLoadingGoogle || isGoogleClicked}
-            className={`text-[12px] lg:text-[16px] 2xl:text-[25px] flex items-center gap-4 lg:h-[60px] h-[40px] cursor-pointer rounded-md mt-10 py-2 px-4 lg:px-6 ${
-              theme
-                ? `${colors.keyBg} ${colors.keyHoverBg}`
-                : `${colors.keyBg} ${colors.keyHoverBg}`
-            } text-white disabled:opacity-70 disabled:cursor-not-allowed`}
-          >
-            <div className="h-full flex justify-center items-center">
-              <div className="h-[30px] sm:h-[50px] w-[30px] sm:w-[50px] relative">
-                <Image
-                  priority
-                  src="/googleIcon.png"
-                  alt="Google Icon"
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 30vw"
-                  className="object-cover"
-                />
-              </div>
-            </div>
-            <div className="h-full text-center flex justify-center items-center">
-              <div>
-                {isLoadingGoogle
-                  ? (
-                    <span className="flex items-center justify-center gap-2">
-                      {renderSpinner()}
-                      Registering...
-                    </span>
-                  )
-                  : session
-                    ? `${session.user?.email}`
-                    : `Register with Google`}
-              </div>
-            </div>
-          </button>
-
-          {successMessage && (
-            <div className="mt-3 text-green-700 text-[12px] lg:text-[16px] 2xl:text-[24px] font-medium animate-pulse">
-              {successMessage}
-            </div>
-          )}
-          {googleError.isError && (
-            <div className="mt-2 text-red-600 text-[10px] lg:text-[14px] 2xl:text-[22px]">
-              {googleError.error}
-            </div>
-          )}
-        </div>
-
-        {!otpSent && (
-          <div className="float-left w-full overflow-hidden">
-            <p className="sm:mt-10 mt-5 text-[12px] lg:text-[16px] 2xl:text-[26px]">
-              Already Have An Account?{" "}
-              <Link
-                href="/login"
-                className={`${colors.keyText} ${colors.keyHoverText}`}
+        {/* ── Registration Success ────────────────────────────────────── */}
+        {registrationSuccess && (
+          <div className="flex flex-col items-center py-4 text-center">
+            <div
+              className={`w-20 h-20 rounded-full flex items-center justify-center mb-5 ${
+                theme ? "bg-green-50" : "bg-green-900/30"
+              }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`w-10 h-10 ${
+                  theme ? "text-green-600" : "text-green-400"
+                }`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
               >
-                Login
-              </Link>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+            <h2
+              className={`text-xl sm:text-2xl font-bold mb-2 ${
+                theme ? "text-gray-800" : "text-gray-100"
+              }`}
+            >
+              Account created!
+            </h2>
+            <p
+              className={`text-sm mb-1 ${
+                theme ? "text-gray-500" : "text-gray-400"
+              }`}
+            >
+              {pendingUserData.current?.email} is now registered.
+            </p>
+            <p
+              className={`text-xs ${
+                theme ? "text-gray-400" : "text-gray-500"
+              }`}
+            >
+              Redirecting you to sign in...
             </p>
           </div>
+        )}
+
+        {/* ── Registration Form ───────────────────────────────────────── */}
+        {!otpSent && !registrationSuccess && (
+          <>
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">
+                Create an account
+              </h1>
+              <p
+                className={`mt-2 text-sm ${
+                  theme ? "text-gray-500" : "text-gray-400"
+                }`}
+              >
+                Fill in your details to get started
+              </p>
+            </div>
+
+            {/* Hidden honeypot fields */}
+            <div className="opacity-0 h-0 overflow-hidden">
+              <EachField
+                label="fake"
+                type="email"
+                name="email"
+                isReal={false}
+                placeholder="Enter your email"
+                value={email}
+                setValue={setEmail}
+                iserror={emailError.iserror}
+                error={emailError.error}
+              />
+              <EachField
+                label="fake"
+                type="password"
+                name="password"
+                isReal={false}
+                placeholder="Enter your password"
+                value={password}
+                setValue={setPassword}
+                iserror={passwordError.iserror}
+                error={passwordError.error}
+              />
+            </div>
+
+            {/* Form fields */}
+            <EachField
+              label="Full Name"
+              type="text"
+              name="name"
+              isReal={true}
+              placeholder="Enter your full name"
+              value={name}
+              setValue={setName}
+              iserror={nameError.iserror}
+              error={nameError.error}
+            />
+            <EachField
+              label="Email"
+              type="email"
+              name="email"
+              isReal={true}
+              placeholder="Enter your email"
+              value={email}
+              setValue={setEmail}
+              iserror={emailError.iserror}
+              error={emailError.error}
+            />
+            <EachField
+              label="Password"
+              type="password"
+              name="password"
+              isReal={true}
+              placeholder="Create a password (min. 8 characters)"
+              value={password}
+              setValue={setPassword}
+              iserror={passwordError.iserror}
+              error={passwordError.error}
+              showToggle={true}
+            />
+
+            {/* Register button */}
+            <button
+              onClick={submitForm}
+              disabled={!noError || isSendingOtp}
+              className={`
+                w-full mt-6 py-2.5 rounded-lg font-semibold text-sm lg:text-base
+                transition-all duration-200 active:scale-[0.98]
+                ${
+                  noError && !isSendingOtp
+                    ? theme
+                      ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer shadow-sm hover:shadow-md"
+                      : "bg-green-700 hover:bg-green-600 text-white cursor-pointer shadow-sm hover:shadow-md"
+                    : theme
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                }
+              `}
+            >
+              {isSendingOtp ? (
+                <span className="flex items-center justify-center gap-2">
+                  {renderSpinner()}
+                  Sending code...
+                </span>
+              ) : (
+                "Create Account"
+              )}
+            </button>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                <div
+                  className={`w-full border-t ${
+                    theme ? "border-gray-200" : "border-gray-700"
+                  }`}
+                />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span
+                  className={`px-3 font-medium tracking-wider ${
+                    theme
+                      ? "bg-white text-gray-400"
+                      : "bg-gray-900 text-gray-500"
+                  }`}
+                >
+                  or continue with
+                </span>
+              </div>
+            </div>
+
+            {/* Google register */}
+            <div className="flex flex-col items-center gap-2">
+              <button
+                onClick={handleGoogleRegister}
+                disabled={isLoadingGoogle || isGoogleClicked}
+                className={`
+                  w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-lg
+                  border font-medium text-sm lg:text-base
+                  transition-all duration-200 active:scale-[0.98]
+                  disabled:opacity-60 disabled:cursor-not-allowed
+                  ${
+                    theme
+                      ? "border-gray-200 bg-white hover:bg-gray-50 text-gray-700 shadow-sm"
+                      : "border-gray-700 bg-gray-800/50 hover:bg-gray-800 text-gray-200"
+                  }
+                `}
+              >
+                <div className="w-5 h-5 relative shrink-0">
+                  <Image
+                    priority
+                    src="/googleIcon.png"
+                    alt="Google"
+                    fill
+                    sizes="20px"
+                    className="object-contain"
+                  />
+                </div>
+                {isLoadingGoogle ? (
+                  <span className="flex items-center gap-2">
+                    {renderSpinner()}
+                    Registering...
+                  </span>
+                ) : session?.user?.email ? (
+                  session.user.email
+                ) : (
+                  "Continue with Google"
+                )}
+              </button>
+
+              {googleError.isError && (
+                <div
+                  className={`w-full flex items-start gap-2 text-xs rounded-lg px-3 py-2 ${
+                    theme
+                      ? "bg-red-50 text-red-700 border border-red-200"
+                      : "bg-red-900/20 text-red-400 border border-red-800/40"
+                  }`}
+                >
+                  <svg
+                    className="w-3.5 h-3.5 mt-0.5 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                    />
+                  </svg>
+                  {googleError.error}
+                </div>
+              )}
+            </div>
+
+            <p
+              className={`mt-8 text-center text-sm ${
+                theme ? "text-gray-500" : "text-gray-400"
+              }`}
+            >
+              Already have an account?{" "}
+              <Link
+                href="/login"
+                className={`font-semibold ${colors.keyText} ${colors.keyHoverText}`}
+              >
+                Sign in
+              </Link>
+            </p>
+          </>
         )}
       </div>
     </div>

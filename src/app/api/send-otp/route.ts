@@ -3,7 +3,7 @@ import { sendOtpEmail } from "@/lib/server/email";
 import { dbConnect } from "@/lib/mongo";
 import { OtpCode } from "@/models/OtpCode";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {

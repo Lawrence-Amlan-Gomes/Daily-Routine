@@ -2,57 +2,102 @@
 import nodemailer from "nodemailer";
 // sendVerificationEmail removed — OTP flow replaces it
 
-if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-  console.error("EMAIL_USER and EMAIL_PASS must be set in environment");
+if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+  console.error("SMTP_USER and SMTP_PASS must be set in environment");
 }
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT) || 587,
+  secure: process.env.SMTP_SECURE === "true",
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 });
 
 export async function sendOtpEmail(email: string, name: string, code: string) {
+  const digits = code.split("");
+  const digitBoxes = digits
+    .map(
+      (d) =>
+        `<span style="display:inline-block;width:44px;height:52px;line-height:52px;text-align:center;font-size:26px;font-weight:700;color:#1d4ed8;background:#eff6ff;border:2px solid #bfdbfe;border-radius:10px;margin:0 4px;">${d}</span>`,
+    )
+    .join("");
+
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: process.env.SMTP_FROM,
     to: email,
-    subject: "My Daily Routine: Your Verification Code",
+    subject: "My Daily Routine — Your Verification Code",
     html: `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .code-box {
-              display: inline-block;
-              font-size: 36px;
-              font-weight: bold;
-              letter-spacing: 8px;
-              color: #166534;
-              background: #f0fdf4;
-              border: 2px solid #166534;
-              border-radius: 8px;
-              padding: 16px 32px;
-              margin: 20px 0;
-            }
-            .footer { margin-top: 20px; font-size: 12px; color: #666; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <h2>Hello, ${name}!</h2>
-            <p>Your verification code for My Daily Routine is:</p>
-            <div class="code-box">${code}</div>
-            <p>This code expires in <strong>1 minute</strong>.</p>
-            <div class="footer">
-              <p>If you didn't create an account, please ignore this email.</p>
-            </div>
-          </div>
-        </body>
-      </html>
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Verify your email</title></head>
+<body style="margin:0;padding:0;background-color:#f0f4ff;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4ff;padding:40px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(37,99,235,0.10);">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#1d4ed8 0%,#3b82f6 100%);padding:40px 48px 36px;text-align:center;">
+            <div style="display:inline-block;background:rgba(255,255,255,0.15);border-radius:50%;width:64px;height:64px;line-height:64px;font-size:32px;margin-bottom:16px;">🔐</div>
+            <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;letter-spacing:-0.3px;">Verify Your Email</h1>
+            <p style="margin:8px 0 0;color:#bfdbfe;font-size:15px;">My Daily Routine</p>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:40px 48px 32px;">
+            <p style="margin:0 0 8px;font-size:18px;font-weight:600;color:#1e293b;">Hi ${name},</p>
+            <p style="margin:0 0 28px;font-size:15px;color:#475569;line-height:1.6;">
+              Use the verification code below to confirm your email address and complete your registration.
+            </p>
+
+            <!-- Code box -->
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:28px 24px;">
+                  <p style="margin:0 0 12px;font-size:12px;font-weight:600;color:#3b82f6;letter-spacing:1.5px;text-transform:uppercase;">Your one-time code</p>
+                  <div style="letter-spacing:0;">${digitBoxes}</div>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Expiry -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;">
+              <tr>
+                <td align="center">
+                  <span style="display:inline-flex;align-items:center;gap:6px;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:8px 16px;font-size:13px;color:#92400e;font-weight:500;">
+                    ⏱ This code expires in <strong>1 minute</strong>
+                  </span>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:28px 0 0;font-size:14px;color:#64748b;line-height:1.6;">
+              Enter this code in the verification screen to activate your account. If you didn't request this, you can safely ignore this email.
+            </p>
+          </td>
+        </tr>
+
+        <!-- Divider -->
+        <tr><td style="padding:0 48px;"><div style="border-top:1px solid #e2e8f0;"></div></td></tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:24px 48px 36px;text-align:center;">
+            <p style="margin:0 0 4px;font-size:13px;color:#94a3b8;">You're receiving this because you signed up for</p>
+            <p style="margin:0;font-size:13px;font-weight:600;color:#3b82f6;">My Daily Routine</p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
     `,
   };
 
@@ -67,30 +112,90 @@ export async function sendOtpEmail(email: string, name: string, code: string) {
 
 export async function sendWelcomeEmail(email: string, name: string) {
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: process.env.SMTP_FROM,
     to: email,
-    subject: "My Daily Routine: Welcome! 🎉",
+    subject: "Welcome to My Daily Routine!",
     html: `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .footer { margin-top: 20px; font-size: 12px; color: #666; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <h2>Welcome, ${name}!</h2>
-            <p>Thank you for registering with My Daily Routine. Your account is now active and ready to use.</p>
-            <p>Start building your perfect daily routine today!</p>
-            <div class="footer">
-              <p>If you didn't create an account, please ignore this email.</p>
-            </div>
-          </div>
-        </body>
-      </html>
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Welcome!</title></head>
+<body style="margin:0;padding:0;background-color:#f0f4ff;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4ff;padding:40px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(37,99,235,0.10);">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#1d4ed8 0%,#3b82f6 100%);padding:48px 48px 40px;text-align:center;">
+            <div style="display:inline-block;background:rgba(255,255,255,0.18);border-radius:50%;width:72px;height:72px;line-height:72px;font-size:36px;margin-bottom:18px;">🎉</div>
+            <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;letter-spacing:-0.3px;">Welcome aboard!</h1>
+            <p style="margin:10px 0 0;color:#bfdbfe;font-size:15px;">My Daily Routine</p>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:40px 48px 8px;">
+            <p style="margin:0 0 8px;font-size:18px;font-weight:600;color:#1e293b;">Hi ${name},</p>
+            <p style="margin:0 0 28px;font-size:15px;color:#475569;line-height:1.7;">
+              Your account is now active and ready to go. We're thrilled to have you join the community of people building better daily habits.
+            </p>
+          </td>
+        </tr>
+
+        <!-- Feature cards -->
+        <tr>
+          <td style="padding:0 48px 32px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:18px 20px;vertical-align:top;width:30%;">
+                  <div style="font-size:24px;margin-bottom:8px;">📋</div>
+                  <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#1d4ed8;">Plan</p>
+                  <p style="margin:0;font-size:12px;color:#64748b;line-height:1.5;">Build structured daily routines</p>
+                </td>
+                <td style="width:12px;"></td>
+                <td style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:18px 20px;vertical-align:top;width:30%;">
+                  <div style="font-size:24px;margin-bottom:8px;">✅</div>
+                  <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#1d4ed8;">Track</p>
+                  <p style="margin:0;font-size:12px;color:#64748b;line-height:1.5;">Monitor your daily progress</p>
+                </td>
+                <td style="width:12px;"></td>
+                <td style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:18px 20px;vertical-align:top;width:30%;">
+                  <div style="font-size:24px;margin-bottom:8px;">📈</div>
+                  <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#1d4ed8;">Grow</p>
+                  <p style="margin:0;font-size:12px;color:#64748b;line-height:1.5;">Build lasting habits over time</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- CTA -->
+        <tr>
+          <td style="padding:0 48px 40px;text-align:center;">
+            <a href="${process.env.NEXTAUTH_URL}/login"
+               style="display:inline-block;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 40px;border-radius:10px;letter-spacing:0.2px;box-shadow:0 4px 12px rgba(37,99,235,0.30);">
+              Get Started →
+            </a>
+          </td>
+        </tr>
+
+        <!-- Divider -->
+        <tr><td style="padding:0 48px;"><div style="border-top:1px solid #e2e8f0;"></div></td></tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:24px 48px 36px;text-align:center;">
+            <p style="margin:0 0 4px;font-size:13px;color:#94a3b8;">You're receiving this because you created an account at</p>
+            <p style="margin:0;font-size:13px;font-weight:600;color:#3b82f6;">My Daily Routine</p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
     `,
   };
 
@@ -109,50 +214,88 @@ export async function sendVerificationSuccessEmail(
   name: string,
 ) {
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: process.env.SMTP_FROM,
     to: email,
-    subject: "My Daily Routine: Email Verified Successfully! 🎉",
+    subject: "My Daily Routine — Email Verified Successfully",
     html: `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f0f9ff; }
-            .content { background: white; padding: 30px; border-radius: 10px; }
-            .success-icon { font-size: 48px; text-align: center; margin-bottom: 20px; }
-            .button { 
-              display: inline-block; 
-              padding: 12px 24px; 
-              background-color: #166534; 
-              color: white !important; 
-              text-decoration: none; 
-              border-radius: 5px; 
-              margin: 20px 0;
-              text-align: center;
-            }
-            .footer { margin-top: 20px; font-size: 12px; color: #666; text-align: center; }
-            h2 { color: #16a34a; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="content">
-              <div class="success-icon">✅</div>
-              <h2>Email Verified Successfully!</h2>
-              <p>Hi ${name},</p>
-              <p>Congratulations! Your email has been successfully verified. You now have full access to all My Daily Routine features.</p>
-              <p>You can now log in to your account and start using our services.</p>
-              <div style="text-align: center;">
-                <a href="${process.env.NEXTAUTH_URL}/login" class="button">Go to Login</a>
-              </div>
-              <div class="footer">
-                <p>Thank you for choosing My Daily Routine!</p>
-              </div>
-            </div>
-          </div>
-        </body>
-      </html>
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Email Verified</title></head>
+<body style="margin:0;padding:0;background-color:#f0f4ff;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4ff;padding:40px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(37,99,235,0.10);">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#1d4ed8 0%,#3b82f6 100%);padding:48px 48px 40px;text-align:center;">
+            <div style="display:inline-block;background:rgba(255,255,255,0.18);border-radius:50%;width:72px;height:72px;line-height:72px;font-size:36px;margin-bottom:18px;">✅</div>
+            <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;letter-spacing:-0.3px;">Email Verified!</h1>
+            <p style="margin:10px 0 0;color:#bfdbfe;font-size:15px;">My Daily Routine</p>
+          </td>
+        </tr>
+
+        <!-- Success badge -->
+        <tr>
+          <td style="padding:32px 48px 0;text-align:center;">
+            <span style="display:inline-block;background:#eff6ff;border:1px solid #bfdbfe;border-radius:999px;padding:8px 20px;font-size:13px;font-weight:600;color:#1d4ed8;letter-spacing:0.3px;">
+              Account activated
+            </span>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:24px 48px 32px;">
+            <p style="margin:0 0 8px;font-size:18px;font-weight:600;color:#1e293b;">Hi ${name},</p>
+            <p style="margin:0 0 20px;font-size:15px;color:#475569;line-height:1.7;">
+              Great news — your email address has been successfully verified. Your account is now fully active and you have access to everything My Daily Routine has to offer.
+            </p>
+
+            <!-- Checkmark list -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:4px 0;margin-bottom:28px;">
+              <tr><td style="padding:12px 20px;">
+                <span style="color:#3b82f6;font-size:16px;margin-right:10px;">✦</span>
+                <span style="font-size:14px;color:#334155;">Create and manage your daily routines</span>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;">
+                <span style="color:#3b82f6;font-size:16px;margin-right:10px;">✦</span>
+                <span style="font-size:14px;color:#334155;">Set goals and track your progress</span>
+              </td></tr>
+              <tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;">
+                <span style="color:#3b82f6;font-size:16px;margin-right:10px;">✦</span>
+                <span style="font-size:14px;color:#334155;">Build streaks and stay consistent</span>
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- CTA -->
+        <tr>
+          <td style="padding:0 48px 40px;text-align:center;">
+            <a href="${process.env.NEXTAUTH_URL}/login"
+               style="display:inline-block;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 40px;border-radius:10px;letter-spacing:0.2px;box-shadow:0 4px 12px rgba(37,99,235,0.30);">
+              Sign In to Your Account →
+            </a>
+          </td>
+        </tr>
+
+        <!-- Divider -->
+        <tr><td style="padding:0 48px;"><div style="border-top:1px solid #e2e8f0;"></div></td></tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:24px 48px 36px;text-align:center;">
+            <p style="margin:0 0 4px;font-size:13px;color:#94a3b8;">Thank you for choosing</p>
+            <p style="margin:0;font-size:13px;font-weight:600;color:#3b82f6;">My Daily Routine</p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
     `,
   };
 

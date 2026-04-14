@@ -3,7 +3,7 @@ import { useTheme } from "@/app/hooks/useTheme";
 import Image from "next/image";
 import { useEffect } from "react";
 
-function ToogleTheme() {
+function ToggleTheme() {
   const { theme, toggleTheme, setTheme } = useTheme();
 
   useEffect(() => {
@@ -40,4 +40,4 @@ function ToogleTheme() {
   );
 }
 
-export default ToogleTheme;
+export default ToggleTheme;

@@ -78,7 +78,7 @@ const UserSchema = new mongoose.Schema<IUser>(
       lowercase: true,
       trim: true,
     },
-    password: { type: String, required: true },
+    password: { type: String, required: true, select: false },
     photo: { type: String, default: "" },
     photoKey: { type: String, default: "" },
     isRegisteredWithGoogle: { type: Boolean, default: false },
@@ -174,7 +174,7 @@ const UserSchema = new mongoose.Schema<IUser>(
       default: "",
       trim: true,
     },
-    isEmailVerified: { type: Boolean, default: true },
+    isEmailVerified: { type: Boolean, default: false },
     goals: {
       type: [
         {

@@ -17,12 +17,15 @@ import {
   Clock,
   Edit3,
   Flame,
+  PanelLeftClose,
+  PanelLeftOpen,
   Pin,
   PinOff,
   Plus,
   RefreshCw,
   Search,
   Tag,
+  Target,
   Trash2,
   X,
 } from "lucide-react";
@@ -560,6 +563,7 @@ function GoalCard({
   onStatusChange,
   onSubtaskToggle,
   theme,
+  compact = false,
 }: {
   goal: IGoal;
   onEdit: () => void;
@@ -568,8 +572,10 @@ function GoalCard({
   onStatusChange: (status: IGoal["status"]) => void;
   onSubtaskToggle: (subId: string) => void;
   theme: boolean;
+  compact?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const priorityKey =
     goal.priority in PRIORITY_CONFIG
       ? (goal.priority as keyof typeof PRIORITY_CONFIG)
@@ -587,18 +593,15 @@ function GoalCard({
 
   return (
     <div
-      className={`rounded-2xl border transition-all ${
-        theme ? "bg-white" : "bg-gray-950"
+      className={`rounded-2xl border transition-all duration-200 hover:shadow-md ${
+        theme ? "bg-white border-gray-200" : "bg-gray-950 border-gray-800"
       } ${goal.status === "archived" ? "opacity-60" : ""}`}
-      style={{
-        borderColor: goal.color || (theme ? "#e5e7eb" : "#1e2939"),
-        borderLeftWidth: goal.color ? "1px" : "1px",
-      }}
+      style={{ borderLeftColor: goal.color || pc.color, borderLeftWidth: "3px" }}
     >
-      {/* Header */}
-      <div className="p-4">
-        <div className="flex items-start gap-3">
-          {/* Status toggle circle */}
+      <div className={`flex flex-col gap-2 ${compact ? "p-2 sm:p-4 sm:gap-2.5" : "p-4 gap-2.5"}`}>
+
+        {/* Row 1 — Status circle */}
+        <div className="w-full">
           <button
             onClick={() =>
               onStatusChange(
@@ -611,160 +614,180 @@ function GoalCard({
                       : "todo",
               )
             }
-            className="flex-shrink-0 mt-0.5"
             title="Cycle status"
+            className="flex items-center gap-2"
           >
             {goal.status === "done" ? (
-              <CheckCircle2 size={20} className="text-emerald-500" />
+              <CheckCircle2 size={18} className="text-emerald-500" />
             ) : goal.status === "in-progress" ? (
-              <RefreshCw size={20} className="text-blue-500" />
+              <RefreshCw size={18} className="text-blue-500" />
             ) : (
-              <Circle size={20} className="opacity-30" />
+              <Circle size={18} className="opacity-30" />
             )}
+            <span
+              className={`text-[11px] font-medium ${compact ? "hidden sm:inline" : ""} ${
+                theme ? "text-gray-400" : "text-gray-500"
+              }`}
+            >
+              {sc.label}
+            </span>
+          </button>
+        </div>
+
+        {/* Row 2 — Name */}
+        <div className="w-full flex items-center gap-1.5 min-w-0 overflow-hidden">
+          <span
+            className={`font-semibold text-sm leading-snug whitespace-nowrap truncate min-w-0 ${
+              goal.status === "done" ? "opacity-50" : ""
+            } ${theme ? "text-gray-900" : "text-gray-100"}`}
+          >
+            {goal.name}
+          </span>
+          {goal.pinned && <Pin size={11} className={`text-amber-500 flex-shrink-0 ${compact ? "hidden sm:inline" : ""}`} />}
+          {overdue && <span className={compact ? "hidden sm:inline" : ""}><Badge color="#ef4444" bg="#ef444418">Overdue</Badge></span>}
+          {dueToday && !overdue && <span className={compact ? "hidden sm:inline" : ""}><Badge color="#f97316" bg="#f9731618">Due Today</Badge></span>}
+        </div>
+
+        {/* Row 3 — Icons (pin, edit, expand / delete) */}
+        <div className={`w-full flex items-center gap-1 ${compact ? "hidden sm:flex" : ""}`}>
+          <button
+            onClick={onTogglePin}
+            title={goal.pinned ? "Unpin" : "Pin"}
+            className={`p-1.5 rounded-lg transition ${
+              goal.pinned
+                ? "text-amber-500"
+                : theme
+                  ? "text-gray-400 hover:bg-gray-50"
+                  : "text-gray-600 hover:bg-gray-800"
+            }`}
+          >
+            {goal.pinned ? <Pin size={13} /> : <PinOff size={13} />}
+          </button>
+          <button
+            onClick={onEdit}
+            title="Edit"
+            className={`p-1.5 rounded-lg transition ${
+              theme
+                ? "text-gray-400 hover:bg-gray-50"
+                : "text-gray-600 hover:bg-gray-800"
+            }`}
+          >
+            <Edit3 size={13} />
+          </button>
+          <button
+            onClick={() => setExpanded((p) => !p)}
+            title="Expand"
+            className={`p-1.5 rounded-lg transition ${
+              theme
+                ? "text-gray-400 hover:bg-gray-50"
+                : "text-gray-600 hover:bg-gray-800"
+            }`}
+          >
+            {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
           </button>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span
-                className={`font-semibold text-sm truncate ${
-                  goal.status === "done" ? "opacity-50" : ""
-                } ${theme ? "text-gray-900" : "text-gray-100"}`}
-              >
-                {goal.name}
-              </span>
-              {goal.pinned && (
-                <Pin size={12} className="text-amber-500 flex-shrink-0" />
-              )}
-              {overdue && (
-                <Badge color="#ef4444" bg="#ef444418">
-                  Overdue
-                </Badge>
-              )}
-              {dueToday && !overdue && (
-                <Badge color="#f97316" bg="#f9731618">
-                  Due Today
-                </Badge>
-              )}
-            </div>
-
-            {/* Badges row */}
-            <div className="flex flex-wrap gap-1.5 mt-1.5">
-              <Badge color={pc.color} bg={pc.bg}>
-                <span className="flex items-center gap-0.5">
-                  <PriorityIcon size={9} /> {pc.label}
+          <div className="ml-auto">
+            {confirmDelete ? (
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[10px] ${theme ? "text-gray-500" : "text-gray-400"}`}>
+                  Delete?
                 </span>
-              </Badge>
-              <Badge color={sc.color} bg={sc.bg}>
-                {sc.label}
-              </Badge>
-              {goal.category && (
-                <Badge
-                  color={theme ? "#374151" : "#9ca3af"}
-                  bg={theme ? "#f3f4f6" : "#1f2937"}
+                <button
+                  onClick={onDelete}
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-sm bg-red-500 hover:bg-red-600 text-white transition"
                 >
-                  {goal.category}
-                </Badge>
-              )}
-              {goal.repeat !== "none" && (
-                <Badge color="#14b8a6" bg="#14b8a618">
-                  <span className="flex items-center gap-0.5">
-                    <RefreshCw size={8} /> {goal.repeat}
-                  </span>
-                </Badge>
-              )}
-            </div>
-
-            {/* Due date + time */}
-            {(goal.dueDate || goal.time) && (
-              <div
-                className={`flex items-center gap-1 mt-1.5 text-[11px] ${
-                  overdue
-                    ? "text-red-500"
-                    : dueToday
-                      ? "text-orange-500"
-                      : theme
-                        ? "text-gray-500"
-                        : "text-gray-300"
+                  Yes
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-sm border transition ${
+                    theme
+                      ? "border-gray-200 text-gray-600 hover:bg-gray-50"
+                      : "border-gray-700 text-gray-400 hover:bg-gray-800"
+                  }`}
+                >
+                  No
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className={`p-1.5 rounded-lg transition ${
+                  theme
+                    ? "text-red-400 hover:bg-red-50"
+                    : "text-red-500 hover:bg-red-500/10"
                 }`}
+                title="Delete"
               >
-                <Calendar size={10} />
-                {goal.dueDate}
-                {goal.time && (
-                  <span className="ml-1 opacity-80">{goal.time}</span>
-                )}
-              </div>
+                <Trash2 size={13} />
+              </button>
             )}
-
-            {/* Subtask progress */}
-            {goal.subtasks.length > 0 && (
-              <div className="mt-2">
-                <div className="flex items-center justify-between text-[10px] opacity-50 mb-1">
-                  <span>Subtasks</span>
-                  <span>
-                    {subtasksDone}/{goal.subtasks.length}
-                  </span>
-                </div>
-                <div
-                  className={`h-1 rounded-full overflow-hidden ${theme ? "bg-gray-100" : "bg-gray-800"}`}
-                >
-                  <div
-                    className="h-full rounded-full bg-indigo-500 transition-all"
-                    style={{
-                      width: `${goal.subtasks.length > 0 ? (subtasksDone / goal.subtasks.length) * 100 : 0}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <button
-              onClick={onTogglePin}
-              className={`p-1.5 rounded-lg transition ${
-                goal.pinned
-                  ? "text-amber-500"
-                  : theme
-                    ? "text-gray-400 hover:bg-gray-50"
-                    : "text-gray-600 hover:bg-gray-900"
-              }`}
-            >
-              {goal.pinned ? <Pin size={13} /> : <PinOff size={13} />}
-            </button>
-            <button
-              onClick={onEdit}
-              className={`p-1.5 rounded-lg transition ${
-                theme
-                  ? "text-gray-400 hover:bg-gray-50"
-                  : "text-gray-600 hover:bg-gray-900"
-              }`}
-            >
-              <Edit3 size={13} />
-            </button>
-            <button
-              onClick={() => setExpanded((p) => !p)}
-              className={`p-1.5 rounded-lg transition ${
-                theme
-                  ? "text-gray-400 hover:bg-gray-50"
-                  : "text-gray-600 hover:bg-gray-900"
-              }`}
-            >
-              {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-            </button>
           </div>
         </div>
+
+        {/* Row 4 — Priority badge */}
+        <div className="w-full">
+          {/* Color dot only on compact mobile */}
+          <span
+            className={`inline-block w-3 h-3 rounded-full flex-shrink-0 ${compact ? "sm:hidden" : "hidden"}`}
+            style={{ background: pc.color }}
+            title={pc.label}
+          />
+          {/* Full pill on sm+ (or always when not compact) */}
+          <span
+            className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-sm ${compact ? "hidden sm:inline-flex" : ""}`}
+            style={{ color: pc.color, background: pc.bg }}
+          >
+            <PriorityIcon size={10} />
+            {pc.label}
+          </span>
+        </div>
+
+        {/* Row 5 — Date (if exists) */}
+        {(goal.dueDate || goal.time) && (
+          <div
+            className={`w-full flex items-center gap-1.5 text-[11px] ${compact ? "hidden sm:flex" : ""} ${
+              overdue
+                ? "text-red-500"
+                : dueToday
+                  ? "text-orange-500"
+                  : theme
+                    ? "text-gray-500"
+                    : "text-gray-400"
+            }`}
+          >
+            <Calendar size={11} />
+            <span>{goal.dueDate}</span>
+            {goal.time && <span className="opacity-70">{goal.time}</span>}
+          </div>
+        )}
+
+        {/* Row 6 — Subtasks progress (if exists) */}
+        {goal.subtasks.length > 0 && (
+          <div className={`w-full ${compact ? "hidden sm:block" : ""}`}>
+            <div className="flex items-center justify-between text-[10px] opacity-50 mb-1">
+              <span>Subtasks</span>
+              <span>{subtasksDone}/{goal.subtasks.length}</span>
+            </div>
+            <div className={`h-1.5 rounded-full overflow-hidden ${theme ? "bg-gray-100" : "bg-gray-800"}`}>
+              <div
+                className="h-full rounded-full bg-indigo-500 transition-all"
+                style={{
+                  width: `${goal.subtasks.length > 0 ? (subtasksDone / goal.subtasks.length) * 100 : 0}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Expanded content */}
       {expanded && (
         <div
-          className={`px-4 pb-4 pt-0 space-y-3 border-t ${theme ? "border-gray-100" : "border-gray-800"}`}
+          className={`px-4 pb-4 pt-0 space-y-3 border-t ${compact ? "hidden sm:block" : ""} ${theme ? "border-gray-100" : "border-gray-800"}`}
         >
           {goal.description && (
-            <p
-              className={`text-xs leading-relaxed pt-3 ${theme ? "text-gray-600" : "text-gray-400"}`}
-            >
+            <p className={`text-xs leading-relaxed pt-3 ${theme ? "text-gray-600" : "text-gray-400"}`}>
               {goal.description}
             </p>
           )}
@@ -787,11 +810,9 @@ function GoalCard({
             </div>
           )}
 
-          {/* Subtasks */}
+          {/* Subtask checklist */}
           {goal.subtasks.length > 0 && (
-            <div
-              className={`px-3 py-2 rounded-lg ${theme ? "bg-gray-50" : "bg-gray-900"}`}
-            >
+            <div className={`px-3 py-2 rounded-lg ${theme ? "bg-gray-50" : "bg-gray-900"}`}>
               {goal.subtasks.map((sub) => (
                 <div key={sub.id} className="flex items-center gap-2 py-1">
                   <button onClick={() => onSubtaskToggle(sub.id)}>
@@ -801,9 +822,7 @@ function GoalCard({
                       <Circle size={14} className="opacity-30" />
                     )}
                   </button>
-                  <span
-                    className={`text-xs ${sub.isDone ? " opacity-40" : ""}`}
-                  >
+                  <span className={`text-xs ${sub.isDone ? "opacity-40 line-through" : ""}`}>
                     {sub.name}
                   </span>
                 </div>
@@ -813,9 +832,7 @@ function GoalCard({
 
           {/* Reminder */}
           {goal.reminderAt && (
-            <div
-              className={`flex items-center gap-1.5 text-[11px] ${theme ? "text-gray-500" : "text-gray-300"}`}
-            >
+            <div className={`flex items-center gap-1.5 text-[11px] ${theme ? "text-gray-500" : "text-gray-300"}`}>
               <Bell size={10} /> Reminder: {goal.reminderAt.replace("T", " ")}
             </div>
           )}
@@ -835,27 +852,17 @@ function GoalCard({
                 }`}
                 style={
                   goal.status === s
-                    ? {
-                        background: STATUS_CONFIG[s].bg,
-                        color: STATUS_CONFIG[s].color,
-                      }
+                    ? { background: STATUS_CONFIG[s].bg, color: STATUS_CONFIG[s].color }
                     : {}
                 }
               >
                 {STATUS_CONFIG[s].label}
               </button>
             ))}
-            <button
-              onClick={onDelete}
-              className="text-[10px] font-bold px-2.5 py-1 rounded-full border border-red-500/30 text-red-500 hover:bg-red-500/10 transition ml-auto"
-            >
-              <Trash2 size={10} className="inline mr-1" />
-              Delete
-            </button>
           </div>
 
           {/* Timestamps */}
-          <div className={`text-[10px] opacity-30`}>
+          <div className="text-[10px] opacity-30">
             Created: {goal.createdAt}
             {goal.finishedAt && ` · Done: ${goal.finishedAt}`}
           </div>
@@ -871,6 +878,7 @@ export default function Goals() {
   const { user: auth, setAuth } = useAuth();
   const { theme } = useTheme();
 
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<IGoal | null>(null);
   const [search, setSearch] = useState("");
@@ -977,7 +985,6 @@ export default function Goals() {
   };
 
   const handleDelete = (id: string) => {
-    if (!confirm("Delete this goal?")) return;
     persist(goals.filter((g) => g.id !== id));
   };
 
@@ -1084,123 +1091,238 @@ export default function Goals() {
 
   if (!auth) return null;
 
-  const cardBg = theme ? "bg-white" : "bg-gray-950";
-  const border = theme ? "border-gray-200" : "border-gray-800";
-  const inputCls = `px-3 py-2 text-sm rounded-xl border outline-none transition ${
-    theme
-      ? "bg-white border-gray-200 focus:border-indigo-400 text-gray-900 placeholder-gray-400"
-      : "bg-gray-900 border-gray-700 focus:border-indigo-500 text-gray-100 placeholder-gray-600"
-  }`;
-
   return (
     <div
-      className={`min-h-screen pt-[63px] font-sans ${
-        theme ? "bg-gray-50 text-gray-900" : "bg-black text-gray-100"
+      className={`flex h-screen overflow-hidden pt-14 lg:pt-16 font-sans ${
+        theme ? "bg-gray-100 text-gray-900" : "bg-black text-gray-100"
       }`}
     >
-      {/* ── Sticky header ─────────────────────────────────────────────────── */}
-      <div
-        className={`sticky top-[63px] z-40 border-b ${
-          theme ? "bg-gray-50 border-gray-200" : "bg-black border-gray-800"
-        }`}
+      {/* ── Left Sidebar ────────────────────────────────────────────────── */}
+      <aside
+        className={`flex-shrink-0 flex flex-col border-r overflow-hidden transition-all duration-300 ${
+          theme ? "bg-white border-gray-200" : "bg-gray-950 border-gray-800"
+        } ${sidebarOpen ? "w-[70%] sm:w-2/5 lg:w-1/5" : "w-[20%] sm:w-[5%]"}`}
       >
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-base sm:text-lg font-black tracking-tight">
-              Goals
-            </h1>
-            <p
-              className={`text-xs ${theme ? "text-gray-500" : "text-gray-600"}`}
-            >
-              {stats.done}/{stats.total} done
-              {stats.overdue > 0 && (
-                <span className="text-red-500 ml-2">
-                  · {stats.overdue} overdue
-                </span>
-              )}
-              {saving && <span className="ml-2 opacity-50">saving...</span>}
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              setEditingGoal(null);
-              setIsFormOpen(true);
-            }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition"
-          >
-            <Plus size={15} /> New Goal
-          </button>
+        {/* ── Header (always visible) ── */}
+        <div className={`flex-shrink-0 border-b ${theme ? "border-gray-100" : "border-gray-800"}`}>
+          {sidebarOpen ? (
+            <div className="px-5 pt-5 pb-4">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      theme ? "bg-indigo-50" : "bg-indigo-900/30"
+                    }`}
+                  >
+                    <Target size={16} className="text-indigo-500" />
+                  </div>
+                  <h1
+                    className={`text-base font-bold ${
+                      theme ? "text-gray-900" : "text-gray-100"
+                    }`}
+                  >
+                    Goals
+                  </h1>
+                </div>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  title="Collapse sidebar"
+                  className={`p-1.5 rounded-lg transition ${
+                    theme
+                      ? "text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                      : "text-gray-600 hover:bg-gray-800 hover:text-gray-300"
+                  }`}
+                >
+                  <PanelLeftClose size={15} />
+                </button>
+              </div>
+              <p className={`text-xs pl-10 ${theme ? "text-gray-500" : "text-gray-500"}`}>
+                {stats.done}/{stats.total} completed
+                {stats.overdue > 0 && (
+                  <span className="text-red-500 ml-1.5">
+                    · {stats.overdue} overdue
+                  </span>
+                )}
+                {saving && (
+                  <span className="ml-1 opacity-40">· saving…</span>
+                )}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center py-3 gap-2 overflow-y-auto">
+              {/* Toggle open */}
+              <button
+                onClick={() => setSidebarOpen(true)}
+                title="Expand sidebar"
+                className={`p-1.5 rounded-lg transition ${
+                  theme
+                    ? "text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                    : "text-gray-600 hover:bg-gray-800 hover:text-gray-300"
+                }`}
+              >
+                <PanelLeftOpen size={15} />
+              </button>
+
+              <div className={`w-full border-t my-1 ${theme ? "border-gray-100" : "border-gray-800"}`} />
+
+              {/* All — blue button */}
+              <button
+                onClick={() => { setFilterStatus("all"); setFilterPriority("all"); }}
+                title="All"
+                className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm transition ${
+                  filterStatus === "all" && filterPriority === "all"
+                    ? "bg-blue-600 text-white"
+                    : "bg-blue-100 text-blue-600 hover:bg-blue-200"
+                }`}
+              >
+                All
+              </button>
+
+              <div className={`w-full border-t my-1 ${theme ? "border-gray-100" : "border-gray-800"}`} />
+
+              {/* Status circles */}
+              {(Object.entries(STATUS_CONFIG) as [IGoal["status"], typeof STATUS_CONFIG[keyof typeof STATUS_CONFIG]][]).map(([key, cfg]) => (
+                <button
+                  key={key}
+                  onClick={() => { setFilterStatus(key); setFilterPriority("all"); }}
+                  title={cfg.label}
+                  className="flex items-center justify-center w-5 h-5 rounded-full transition hover:scale-110"
+                  style={{
+                    background: filterStatus === key ? cfg.color : "transparent",
+                    border: `2px solid ${cfg.color}`,
+                  }}
+                />
+              ))}
+
+              <div className={`w-full border-t my-1 ${theme ? "border-gray-100" : "border-gray-800"}`} />
+
+              {/* Priority icons */}
+              {(PRIORITY_OPTIONS.map((p) => {
+                const cfg = PRIORITY_CONFIG[p];
+                const PIcon = cfg.icon;
+                const isActive = filterPriority === p;
+                return (
+                  <button
+                    key={p}
+                    onClick={() => { setFilterPriority(p); setFilterStatus("all"); }}
+                    title={cfg.label}
+                    className="flex items-center justify-center w-7 h-7 rounded-lg transition hover:scale-110"
+                    style={{
+                      color: cfg.color,
+                      background: isActive ? cfg.bg : "transparent",
+                    }}
+                  >
+                    <PIcon size={14} />
+                  </button>
+                );
+              }))}
+            </div>
+          )}
         </div>
 
-        {/* Stats bar */}
-        <div className={`max-w-3xl mx-auto px-4 pb-3 grid grid-cols-4 gap-2`}>
-          {[
-            { label: "Total", value: stats.total, color: "#6366f1" },
-            { label: "In Progress", value: stats.inProgress, color: "#3b82f6" },
-            { label: "Done", value: stats.done, color: "#10b981" },
-            { label: "Overdue", value: stats.overdue, color: "#ef4444" },
-          ].map((s) => (
-            <div
-              key={s.label}
-              className={`rounded-xl p-2 text-center border ${cardBg} ${border}`}
-            >
-              <div className="text-base font-black" style={{ color: s.color }}>
-                {s.value}
-              </div>
-              <div
-                className={`text-[10px] font-semibold uppercase tracking-wide ${theme ? "text-gray-500" : "text-gray-600"}`}
+        {/* ── Scrollable content (open only) ── */}
+        {sidebarOpen && (
+          <div className="flex-1 overflow-y-auto flex flex-col">
+            {/* ── New Goal button ── */}
+            <div className="px-4 pt-4 pb-3">
+              <button
+                onClick={() => {
+                  setEditingGoal(null);
+                  setIsFormOpen(true);
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-sm font-semibold transition shadow-sm hover:shadow-md"
               >
-                {s.label}
+                <Plus size={15} /> New Goal
+              </button>
+            </div>
+
+            {/* ── Stats ── */}
+            <div className="px-4 pb-4 grid grid-cols-2 gap-2">
+              {[
+                { label: "Total", value: stats.total, color: "#6366f1", Icon: Target },
+                { label: "In Progress", value: stats.inProgress, color: "#3b82f6", Icon: RefreshCw },
+                { label: "Done", value: stats.done, color: "#10b981", Icon: CheckCircle2 },
+                { label: "Overdue", value: stats.overdue, color: "#ef4444", Icon: AlertTriangle },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className={`rounded-xl p-3 border ${
+                    theme ? "bg-gray-50 border-gray-200" : "bg-gray-900 border-gray-800"
+                  }`}
+                >
+                  <s.Icon size={12} style={{ color: s.color }} className="mb-1.5" />
+                  <div
+                    className="text-xl font-black leading-none"
+                    style={{ color: s.color }}
+                  >
+                    {s.value}
+                  </div>
+                  <div
+                    className={`text-[10px] font-medium mt-1 ${
+                      theme ? "text-gray-500" : "text-gray-600"
+                    }`}
+                  >
+                    {s.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Search ── */}
+            <div className="px-4 pb-3">
+              <div className="relative">
+                <Search
+                  size={13}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40 pointer-events-none"
+                />
+                <input
+                  placeholder="Search goals..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className={`w-full pl-9 pr-8 py-2 text-xs rounded-xl border outline-none transition ${
+                    theme
+                      ? "bg-gray-50 border-gray-200 focus:border-indigo-400 text-gray-900 placeholder-gray-400"
+                      : "bg-gray-900 border-gray-700 focus:border-indigo-500 text-gray-100 placeholder-gray-600"
+                  }`}
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100 transition"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* Search + horizontal filter pills */}
-        <div className="max-w-3xl mx-auto px-4 pb-4 space-y-3">
-          {/* Full-width search */}
-          <div className="relative">
-            <Search
-              size={14}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none"
-            />
-            <input
-              placeholder="Search goals..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={`${inputCls} w-full pl-11 pr-10`}
-            />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100 transition"
-              >
-                <X size={16} />
-              </button>
-            )}
-          </div>
-
-          {/* Horizontally scrollable pills – using goal card colors */}
-          <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400/40 dark:scrollbar-thumb-gray-600/40 pb-1 -mx-1">
-            <div className="flex gap-2.5 px-1 min-w-max">
+            {/* ── Filters ── */}
+            <div className="px-3 pb-6">
               {/* All */}
               <button
                 onClick={() => {
                   setFilterStatus("all");
                   setFilterPriority("all");
                 }}
-                className={`whitespace-nowrap px-4 py-1.5 text-xs font-medium rounded-md transition-all border ${
+                className={`w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition mb-1 ${
                   filterStatus === "all" && filterPriority === "all"
-                    ? "bg-indigo-600 border-indigo-700 text-white shadow-sm"
+                    ? "bg-indigo-600 text-white"
                     : theme
-                      ? "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 active:bg-gray-100"
-                      : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 active:bg-gray-600"
+                      ? "text-gray-700 hover:bg-gray-100"
+                      : "text-gray-400 hover:bg-gray-900"
                 }`}
               >
                 All
               </button>
 
-              {/* Status pills – using STATUS_CONFIG colors */}
+              {/* Status */}
+              <p
+                className={`text-[10px] font-bold uppercase tracking-widest px-3 pt-3 pb-1.5 ${
+                  theme ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                Status
+              </p>
               {STATUS_OPTIONS.map((status) => {
                 const isActive = filterStatus === status;
                 const cfg = STATUS_CONFIG[status];
@@ -1211,35 +1333,36 @@ export default function Goals() {
                       setFilterStatus(status);
                       setFilterPriority("all");
                     }}
-                    className={`whitespace-nowrap px-4 py-1.5 text-xs font-medium rounded-md transition-all border ${
+                    className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition mb-0.5 ${
                       isActive
-                        ? "bg-indigo-600 border-indigo-700 text-white shadow-sm"
+                        ? "text-white"
                         : theme
-                          ? "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 active:bg-gray-100"
-                          : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 active:bg-gray-600"
+                          ? "text-gray-700 hover:bg-gray-100"
+                          : "text-gray-400 hover:bg-gray-900"
                     }`}
-                    style={{
-                      background: isActive
-                        ? cfg.color
-                        : theme
-                          ? "#ffffff"
-                          : "#1f2937",
-                      borderColor: isActive
-                        ? cfg.color
-                        : theme
-                          ? "#d1d5db"
-                          : "#374151",
-                    }}
+                    style={isActive ? { background: cfg.color } : {}}
                   >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      style={{ background: isActive ? "white" : cfg.color }}
+                    />
                     {cfg.label}
                   </button>
                 );
               })}
 
-              {/* Priority pills – using PRIORITY_CONFIG colors */}
+              {/* Priority */}
+              <p
+                className={`text-[10px] font-bold uppercase tracking-widest px-3 pt-3 pb-1.5 ${
+                  theme ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                Priority
+              </p>
               {PRIORITY_OPTIONS.map((priority) => {
                 const isActive = filterPriority === priority;
                 const cfg = PRIORITY_CONFIG[priority];
+                const PIcon = cfg.icon;
                 return (
                   <button
                     key={priority}
@@ -1247,113 +1370,247 @@ export default function Goals() {
                       setFilterPriority(priority);
                       setFilterStatus("all");
                     }}
-                    className={`whitespace-nowrap px-4 py-1.5 text-xs font-medium rounded-md transition-all border ${
+                    className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition mb-0.5 ${
                       isActive
-                        ? "text-white shadow-sm"
+                        ? "text-white"
                         : theme
-                          ? "text-gray-700 hover:bg-gray-50 active:bg-gray-100"
-                          : "text-gray-300 hover:bg-gray-700 active:bg-gray-600"
+                          ? "text-gray-700 hover:bg-gray-100"
+                          : "text-gray-400 hover:bg-gray-900"
                     }`}
-                    style={{
-                      background: isActive
-                        ? cfg.color
-                        : theme
-                          ? "#ffffff"
-                          : "#1f2937",
-                      borderColor: isActive
-                        ? cfg.color
-                        : theme
-                          ? "#d1d5db"
-                          : "#374151",
-                      color: isActive ? "#ffffff" : undefined,
-                    }}
+                    style={isActive ? { background: cfg.color } : {}}
                   >
+                    <PIcon
+                      size={11}
+                      style={{ color: isActive ? "white" : cfg.color }}
+                    />
                     {cfg.label}
                   </button>
                 );
               })}
             </div>
           </div>
+        )}
+      </aside>
 
-          {/* Optional small feedback when filtered */}
-          {(filterStatus !== "all" || filterPriority !== "all") && (
-            <div className="text-xs opacity-70 pl-1">
-              Filtered by:{" "}
-              {filterStatus !== "all" && (
-                <span style={{ color: STATUS_CONFIG[filterStatus].color }}>
-                  {STATUS_CONFIG[filterStatus].label}
+      {/* ── Kanban Board ─────────────────────────────────────────────────── */}
+      <div className={`flex flex-col transition-all duration-300 overflow-hidden overflow-x-hidden ${sidebarOpen ? "w-[30%] sm:w-3/5 lg:w-4/5" : "w-[80%] sm:w-[95%]"}`}>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className={`flex flex-col ${sidebarOpen ? "sm:flex-col" : "sm:flex-row sm:flex-wrap"} lg:flex-row lg:flex-nowrap gap-4 p-5 items-start`}>
+
+          {/* To Do, In Progress, Done columns */}
+          {(["todo", "in-progress", "done"] as const).map((statusKey) => {
+            const colGoals = filtered.filter((g) => g.status === statusKey);
+            const cfg = STATUS_CONFIG[statusKey];
+            return (
+              <div key={statusKey} className={`w-full ${!sidebarOpen ? "sm:w-[calc(50%-8px)]" : ""} lg:flex-1 lg:w-auto min-w-0 flex flex-col`}>
+                {/* Column header */}
+                <div className="flex items-center justify-between mb-3 px-1">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ background: cfg.color }}
+                    />
+                    <span
+                      className={`text-sm font-bold ${sidebarOpen ? "hidden sm:inline" : ""} ${
+                        theme ? "text-gray-700" : "text-gray-300"
+                      }`}
+                    >
+                      {cfg.label}
+                    </span>
+                    <span
+                      className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${sidebarOpen ? "hidden sm:inline" : ""}`}
+                      style={{ color: cfg.color, background: cfg.bg }}
+                    >
+                      {colGoals.length}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditingGoal(null);
+                      setIsFormOpen(true);
+                    }}
+                    title="Add goal"
+                    className={`p-1 rounded-lg transition opacity-50 hover:opacity-100 ${
+                      theme
+                        ? "hover:bg-gray-200 text-gray-500"
+                        : "hover:bg-gray-800 text-gray-500"
+                    }`}
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+
+                {/* Cards */}
+                <div className="flex flex-col gap-3">
+                  {colGoals.length === 0 ? (
+                    <div
+                      className={`rounded-2xl border border-dashed p-8 text-center ${
+                        theme
+                          ? "border-gray-300 bg-white/60"
+                          : "border-gray-800 bg-gray-900/30"
+                      }`}
+                    >
+                      <p
+                        className={`text-xs ${
+                          theme ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
+                        No goals
+                      </p>
+                    </div>
+                  ) : (
+                    colGoals.map((goal) => (
+                      <GoalCard
+                        key={goal.id}
+                        goal={goal}
+                        theme={theme}
+                        compact={sidebarOpen}
+                        onEdit={() => {
+                          setEditingGoal(goal);
+                          setIsFormOpen(false);
+                        }}
+                        onDelete={() => handleDelete(goal.id)}
+                        onTogglePin={() =>
+                          persist(
+                            goals.map((g) =>
+                              g.id === goal.id
+                                ? { ...g, pinned: !g.pinned }
+                                : g,
+                            ),
+                          )
+                        }
+                        onStatusChange={(status) =>
+                          handleStatusChange(goal.id, status)
+                        }
+                        onSubtaskToggle={(subId) =>
+                          handleSubtaskToggle(goal.id, subId)
+                        }
+                      />
+                    ))
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Archived column — shown only when there are archived goals */}
+          {filtered.some((g) => g.status === "archived") && (
+            <div className={`w-full ${!sidebarOpen ? "sm:w-[calc(50%-8px)]" : ""} lg:flex-1 lg:w-auto min-w-0 flex flex-col opacity-70`}>
+              <div className="flex items-center gap-2 mb-3 px-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-400 flex-shrink-0" />
+                <span
+                  className={`text-sm font-bold ${sidebarOpen ? "hidden sm:inline" : ""} ${
+                    theme ? "text-gray-500" : "text-gray-500"
+                  }`}
+                >
+                  Archived
                 </span>
-              )}
-              {filterStatus !== "all" && filterPriority !== "all" && " + "}
-              {filterPriority !== "all" && (
-                <span style={{ color: PRIORITY_CONFIG[filterPriority].color }}>
-                  {PRIORITY_CONFIG[filterPriority].label}
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full text-purple-400 bg-purple-400/10 ${sidebarOpen ? "hidden sm:inline" : ""}`}>
+                  {filtered.filter((g) => g.status === "archived").length}
                 </span>
-              )}
+              </div>
+              <div className="flex flex-col gap-3">
+                {filtered
+                  .filter((g) => g.status === "archived")
+                  .map((goal) => (
+                    <GoalCard
+                      key={goal.id}
+                      goal={goal}
+                      theme={theme}
+                      compact={sidebarOpen}
+                      onEdit={() => {
+                        setEditingGoal(goal);
+                        setIsFormOpen(false);
+                      }}
+                      onDelete={() => handleDelete(goal.id)}
+                      onTogglePin={() =>
+                        persist(
+                          goals.map((g) =>
+                            g.id === goal.id
+                              ? { ...g, pinned: !g.pinned }
+                              : g,
+                          ),
+                        )
+                      }
+                      onStatusChange={(status) =>
+                        handleStatusChange(goal.id, status)
+                      }
+                      onSubtaskToggle={(subId) =>
+                        handleSubtaskToggle(goal.id, subId)
+                      }
+                    />
+                  ))}
+              </div>
             </div>
           )}
         </div>
+        </div>
       </div>
 
-      {/* ── Main content ──────────────────────────────────────────────────── */}
-      <div className="max-w-3xl mx-auto px-4 py-5 space-y-3">
-        {/* Form */}
-        {(isFormOpen || editingGoal) && (
-          <div className={`rounded-2xl border p-5 ${cardBg} ${border}`}>
-            <h2 className="text-sm font-black uppercase tracking-widest opacity-50 mb-4">
-              {editingGoal ? "Edit Goal" : "New Goal"}
-            </h2>
-            <GoalForm
-              initial={editingGoal ?? {}}
-              onSave={handleSave}
-              onCancel={() => {
-                setIsFormOpen(false);
-                setEditingGoal(null);
-              }}
-              theme={theme}
-            />
-          </div>
-        )}
-
-        {/* Empty state */}
-        {filtered.length === 0 && !isFormOpen && !editingGoal && (
+      {/* ── Form Modal ───────────────────────────────────────────────────── */}
+      {(isFormOpen || editingGoal) && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-4">
           <div
-            className={`rounded-2xl border p-10 text-center ${cardBg} ${border}`}
-          >
-            <div className="text-4xl mb-3">🎯</div>
-            <p
-              className={`text-sm font-semibold ${theme ? "text-gray-500" : "text-gray-600"}`}
-            >
-              {goals.length === 0
-                ? "No goals yet — create your first one!"
-                : "No goals match your filters."}
-            </p>
-          </div>
-        )}
-
-        {/* Goal cards */}
-        {filtered.map((goal) => (
-          <GoalCard
-            key={goal.id}
-            goal={goal}
-            theme={theme}
-            onEdit={() => {
-              setEditingGoal(goal);
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => {
               setIsFormOpen(false);
+              setEditingGoal(null);
             }}
-            onDelete={() => handleDelete(goal.id)}
-            onTogglePin={() =>
-              persist(
-                goals.map((g) =>
-                  g.id === goal.id ? { ...g, pinned: !g.pinned } : g,
-                ),
-              )
-            }
-            onStatusChange={(status) => handleStatusChange(goal.id, status)}
-            onSubtaskToggle={(subId) => handleSubtaskToggle(goal.id, subId)}
           />
-        ))}
-      </div>
+          <div
+            className={`relative w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl border shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] ${
+              theme ? "bg-white border-gray-200" : "bg-gray-950 border-gray-800"
+            }`}
+          >
+            <div
+              className={`flex items-center justify-between px-5 py-4 border-b flex-shrink-0 ${
+                theme ? "border-gray-100" : "border-gray-800"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                    theme ? "bg-indigo-50" : "bg-indigo-900/30"
+                  }`}
+                >
+                  <Target size={14} className="text-indigo-500" />
+                </div>
+                <h2
+                  className={`text-sm font-bold ${
+                    theme ? "text-gray-900" : "text-gray-100"
+                  }`}
+                >
+                  {editingGoal ? "Edit Goal" : "New Goal"}
+                </h2>
+              </div>
+              <button
+                onClick={() => {
+                  setIsFormOpen(false);
+                  setEditingGoal(null);
+                }}
+                className={`p-1.5 rounded-lg transition ${
+                  theme
+                    ? "text-gray-400 hover:bg-gray-100"
+                    : "text-gray-600 hover:bg-gray-800"
+                }`}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-5">
+              <GoalForm
+                initial={editingGoal ?? {}}
+                onSave={handleSave}
+                onCancel={() => {
+                  setIsFormOpen(false);
+                  setEditingGoal(null);
+                }}
+                theme={theme}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Goal reminder popup ───────────────────────────── */}
       {goalAlert && (

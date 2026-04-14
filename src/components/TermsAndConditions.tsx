@@ -152,9 +152,7 @@ export default function TermsAndConditions() {
               <h2 className="text-xl font-semibold mb-2">10. Contact</h2>
               <p>
                 Questions about these Terms:{" "}
-                <span className="font-medium">
-                  my.daily.routine.app@gmail.com
-                </span>
+                <span className="font-medium">amlan100ai@gmail.com</span>
               </p>
             </section>
           </div>

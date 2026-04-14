@@ -1559,10 +1559,7 @@ export default function StatsRoutine() {
               {monthlyData.length > 0 ? (
                 <>
                   {/* Mobile card list */}
-                  <div
-                    className="sm:hidden divide-y"
-                    style={{ borderColor: t.border }}
-                  >
+                  <div className="sm:hidden">
                     {monthlyData.map((m, i) => {
                       const diff = m.count - avgPerMonth;
                       const share =
@@ -1570,7 +1567,11 @@ export default function StatsRoutine() {
                           ? Math.round((m.count / totalThisYear) * 100)
                           : 0;
                       return (
-                        <div key={i} className="p-4 space-y-2">
+                        <div
+                          key={i}
+                          className="p-4 space-y-2 border-b last:border-b-0"
+                          style={{ borderColor: t.border }}
+                        >
                           <div className="flex justify-between items-start">
                             <div>
                               <div

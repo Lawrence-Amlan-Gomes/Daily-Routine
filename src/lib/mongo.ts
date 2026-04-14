@@ -1,17 +1,22 @@
 import mongoose from "mongoose";
 
-export async function dbConnect() {
-  try {
-    // FIXED: Ensure MONGODB_URI is defined
-    const uri = process.env.MONGODB_URI;
-    if (!uri) {
-      throw new Error("MONGODB_URI is not defined in environment variables");
-    }
+declare global {
+  // eslint-disable-next-line no-var
+  var _mongoosePromise: Promise<typeof mongoose> | undefined;
+}
 
-    const conn = await mongoose.connect(uri);
-    console.log("Connected");
-    return conn;
-  } catch (err) {
-    console.log(err);
+export async function dbConnect() {
+  if (mongoose.connection.readyState >= 1) return;
+
+  if (!global._mongoosePromise) {
+    const uri = process.env.MONGODB_URI;
+    if (!uri) throw new Error("MONGODB_URI is not defined in environment variables");
+
+    global._mongoosePromise = mongoose.connect(uri).then(
+      (m) => { global._mongoosePromise = undefined; return m; },
+      (err) => { global._mongoosePromise = undefined; throw err; },
+    );
   }
+
+  await global._mongoosePromise;
 }
