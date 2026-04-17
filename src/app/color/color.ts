@@ -1,10 +1,10 @@
 // src/app/color/color.ts
 const colors = {
-  bgDark: "bg-[#111111]",
+  bgDark: "dark:bg-[#111111]",
   bgLight: "bg-[#eeeeee]",
   textDark: "text-[#121212]",
   textLight: "text-[#f5f5f5]",
-  cardDark: "border-gray-800 border-[1px] bg-gray-950 text-[#ffffff]",
+  cardDark: "dark:border-gray-800 dark:bg-gray-950 dark:text-[#ffffff]",
   cardLight: "border-gray-200 border-[1px] bg-gray-100 text-[#000000]",
   keyText: "text-blue-600",
   keyBg: "bg-blue-600",

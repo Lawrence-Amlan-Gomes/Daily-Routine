@@ -212,10 +212,10 @@ const LoginForm = () => {
       onKeyDown={(event) => {
         if (event.key === "Enter") submitForm();
       }}
-      className={`min-h-screen w-full flex items-center justify-center sm:px-0 px-6 pt-[80px] md:pt-[100px] bg-white dark:bg-black ${colors.bgLight} dark:${colors.bgDark}`}
+      className={`min-h-screen w-full flex items-center justify-center sm:px-0 px-6 pt-[80px] md:pt-[100px] pb-16 bg-white dark:bg-black ${colors.bgLight} ${colors.bgDark}`}
     >
       <div
-        className={`w-full sm:w-[440px] lg:w-[460px] xl:w-[480px] rounded-xl p-8 sm:p-10 ${colors.cardLight} dark:${colors.cardDark}`}
+        className={`w-full sm:w-[440px] lg:w-[460px] xl:w-[480px] rounded-xl p-8 sm:p-10 ${colors.cardLight} ${colors.cardDark}`}
       >
         {/* Header */}
         <div className="text-center mb-8">

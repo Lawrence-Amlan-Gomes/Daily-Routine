@@ -297,10 +297,10 @@ const RegistrationForm = () => {
   return (
     <div
       onKeyDown={(e) => e.key === "Enter" && !otpSent && submitForm()}
-      className={`min-h-screen w-full flex items-center justify-center sm:px-0 px-6 pt-[80px] md:pt-[100px] pb-10 bg-white ${colors.bgLight} dark:bg-black dark:${colors.bgDark}`}
+      className={`min-h-screen w-full flex items-center justify-center sm:px-0 px-6 pt-[80px] md:pt-[100px] pb-10 bg-white ${colors.bgLight} dark:bg-black ${colors.bgDark}`}
     >
       <div
-        className={`w-full sm:w-[480px] lg:w-[520px] rounded-xl p-8 sm:p-10 ${colors.cardLight} dark:${colors.cardDark}`}
+        className={`w-full sm:w-[480px] lg:w-[520px] rounded-xl p-8 sm:p-10 ${colors.cardLight} ${colors.cardDark}`}
       >
         {/* ── OTP Step ───────────────────────────────────────────────── */}
         {otpSent && !registrationSuccess && (

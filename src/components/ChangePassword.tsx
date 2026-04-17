@@ -112,10 +112,10 @@ const ChangePassword = () => {
       onKeyDown={(e) => {
         if (e.key === "Enter") submitForm();
       }}
-      className={`min-h-screen w-full flex items-center justify-center sm:px-0 px-6 pt-[80px] md:pt-[100px] bg-white dark:bg-black ${colors.bgLight} dark:${colors.bgDark}`}
+      className={`min-h-screen w-full flex items-center justify-center sm:px-0 px-6 pt-[80px] md:pt-[100px] pb-16 bg-white dark:bg-black ${colors.bgLight} ${colors.bgDark}`}
     >
       <div
-        className={`w-full sm:w-[440px] lg:w-[460px] xl:w-[480px] rounded-xl p-8 sm:p-10 ${colors.cardLight} dark:${colors.cardDark}`}
+        className={`w-full sm:w-[440px] lg:w-[460px] xl:w-[480px] rounded-xl p-8 sm:p-10 ${colors.cardLight} ${colors.cardDark}`}
       >
         {success ? (
           /* ── Success state ── */
@@ -260,7 +260,7 @@ const ChangePassword = () => {
             <button
               onClick={submitForm}
               disabled={!isFormValid || isLoading}
-              className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed ${
+              className={`w-full mt-6 py-3 px-4 rounded-lg font-medium transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed ${
                 isFormValid && !isLoading
                   ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-sm hover:shadow-md"
                   : "bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed"
