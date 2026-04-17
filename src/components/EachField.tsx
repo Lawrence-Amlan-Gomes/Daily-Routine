@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTheme } from "@/app/hooks/useTheme";
 
 // Define the props interface
 interface EachFieldProps {
@@ -31,7 +30,6 @@ const EachField = ({
 }: EachFieldProps) => {
   const [firstTime, setFirstTime] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  const { theme } = useTheme();
 
   useEffect(() => {
     if (value === "") {
@@ -43,7 +41,11 @@ const EachField = ({
   }, [value]);
 
   const inputType =
-    type === "password" && showToggle ? (showPassword ? "text" : "password") : type;
+    type === "password" && showToggle
+      ? showPassword
+        ? "text"
+        : "password"
+      : type;
 
   return (
     <>
@@ -58,9 +60,7 @@ const EachField = ({
                 showToggle ? "pr-10" : ""
               } ${
                 firstTime
-                  ? theme
-                    ? "border-gray-400"
-                    : "border-gray-700"
+                  ? "border-gray-400 dark:border-gray-700"
                   : !iserror
                     ? "border-green-700 text-green-600 focus:outline-green-600"
                     : "border-red-600 text-red-600 focus:outline-red-600"
@@ -78,11 +78,7 @@ const EachField = ({
                 onClick={() => setShowPassword((p) => !p)}
                 tabIndex={-1}
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors duration-150 ${
-                  theme
-                    ? "text-gray-400 hover:text-gray-600"
-                    : "text-gray-500 hover:text-gray-300"
-                }`}
+                className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors duration-150 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300`}
               >
                 {showPassword ? (
                   <svg

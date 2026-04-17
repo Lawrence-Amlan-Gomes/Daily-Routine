@@ -5,7 +5,6 @@
 import { findUserByEmail } from "@/app/actions";
 import colors from "@/app/color/color";
 import { useAuth } from "@/app/hooks/useAuth";
-import { useTheme } from "@/app/hooks/useTheme";
 import { logout } from "@/store/features/auth/authSlice";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
@@ -13,7 +12,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import ProfileIcon from "./ProfileIcon";
-import ToggleTheme from "./ToggleTheme";
+import ThemeToggle from "./ThemeToggle";
 
 // ──────────────────────────────────────────────────────────────
 //  ONLY ADDED: Props interface + type annotation
@@ -23,10 +22,9 @@ interface NavItemProps {
   label: string;
   active: boolean;
   onClick: () => void;
-  theme: boolean;
 }
 
-const NavItem = ({ href, label, active, onClick, theme }: NavItemProps) => (
+const NavItem = ({ href, label, active, onClick }: NavItemProps) => (
   <Link href={href}>
     <div
       className={`flex items-center h-full px-2 cursor-pointer transition-colors duration-200`}
@@ -34,13 +32,9 @@ const NavItem = ({ href, label, active, onClick, theme }: NavItemProps) => (
     >
       <span
         className={`sm:text-[15px] font-sans tracking-wider ${
-          theme
-            ? active
-              ? colors.keyText
-              : "text-[#555555] hover:text-[#000000]"
-            : active
-              ? colors.keyText
-              : "text-[#cccccc] hover:text-[#ffffff]"
+          active
+            ? colors.keyText
+            : "text-[#555555] hover:text-[#000000] dark:text-[#cccccc] dark:hover:text-[#ffffff]"
         } `}
       >
         {label}
@@ -50,7 +44,6 @@ const NavItem = ({ href, label, active, onClick, theme }: NavItemProps) => (
 );
 
 const TopNavbar = () => {
-  const { theme } = useTheme();
   const { user: auth, setAuth } = useAuth();
   const dispatch = useDispatch();
   const [active, setActive] = useState("home");
@@ -135,11 +128,7 @@ const TopNavbar = () => {
     <>
       {/* Desktop Navbar */}
       <nav
-        className={`fixed top-0 z-50 w-[100%] h-12 sm:h-14 md:h-16 hidden lg:flex items-center justify-between border-b-[1px] pl-[10%] pr-[11%] bg-opacity-65 backdrop-blur-xl ${
-          theme
-            ? "bg-[#ffffff] border-gray-200"
-            : "bg-[#000000] border-gray-800"
-        }`}
+        className={`fixed top-0 z-50 w-[100%] h-12 sm:h-14 md:h-16 hidden lg:flex items-center justify-between border-b-[1px] pl-[10%] pr-[11%] bg-opacity-65 backdrop-blur-xl bg-[#ffffff] border-gray-200 dark:bg-[#000000] dark:border-gray-800`}
       >
         {/* Logo */}
         <Link href="/home">
@@ -150,9 +139,7 @@ const TopNavbar = () => {
               className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 object-contain"
             />
             <div
-              className={`text-lg sm:text-lg md:text-xl lg:text-2xl font-bold tracking-wide ${
-                theme ? "text-[#222222]" : "text-[#dadada]"
-              }`}
+              className={`text-lg sm:text-lg md:text-xl lg:text-2xl font-bold tracking-wide text-[#222222] dark:text-[#dadada]`}
             >
               My Daily Routine
             </div>
@@ -168,11 +155,10 @@ const TopNavbar = () => {
               label={item.label}
               active={active === item.activeKey}
               onClick={() => setActive(item.activeKey)}
-              theme={theme}
             />
           ))}
-          <div className="flex items-center">
-            <ToggleTheme />
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
             <ProfileIcon
               active={active === "profile" ? "profile" : undefined}
             />
@@ -182,11 +168,7 @@ const TopNavbar = () => {
 
       {/* Mobile Navbar */}
       <nav
-        className={`fixed top-0 z-50 w-full h-14 flex lg:hidden border-b-[1px] items-center justify-between px-[10%] bg-opacity-50 backdrop-blur-md ${
-          theme
-            ? "bg-[#ffffff] border-gray-200"
-            : "bg-[#000000] border-gray-800"
-        }`}
+        className={`fixed top-0 z-50 w-full h-14 flex lg:hidden border-b-[1px] items-center justify-between px-[10%] bg-opacity-50 backdrop-blur-md bg-[#ffffff] border-gray-200 dark:bg-[#000000] dark:border-gray-800`}
       >
         {/* Logo */}
         <Link href="/home">
@@ -197,9 +179,7 @@ const TopNavbar = () => {
               className="h-6 w-6 sm:h-7 sm:w-7 object-contain"
             />
             <div
-              className={`text-[12px] sm:text-[18px] font-bold tracking-wide ${
-                theme ? "text-[#222222]" : "text-[#dadada]"
-              }`}
+              className={`text-[12px] sm:text-[18px] font-bold tracking-wide text-[#222222] dark:text-[#dadada]`}
             >
               My Daily Routine
             </div>
@@ -207,17 +187,15 @@ const TopNavbar = () => {
         </Link>
 
         {/* Hamburger Menu Button */}
-        <div className="flex items-center">
-          <ToggleTheme />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
           <ProfileIcon active={active === "profile" ? "profile" : undefined} />
           <button
             onClick={toggleMenu}
-            className={`focus:outline-none ml-2 ${
-              theme ? "text-[#222222]" : "text-[#dadada]"
-            }`}
+            className={`focus:outline-none text-[#222222] dark:text-[#dadada]`}
           >
             <svg
-              className="w-6 h-6"
+              className="w-[30px] h-[30px] sm:w-[35px] sm:h-[35px]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -241,11 +219,7 @@ const TopNavbar = () => {
       {/* Mobile Menu */}
       {isMenuOpen && (
         <div
-          className={`fixed z-40 w-full top-14 bg-opacity-65 backdrop-blur-xl border-b-[1px] ${
-            theme
-              ? "bg-[#ffffff] border-[#dddddd]"
-              : "bg-[#000000] border-[#222222]"
-          }`}
+          className={`fixed z-40 w-full top-14 bg-opacity-65 backdrop-blur-xl border-b-[1px] bg-[#ffffff] border-[#dddddd] dark:bg-[#000000] dark:border-[#222222]`}
         >
           <div className="flex flex-col items-center py-4 space-y-2">
             {navItems.map((item) => (
@@ -258,8 +232,7 @@ const TopNavbar = () => {
                   setActive(item.activeKey);
                   setIsMenuOpen(false);
                 }}
-                theme={theme}
-              />
+                />
             ))}
           </div>
         </div>

@@ -1,6 +1,5 @@
 "use client";
 import colors from "@/app/color/color";
-import { useTheme } from "@/app/hooks/useTheme";
 import Image from "next/image";
 import { FaQuoteLeft } from "react-icons/fa";
 
@@ -15,29 +14,19 @@ export default function TestimonialCard({
   clientRole: string;
   clientQuote: string;
 }) {
-  const { theme } = useTheme();
-
   return (
     <div
-      className={`w-full mx-auto p-8 rounded-2xl hover:cursor-pointer border-[1px] flex flex-col justify-between relative ${
-        theme
-          ? `bg-[#ffffff] hover:bg-[#fafafa] text-[#aaaaaa] ${colors.keyBorder}`
-          : `bg-[#000000] hover:bg-[#060606] text-[#eeeeee] ${colors.keyBorder}`
-      }`}
+      className={`w-full mx-auto p-8 rounded-2xl hover:cursor-pointer border-[1px] flex flex-col justify-between relative ${colors.keyBorder} bg-[#ffffff] dark:bg-[#000000] hover:bg-[#fafafa] dark:hover:bg-[#060606] text-[#aaaaaa] dark:text-[#eeeeee]`}
     >
       <div className="flex flex-col flex-grow">
         {/* Quote Icon */}
         <FaQuoteLeft
-          className={`text-xl mb-4 ${
-            theme ? "text-[#666666]" : "text-[#aaaaaa]"
-          }`}
+          className={`text-xl mb-4 text-[#666666] dark:text-[#aaaaaa]`}
         />
 
         {/* Quote Text */}
         <p
-          className={`lg:text-md text-sm leading-relaxed text-justify mb-6 ${
-            theme ? "text-[#666666]" : "text-[#aaaaaa]"
-          }`}
+          className={`lg:text-md text-sm leading-relaxed text-justify mb-6 text-[#666666] dark:text-[#aaaaaa]`}
         >
           {clientQuote}
         </p>
@@ -56,15 +45,11 @@ export default function TestimonialCard({
         </div>
         <div>
           <h3
-            className={`font-semibold lg:text-md text-sm ${
-              theme ? "text-[#333333]" : "text-[#dddddd]"
-            }`}
+            className={`font-semibold lg:text-md text-sm text-[#333333] dark:text-[#dddddd]`}
           >
             {clientName}
           </h3>
-          <p
-            className={`text-sm ${theme ? "text-[#666666]" : "text-[#aaaaaa]"}`}
-          >
+          <p className={`text-sm text-[#666666] dark:text-[#aaaaaa]`}>
             {clientRole}
           </p>
         </div>

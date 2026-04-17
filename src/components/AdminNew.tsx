@@ -3,7 +3,6 @@
 
 import { getAllFeedbacks, getAllUsers } from "@/app/actions";
 import { useAuth } from "@/app/hooks/useAuth";
-import { useTheme } from "@/app/hooks/useTheme";
 import { format } from "date-fns";
 import {
   ChevronDown,
@@ -39,7 +38,6 @@ type UserItem = {
 type AdminView = "feedback" | "users";
 
 export default function Admin() {
-  const { theme } = useTheme();
   const { user: auth } = useAuth();
 
   const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
@@ -104,9 +102,7 @@ export default function Admin() {
 
   if (loading) {
     return (
-      <div
-        className={`min-h-screen flex items-center justify-center ${theme ? "bg-gray-50" : "bg-gray-900"}`}
-      >
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -115,21 +111,21 @@ export default function Admin() {
   const subscriptionStats = getSubscriptionStats();
 
   return (
-    <div className={`min-h-screen flex ${theme ? "bg-gray-50" : "bg-black"}`}>
+    <div className="min-h-screen flex bg-gray-50 dark:bg-black">
       {/* Sidebar */}
       <div
-        className={`${sidebarOpen ? "w-64" : "w-16"} transition-all duration-300 ${theme ? "bg-white border-gray-200" : "bg-[#111111] border-gray-800"} border-r min-h-screen pt-16 lg:pt-16`}
+        className={`${sidebarOpen ? "w-64" : "w-16"} transition-all duration-300 bg-white dark:bg-[#111111] border-gray-200 dark:border-gray-800 border-r min-h-screen pt-16 lg:pt-16`}
       >
         <div className="p-4">
           <div className="flex items-center justify-between mb-8">
             <h1
-              className={`font-bold text-xl ${sidebarOpen ? "block" : "hidden"} ${theme ? "text-gray-900" : "text-gray-100"}`}
+              className={`font-bold text-xl ${sidebarOpen ? "block" : "hidden"} text-gray-900 dark:text-gray-100`}
             >
               Admin Panel
             </h1>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className={`p-2 rounded-lg transition-colors ${theme ? "hover:bg-gray-100 text-gray-600" : "hover:bg-gray-800 text-gray-400"}`}
+              className="p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400"
             >
               {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -140,12 +136,8 @@ export default function Admin() {
               onClick={() => setCurrentView("feedback")}
               className={`w-full flex items-center ${sidebarOpen ? "px-4" : "px-2 justify-center"} py-3 rounded-lg transition-colors ${
                 currentView === "feedback"
-                  ? theme
-                    ? "bg-blue-50 text-blue-600 border border-blue-200"
-                    : "bg-blue-900/30 text-blue-400 border border-blue-700"
-                  : theme
-                    ? "hover:bg-gray-100 text-gray-700"
-                    : "hover:bg-gray-800 text-gray-300"
+                  ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700"
+                  : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
               }`}
             >
               <MessageSquare size={20} />
@@ -156,12 +148,8 @@ export default function Admin() {
               onClick={() => setCurrentView("users")}
               className={`w-full flex items-center ${sidebarOpen ? "px-4" : "px-2 justify-center"} py-3 rounded-lg transition-colors ${
                 currentView === "users"
-                  ? theme
-                    ? "bg-blue-50 text-blue-600 border border-blue-200"
-                    : "bg-blue-900/30 text-blue-400 border border-blue-700"
-                  : theme
-                    ? "hover:bg-gray-100 text-gray-700"
-                    : "hover:bg-gray-800 text-gray-300"
+                  ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700"
+                  : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
               }`}
             >
               <Users size={20} />
@@ -178,14 +166,10 @@ export default function Admin() {
             <div>
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h1
-                    className={`text-3xl font-bold ${theme ? "text-gray-900" : "text-gray-100"}`}
-                  >
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                     User Feedback
                   </h1>
-                  <p
-                    className={`mt-2 ${theme ? "text-gray-600" : "text-gray-200"}`}
-                  >
+                  <p className="mt-2 text-gray-600 dark:text-gray-200">
                     {filteredFeedbacks.length}{" "}
                     {filteredFeedbacks.length === 1 ? "entry" : "entries"}
                     {ratingFilter !== "all" &&
@@ -197,7 +181,7 @@ export default function Admin() {
                 <div className="relative">
                   <button
                     onClick={() => setShowRatingDropdown(!showRatingDropdown)}
-                    className={`flex items-center px-4 py-2 rounded-lg border transition-colors ${theme ? "border-gray-300 bg-white text-gray-700 hover:bg-gray-50" : "border-gray-600 bg-gray-950 text-gray-100 hover:bg-gray-800"}`}
+                    className="flex items-center px-4 py-2 rounded-lg border transition-colors border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
                   >
                     <Filter size={16} className="mr-2" />
                     {ratingFilter === "all"
@@ -207,15 +191,13 @@ export default function Admin() {
                   </button>
 
                   {showRatingDropdown && (
-                    <div
-                      className={`absolute right-0 mt-2 w-48 rounded-lg border shadow-lg z-10 ${theme ? "bg-white border-gray-200" : "bg-gray-950 border-gray-700"}`}
-                    >
+                    <div className="absolute right-0 mt-2 w-48 rounded-lg border shadow-lg z-10 bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-700">
                       <button
                         onClick={() => {
                           setRatingFilter("all");
                           setShowRatingDropdown(false);
                         }}
-                        className={`w-full text-left px-4 py-2 transition-colors ${theme ? "hover:bg-gray-50" : "hover:bg-gray-800"} ${ratingFilter === "all" ? (theme ? "bg-blue-50 text-blue-600" : "bg-blue-900/30 text-blue-400") : ""}`}
+                        className={`w-full text-left px-4 py-2 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 ${ratingFilter === "all" ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" : ""}`}
                       >
                         All Ratings
                       </button>
@@ -226,13 +208,9 @@ export default function Admin() {
                             setRatingFilter(rating);
                             setShowRatingDropdown(false);
                           }}
-                          className={`w-full text-left px-4 py-2 transition-colors ${theme ? "hover:bg-gray-50" : "hover:bg-gray-800"} ${ratingFilter === rating ? (theme ? "bg-blue-50 text-blue-600" : "bg-blue-900/30 text-blue-400") : theme ? "text-gray-700" : "text-gray-300"}`}
+                          className={`w-full text-left px-4 py-2 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 ${ratingFilter === rating ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" : "text-gray-700 dark:text-gray-300"}`}
                         >
-                          <span
-                            className={
-                              theme ? "text-amber-500" : "text-amber-400"
-                            }
-                          >
+                          <span className="text-amber-500 dark:text-amber-400">
                             {"★".repeat(rating)}
                             {"☆".repeat(5 - rating)}
                           </span>{" "}
@@ -245,23 +223,17 @@ export default function Admin() {
               </div>
 
               {filteredFeedbacks.length === 0 ? (
-                <div
-                  className={`text-center py-12 rounded-lg ${theme ? "bg-gray-50 text-gray-500" : "bg-gray-950 text-gray-400"}`}
-                >
+                <div className="text-center py-12 rounded-lg bg-gray-50 dark:bg-gray-950 text-gray-500 dark:text-gray-400">
                   {ratingFilter === "all"
                     ? "No feedback has been submitted yet."
                     : `No ${ratingFilter}-star feedback found.`}
                 </div>
               ) : (
-                <div
-                  className={`rounded-xl border overflow-hidden shadow-sm ${theme ? "border-gray-200" : "border-gray-700"}`}
-                >
+                <div className="rounded-xl border overflow-hidden shadow-sm border-gray-200 dark:border-gray-700">
                   <div className="overflow-x-auto">
                     <table className="min-w-full">
-                      <thead className={theme ? "bg-gray-100" : "bg-gray-900"}>
-                        <tr
-                          className={theme ? "text-gray-900" : "text-gray-100"}
-                        >
+                      <thead className="bg-gray-100 dark:bg-gray-900">
+                        <tr className="text-gray-900 dark:text-gray-100">
                           <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider">
                             Rating
                           </th>
@@ -279,18 +251,14 @@ export default function Admin() {
                           </th>
                         </tr>
                       </thead>
-                      <tbody
-                        className={`divide-y ${theme ? "divide-gray-200 bg-white text-gray-900" : "divide-gray-700 bg-gray-950 text-gray-100"}`}
-                      >
+                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
                         {filteredFeedbacks.map((fb) => (
                           <tr
                             key={fb._id}
-                            className={`transition-colors ${theme ? "hover:bg-gray-50" : "hover:bg-gray-800"}`}
+                            className="transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
                           >
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span
-                                className={`text-lg ${theme ? "text-amber-500" : "text-amber-400"}`}
-                              >
+                              <span className="text-lg text-amber-500 dark:text-amber-400">
                                 {"★".repeat(fb.rating)}
                                 {"☆".repeat(5 - fb.rating)}
                               </span>
@@ -331,89 +299,61 @@ export default function Admin() {
           {currentView === "users" && (
             <div>
               <div className="mb-6">
-                <h1
-                  className={`text-3xl font-bold ${theme ? "text-gray-900" : "text-gray-100"}`}
-                >
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                   Active Users
                 </h1>
-                <p
-                  className={`mt-2 ${theme ? "text-gray-600" : "text-gray-200"}`}
-                >
+                <p className="mt-2 text-gray-600 dark:text-gray-200">
                   {users.length} total users
                 </p>
               </div>
 
               {/* Subscription Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div
-                  className={`p-6 rounded-lg border transition-colors ${theme ? "bg-white border-gray-200 hover:shadow-md" : "bg-gray-950 border-gray-700 hover:shadow-lg"}`}
-                >
+                <div className="p-6 rounded-lg border transition-colors bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:shadow-md dark:hover:shadow-lg">
                   <div className="flex items-center">
-                    <div
-                      className={`p-3 rounded-full ${theme ? "bg-gray-100" : "bg-gray-800"}`}
-                    >
+                    <div className="p-3 rounded-full bg-gray-100 dark:bg-gray-800">
                       <Users
                         size={24}
-                        className={theme ? "text-gray-600" : "text-gray-400"}
+                        className="text-gray-600 dark:text-gray-400"
                       />
                     </div>
                     <div className="ml-4">
-                      <p
-                        className={`text-sm font-medium ${theme ? "text-gray-600" : "text-gray-400"}`}
-                      >
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                         Free Users
                       </p>
-                      <p
-                        className={`text-2xl font-bold ${theme ? "text-gray-900" : "text-gray-100"}`}
-                      >
+                      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                         {subscriptionStats.Free}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div
-                  className={`p-6 rounded-lg border transition-colors ${theme ? "bg-white border-gray-200 hover:shadow-md" : "bg-gray-950 border-gray-700 hover:shadow-lg"}`}
-                >
+                <div className="p-6 rounded-lg border transition-colors bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:shadow-md dark:hover:shadow-lg">
                   <div className="flex items-center">
-                    <div
-                      className={`p-3 rounded-full ${theme ? "bg-blue-100" : "bg-blue-900/30"}`}
-                    >
+                    <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/30">
                       <Users size={24} className="text-blue-600" />
                     </div>
                     <div className="ml-4">
-                      <p
-                        className={`text-sm font-medium ${theme ? "text-gray-600" : "text-gray-400"}`}
-                      >
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                         Standard Users
                       </p>
-                      <p
-                        className={`text-2xl font-bold ${theme ? "text-gray-900" : "text-gray-100"}`}
-                      >
+                      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                         {subscriptionStats.Standard}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div
-                  className={`p-6 rounded-lg border transition-colors ${theme ? "bg-white border-gray-200 hover:shadow-md" : "bg-gray-950 border-gray-700 hover:shadow-lg"}`}
-                >
+                <div className="p-6 rounded-lg border transition-colors bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-700 hover:shadow-md dark:hover:shadow-lg">
                   <div className="flex items-center">
-                    <div
-                      className={`p-3 rounded-full ${theme ? "bg-purple-100" : "bg-purple-900/30"}`}
-                    >
+                    <div className="p-3 rounded-full bg-purple-100 dark:bg-purple-900/30">
                       <Users size={24} className="text-purple-600" />
                     </div>
                     <div className="ml-4">
-                      <p
-                        className={`text-sm font-medium ${theme ? "text-gray-600" : "text-gray-400"}`}
-                      >
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                         Premium Users
                       </p>
-                      <p
-                        className={`text-2xl font-bold ${theme ? "text-gray-900" : "text-gray-100"}`}
-                      >
+                      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                         {subscriptionStats.Premium}
                       </p>
                     </div>
@@ -422,21 +362,15 @@ export default function Admin() {
               </div>
 
               {users.length === 0 ? (
-                <div
-                  className={`text-center py-12 rounded-lg ${theme ? "bg-gray-50 text-gray-500" : "bg-gray-950 text-gray-400"}`}
-                >
+                <div className="text-center py-12 rounded-lg bg-gray-50 dark:bg-gray-950 text-gray-500 dark:text-gray-400">
                   No users found.
                 </div>
               ) : (
-                <div
-                  className={`rounded-xl border overflow-hidden shadow-sm ${theme ? "border-gray-200" : "border-gray-700"}`}
-                >
+                <div className="rounded-xl border overflow-hidden shadow-sm border-gray-200 dark:border-gray-700">
                   <div className="overflow-x-auto">
                     <table className="min-w-full">
-                      <thead className={theme ? "bg-gray-100" : "bg-gray-900"}>
-                        <tr
-                          className={theme ? "text-gray-900" : "text-gray-100"}
-                        >
+                      <thead className="bg-gray-100 dark:bg-gray-900">
+                        <tr className="text-gray-900 dark:text-gray-100">
                           <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider">
                             Name
                           </th>
@@ -457,13 +391,11 @@ export default function Admin() {
                           </th>
                         </tr>
                       </thead>
-                      <tbody
-                        className={`divide-y ${theme ? "divide-gray-200 bg-white text-gray-900" : "divide-gray-700 bg-gray-950 text-gray-100"}`}
-                      >
+                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
                         {users.map((user) => (
                           <tr
                             key={user._id}
-                            className={`transition-colors ${theme ? "hover:bg-gray-50" : "hover:bg-gray-800"}`}
+                            className="transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
                           >
                             <td className="px-6 py-4 whitespace-nowrap font-medium">
                               {user.name}
@@ -477,24 +409,16 @@ export default function Admin() {
                                   user.paymentType
                                     .toLowerCase()
                                     .includes("free")
-                                    ? theme
-                                      ? "bg-gray-100 text-gray-800"
-                                      : "bg-gray-700 text-gray-300"
+                                    ? "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300"
                                     : user.paymentType
                                           .toLowerCase()
                                           .includes("standard")
-                                      ? theme
-                                        ? "bg-blue-100 text-blue-800"
-                                        : "bg-blue-900/30 text-blue-400"
+                                      ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400"
                                       : user.paymentType
                                             .toLowerCase()
                                             .includes("premium")
-                                        ? theme
-                                          ? "bg-purple-100 text-purple-800"
-                                          : "bg-purple-900/30 text-purple-400"
-                                        : theme
-                                          ? "bg-gray-100 text-gray-800"
-                                          : "bg-gray-700 text-gray-300"
+                                        ? "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400"
+                                        : "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300"
                                 }`}
                               >
                                 {user.paymentType}
@@ -504,12 +428,8 @@ export default function Admin() {
                               <span
                                 className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                   user.isEmailVerified
-                                    ? theme
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-green-900/30 text-green-400"
-                                    : theme
-                                      ? "bg-red-100 text-red-800"
-                                      : "bg-red-900/30 text-red-400"
+                                    ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400"
+                                    : "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400"
                                 }`}
                               >
                                 {user.isEmailVerified

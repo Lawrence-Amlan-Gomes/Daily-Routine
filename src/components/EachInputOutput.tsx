@@ -1,8 +1,7 @@
 "use client";
-import { useTheme } from "@/app/hooks/useTheme";
 import { motion, Variants } from "framer-motion";
-import { CgCopy } from "react-icons/cg";
 import { useState } from "react";
+import { CgCopy } from "react-icons/cg";
 
 export default function EachInputOutput({
   pair,
@@ -13,7 +12,6 @@ export default function EachInputOutput({
   isLast: boolean;
   isLoading: boolean;
 }) {
-  const { theme } = useTheme();
   const [copiedUser, setCopiedUser] = useState(false);
   const [copiedAI, setCopiedAI] = useState(false);
 
@@ -75,7 +73,7 @@ export default function EachInputOutput({
         p
           .replace(/\*\*/g, "") // Remove bold markers
           .replace(/^#{1,6}\s*/gm, "") // Remove heading markers
-          .trim()
+          .trim(),
       )
       .join("\n\n"); // Join with double newline (one blank line between paragraphs)
   };
@@ -134,11 +132,7 @@ export default function EachInputOutput({
       {/* User Input */}
       <div className="relative w-full">
         <div
-          className={`border-[1px] ${
-            theme
-              ? "bg-[#ffffff] text-black border-[#333333]"
-              : "bg-[#000000] text-[#cccccc] border-[#444444]"
-          } w-[78%] ml-[20%] text-justify py-2 px-3 rounded-md sm:mb-5 mr-[2%] text-[12px] sm:text-[16px] mb-3 whitespace-pre-wrap`}
+          className={`border-[1px] bg-[#ffffff] dark:bg-[#000000] text-black dark:text-[#cccccc] border-[#333333] dark:border-[#444444] w-[78%] ml-[20%] text-justify py-2 px-3 rounded-md sm:mb-5 mr-[2%] text-[12px] sm:text-[16px] mb-3 whitespace-pre-wrap`}
         >
           {renderTextWithLineBreaks(pair[0])}
         </div>
@@ -149,9 +143,7 @@ export default function EachInputOutput({
           className={`absolute top-0 left-8 sm:left-10 p-1.5 rounded transition-all duration-200 ${
             copiedUser
               ? "text-green-500"
-              : theme
-              ? "text-gray-600 hover:text-purple-700 hover:bg-gray-100"
-              : "text-gray-400 hover:text-purple-500 hover:bg-[#222222]"
+              : "text-gray-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-500 hover:bg-gray-100 dark:hover:bg-[#222222]"
           }`}
           title={copiedUser ? "Copied!" : "Copy user text"}
         >
@@ -177,9 +169,7 @@ export default function EachInputOutput({
 
       {/* AI Response */}
       <div
-        className={`w-[78%] mr-[20%] ml-[2%] ${
-          theme ? "text-[#111111]" : "text-[#dddddd]"
-        } text-justify pr-3 pl-2 rounded-md sm:mb-10 mb-6 relative`}
+        className={`w-[78%] mr-[20%] ml-[2%] text-[#111111] dark:text-[#dddddd] text-justify pr-3 pl-2 rounded-md sm:mb-10 mb-6 relative`}
       >
         {isLast && isLoading ? (
           <motion.div
@@ -223,9 +213,7 @@ export default function EachInputOutput({
             className={`absolute top-0 -right-8 sm:-right-10 p-1.5 rounded transition-all duration-200 ${
               copiedAI
                 ? "text-green-500"
-                : theme
-                ? "text-gray-600 hover:text-purple-700 hover:bg-gray-100"
-                : "text-gray-400 hover:text-purple-500 hover:bg-[#222222]"
+                : "text-gray-600 dark:text-gray-400 hover:text-purple-700 dark:hover:text-purple-500 hover:bg-gray-100 dark:hover:bg-[#222222]"
             }`}
             title={copiedAI ? "Copied!" : "Copy response"}
           >

@@ -2,7 +2,6 @@
 
 import colors from "@/app/color/color";
 import { useAuth } from "@/app/hooks/useAuth";
-import { useTheme } from "@/app/hooks/useTheme";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -13,23 +12,17 @@ interface ProfileIconProps {
 
 const ProfileIcon = ({ active }: ProfileIconProps) => {
   const pathname = usePathname();
-  const { theme } = useTheme();
   const { user: auth } = useAuth();
 
   // Choose border & background style based on active state and theme
   const baseStyle = `border-[1px] lg:h-[40px] lg:w-[40px] sm:w-[35px] sm:h-[35px] h-[30px] w-[30px] rounded-lg relative overflow-hidden flex items-center justify-center font-medium text-lg`;
 
-  const lightMode =
+  const activeStyle =
     active === "profile"
-      ? `bg-transparent hover:bg-[#f8f8f8] text-black ${colors.keyBorder} border-[1px]`
-      : `bg-transparent hover:bg-[#f8f8f8] text-black border-gray-400 hover:border-gray-400 border-[1px]`;
+      ? `bg-transparent hover:bg-[#f8f8f8] dark:hover:bg-[#111111] text-black dark:text-white ${colors.keyBorder} border-[1px]`
+      : `bg-transparent hover:bg-[#f8f8f8] dark:hover:bg-[#111111] text-black dark:text-white border-gray-400 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-700 border-[1px]`;
 
-  const darkMode =
-    active === "profile"
-      ? `bg-transparent hover:bg-[#111111] text-white ${colors.keyBorder} border-[1px]`
-      : `bg-transparent hover:bg-[#111111] text-white border-gray-800 hover:border-gray-700 border-[1px]`;
-
-  const profileStyle = `${baseStyle} ${theme ? lightMode : darkMode}`;
+  const profileStyle = `${baseStyle} ${activeStyle}`;
 
   // ───────────────────────────────────────────────
   // Decide what to show inside the circle
@@ -50,25 +43,32 @@ const ProfileIcon = ({ active }: ProfileIconProps) => {
   } else if (auth && auth.name && auth.name.trim()) {
     // Show first letter of name (uppercase) - only when no photo
     const firstLetter = auth.name.trim()[0].toUpperCase();
-    content = <span>{firstLetter}</span>;
+    content = <span className="dark:text-white">{firstLetter}</span>;
   } else if (!auth) {
     // Not logged in → show default icon
-    const defaultIcon = theme
-      ? "/profileIconLight.png"
-      : "/profileIconDark.png";
     content = (
-      <Image
-        priority
-        src={defaultIcon}
-        alt="Profile Icon"
-        fill
-        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 30vw"
-        className="object-cover"
-      />
+      <>
+        <Image
+          priority
+          src="/profileIconLight.png"
+          alt="Profile Icon"
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 30vw"
+          className="object-cover dark:hidden"
+        />
+        <Image
+          priority
+          src="/profileIconDark.png"
+          alt="Profile Icon"
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 30vw"
+          className="object-cover hidden dark:block"
+        />
+      </>
     );
   } else {
     // Edge case: logged in but no name → show "?"
-    content = <span>?</span>;
+    content = <span className="dark:text-white">?</span>;
   }
 
   // Where to redirect

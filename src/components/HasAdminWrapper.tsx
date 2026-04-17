@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from "@/app/hooks/useAuth";
-import { useTheme } from "@/app/hooks/useTheme";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -11,7 +10,6 @@ export default function HasAdminWrapper({
   children: React.ReactNode;
 }) {
   const { user: auth } = useAuth();
-  const { theme } = useTheme();
   const router = useRouter();
   const [hasMounted, setHasMounted] = useState(false);
 
@@ -31,19 +29,11 @@ export default function HasAdminWrapper({
 
   if (!auth || !auth.isAdmin) {
     return (
-      <div
-        className={`h-screen w-full flex flex-col items-center justify-center gap-4 ${
-          theme ? "bg-white text-gray-800" : "bg-black text-gray-200"
-        }`}
-      >
-        <div
-          className={`w-14 h-14 rounded-full flex items-center justify-center mb-2 ${
-            theme ? "bg-red-50" : "bg-red-900/30"
-          }`}
-        >
+      <div className="h-screen w-full flex flex-col items-center justify-center gap-4 bg-white dark:bg-black text-gray-800 dark:text-gray-200">
+        <div className="w-14 h-14 rounded-full flex items-center justify-center mb-2 bg-red-50 dark:bg-red-900/30">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className={`w-7 h-7 ${theme ? "text-red-500" : "text-red-400"}`}
+            className={`w-7 h-7 text-red-500 dark:text-red-400`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -57,15 +47,11 @@ export default function HasAdminWrapper({
           </svg>
         </div>
 
-        <p
-          className={`text-lg sm:text-xl font-semibold ${
-            theme ? "text-gray-800" : "text-gray-100"
-          }`}
-        >
+        <p className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-100">
           Access Denied
         </p>
 
-        <p className={`text-sm ${theme ? "text-gray-400" : "text-gray-500"}`}>
+        <p className="text-sm text-gray-400 dark:text-gray-500">
           Redirecting to home...
         </p>
 
@@ -73,9 +59,7 @@ export default function HasAdminWrapper({
           {[0, 1, 2].map((i) => (
             <span
               key={i}
-              className={`w-2 h-2 rounded-full animate-bounce ${
-                theme ? "bg-red-300" : "bg-red-700"
-              }`}
+              className={`w-2 h-2 rounded-full animate-bounce bg-red-300 dark:bg-red-700`}
               style={{ animationDelay: `${i * 0.15}s` }}
             />
           ))}

@@ -3,7 +3,6 @@
 
 import { deletePhoto, updateUser, uploadPhoto } from "@/app/actions";
 import { useAuth } from "@/app/hooks/useAuth";
-import { useTheme } from "@/app/hooks/useTheme";
 import { logout } from "@/store/features/auth/authSlice";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -15,7 +14,6 @@ import { useDispatch } from "react-redux";
 const Profile = () => {
   const router = useRouter();
   const dispatch = useDispatch();
-  const { theme } = useTheme();
   const { user: auth, setAuth } = useAuth();
 
   const [name, setName] = useState("");
@@ -104,28 +102,20 @@ const Profile = () => {
 
   const getSubscriptionBadge = (type: string) => {
     if (type === "Monthly" || type === "Yearly") {
-      return theme
-        ? "bg-blue-50 text-blue-700 border-blue-200"
-        : "bg-blue-900/30 text-blue-300 border-blue-700/50";
+      return "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/50";
     }
     if (type?.toLowerCase().includes("trial")) {
-      return theme
-        ? "bg-green-50 text-green-700 border-green-200"
-        : "bg-green-900/30 text-green-300 border-green-700/50";
+      return "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700/50";
     }
-    return theme
-      ? "bg-gray-100 text-gray-500 border-gray-200"
-      : "bg-gray-800 text-gray-400 border-gray-700";
+    return "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700";
   };
 
   if (!auth) {
     return (
       <div
-        className={`min-h-screen flex items-center justify-center ${
-          theme ? "bg-gray-50" : "bg-black"
-        }`}
+        className={`min-h-screen flex items-center justify-center bg-gray-50 dark:bg-black`}
       >
-        <p className={theme ? "text-gray-500" : "text-gray-400"}>
+        <p className="text-gray-500 dark:text-gray-400">
           Please log in to view your profile.
         </p>
       </div>
@@ -143,19 +133,13 @@ const Profile = () => {
 
   return (
     <div
-      className={`min-h-screen w-full px-4 pt-[80px] md:pt-[100px] pb-12 ${
-        theme ? "bg-gray-50" : "bg-black"
-      }`}
+      className={`min-h-screen w-full px-4 pt-[80px] md:pt-[100px] pb-12 bg-gray-50 dark:bg-black`}
     >
       <div className="w-full max-w-lg mx-auto space-y-4">
 
         {/* ── Profile card ── */}
         <div
-          className={`rounded-2xl border overflow-hidden ${
-            theme
-              ? "bg-white border-gray-200 shadow-sm"
-              : "bg-gray-950 border-gray-800"
-          }`}
+          className={`rounded-2xl border overflow-hidden bg-white border-gray-200 shadow-sm dark:bg-gray-950 dark:border-gray-800`}
         >
           {/* Avatar + name */}
           <div className="px-6 pt-6 pb-6">
@@ -163,9 +147,7 @@ const Profile = () => {
               {/* Avatar */}
               <div className="relative group flex-shrink-0">
                 <div
-                  className={`w-24 h-24 rounded-2xl overflow-hidden border-[3px] border-blue-500 shadow-md flex items-center justify-center ${
-                    theme ? "bg-gray-100" : "bg-gray-800"
-                  }`}
+                  className={`w-24 h-24 rounded-2xl overflow-hidden border-[3px] border-blue-500 shadow-md flex items-center justify-center bg-gray-100 dark:bg-gray-800`}
                 >
                   {photoLoading ? (
                     <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -179,9 +161,7 @@ const Profile = () => {
                     />
                   ) : (
                     <span
-                      className={`text-3xl font-bold select-none ${
-                        theme ? "text-gray-400" : "text-gray-500"
-                      }`}
+                      className={`text-3xl font-bold select-none text-gray-400 dark:text-gray-500`}
                     >
                       {initials}
                     </span>
@@ -224,26 +204,18 @@ const Profile = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleUpdate()}
-                    className={`w-full bg-transparent border-b-2 text-xl font-bold focus:outline-none pb-0.5 transition-colors ${
-                      theme
-                        ? "border-gray-300 focus:border-blue-500 text-gray-900"
-                        : "border-gray-700 focus:border-blue-400 text-white"
-                    }`}
+                    className={`w-full bg-transparent border-b-2 text-xl font-bold focus:outline-none pb-0.5 transition-colors border-gray-300 focus:border-blue-500 text-gray-900 dark:border-gray-700 dark:focus:border-blue-400 dark:text-white`}
                     placeholder="Your name"
                   />
                 ) : (
                   <h1
-                    className={`text-xl font-bold truncate ${
-                      theme ? "text-gray-900" : "text-white"
-                    }`}
+                    className={`text-xl font-bold truncate text-gray-900 dark:text-white`}
                   >
                     {name || "User"}
                   </h1>
                 )}
                 <p
-                  className={`text-sm truncate mt-0.5 ${
-                    theme ? "text-gray-500" : "text-gray-400"
-                  }`}
+                  className={`text-sm truncate mt-0.5 text-gray-500 dark:text-gray-400`}
                 >
                   {auth.email}
                 </p>
@@ -272,7 +244,7 @@ const Profile = () => {
                 {deletePhotoConfirm && (
                   <div className="ml-auto flex items-center gap-2 text-xs">
                     <span
-                      className={theme ? "text-gray-600" : "text-gray-400"}
+                      className="text-gray-600 dark:text-gray-400"
                     >
                       Remove photo?
                     </span>
@@ -284,11 +256,7 @@ const Profile = () => {
                     </button>
                     <button
                       onClick={() => setDeletePhotoConfirm(false)}
-                      className={
-                        theme
-                          ? "text-gray-500 hover:text-gray-700"
-                          : "text-gray-400 hover:text-gray-200"
-                      }
+                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     >
                       Cancel
                     </button>
@@ -309,21 +277,13 @@ const Profile = () => {
 
         {/* ── Account info card ── */}
         <div
-          className={`rounded-2xl border overflow-hidden ${
-            theme
-              ? "bg-white border-gray-200 shadow-sm"
-              : "bg-gray-950 border-gray-800"
-          }`}
+          className={`rounded-2xl border overflow-hidden bg-white border-gray-200 shadow-sm dark:bg-gray-950 dark:border-gray-800`}
         >
           <div
-            className={`px-6 py-3.5 border-b ${
-              theme ? "border-gray-100" : "border-gray-800"
-            }`}
+            className={`px-6 py-3.5 border-b border-gray-100 dark:border-gray-800`}
           >
             <h2
-              className={`text-[11px] font-semibold uppercase tracking-widest ${
-                theme ? "text-gray-400" : "text-gray-500"
-              }`}
+              className={`text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500`}
             >
               Account
             </h2>
@@ -333,9 +293,7 @@ const Profile = () => {
             {/* Subscription */}
             <div className="flex items-center justify-between">
               <span
-                className={`text-sm ${
-                  theme ? "text-gray-500" : "text-gray-400"
-                }`}
+                className={`text-sm text-gray-500 dark:text-gray-400`}
               >
                 Subscription
               </span>
@@ -350,22 +308,18 @@ const Profile = () => {
 
             {/* Divider */}
             <div
-              className={`h-px ${theme ? "bg-gray-100" : "bg-gray-800"}`}
+              className={`h-px bg-gray-100 dark:bg-gray-800`}
             />
 
             {/* Expiry */}
             <div className="flex items-center justify-between">
               <span
-                className={`text-sm ${
-                  theme ? "text-gray-500" : "text-gray-400"
-                }`}
+                className={`text-sm text-gray-500 dark:text-gray-400`}
               >
                 Expires
               </span>
               <span
-                className={`text-sm font-medium ${
-                  theme ? "text-gray-800" : "text-gray-200"
-                }`}
+                className={`text-sm font-medium text-gray-800 dark:text-gray-200`}
               >
                 {auth.expiredAt ? auth.expiredAt.split("T")[0] : "—"}
               </span>
@@ -373,22 +327,18 @@ const Profile = () => {
 
             {/* Divider */}
             <div
-              className={`h-px ${theme ? "bg-gray-100" : "bg-gray-800"}`}
+              className={`h-px bg-gray-100 dark:bg-gray-800`}
             />
 
             {/* Login method */}
             <div className="flex items-center justify-between">
               <span
-                className={`text-sm ${
-                  theme ? "text-gray-500" : "text-gray-400"
-                }`}
+                className={`text-sm text-gray-500 dark:text-gray-400`}
               >
                 Login method
               </span>
               <span
-                className={`text-sm font-medium flex items-center gap-1.5 ${
-                  theme ? "text-gray-800" : "text-gray-200"
-                }`}
+                className={`text-sm font-medium flex items-center gap-1.5 text-gray-800 dark:text-gray-200`}
               >
                 {auth.isRegisteredWithGoogle ? (
                   <>
@@ -441,21 +391,13 @@ const Profile = () => {
 
         {/* ── Actions card ── */}
         <div
-          className={`rounded-2xl border overflow-hidden ${
-            theme
-              ? "bg-white border-gray-200 shadow-sm"
-              : "bg-gray-950 border-gray-800"
-          }`}
+          className={`rounded-2xl border overflow-hidden bg-white border-gray-200 shadow-sm dark:bg-gray-950 dark:border-gray-800`}
         >
           <div
-            className={`px-6 py-3.5 border-b ${
-              theme ? "border-gray-100" : "border-gray-800"
-            }`}
+            className={`px-6 py-3.5 border-b border-gray-100 dark:border-gray-800`}
           >
             <h2
-              className={`text-[11px] font-semibold uppercase tracking-widest ${
-                theme ? "text-gray-400" : "text-gray-500"
-              }`}
+              className={`text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500`}
             >
               Actions
             </h2>
@@ -512,11 +454,7 @@ const Profile = () => {
             {!auth.isRegisteredWithGoogle && (
               <Link href="/changePassword" className="block">
                 <button
-                  className={`w-full py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] border ${
-                    theme
-                      ? "border-gray-200 text-gray-700 hover:bg-gray-50"
-                      : "border-gray-700 text-gray-300 hover:bg-gray-800/60"
-                  }`}
+                  className={`w-full py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800/60`}
                 >
                   <svg
                     className="w-4 h-4"
@@ -540,11 +478,7 @@ const Profile = () => {
             {!logoutConfirm ? (
               <button
                 onClick={() => setLogoutConfirm(true)}
-                className={`w-full py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] border ${
-                  theme
-                    ? "text-red-600 hover:bg-red-50 border-red-200"
-                    : "text-red-400 hover:bg-red-950/40 border-red-900/50"
-                }`}
+                className={`w-full py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] border text-red-600 hover:bg-red-50 border-red-200 dark:text-red-400 dark:hover:bg-red-950/40 dark:border-red-900/50`}
               >
                 <svg
                   className="w-4 h-4"
@@ -563,16 +497,10 @@ const Profile = () => {
               </button>
             ) : (
               <div
-                className={`rounded-xl border p-4 ${
-                  theme
-                    ? "bg-red-50 border-red-200"
-                    : "bg-red-950/20 border-red-900/50"
-                }`}
+                className={`rounded-xl border p-4 bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900/50`}
               >
                 <p
-                  className={`text-sm text-center mb-3 font-medium ${
-                    theme ? "text-gray-700" : "text-gray-300"
-                  }`}
+                  className={`text-sm text-center mb-3 font-medium text-gray-700 dark:text-gray-300`}
                 >
                   Are you sure you want to sign out?
                 </p>
@@ -585,11 +513,7 @@ const Profile = () => {
                   </button>
                   <button
                     onClick={() => setLogoutConfirm(false)}
-                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors border ${
-                      theme
-                        ? "border-gray-300 text-gray-600 hover:bg-gray-100"
-                        : "border-gray-700 text-gray-400 hover:bg-gray-800"
-                    }`}
+                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors border border-gray-300 text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800`}
                   >
                     Cancel
                   </button>

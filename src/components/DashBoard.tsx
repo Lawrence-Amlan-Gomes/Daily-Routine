@@ -5,7 +5,6 @@
 
 import colors from "@/app/color/color";
 import { useAuth } from "@/app/hooks/useAuth";
-import { useTheme } from "@/app/hooks/useTheme";
 import EditRoutine from "@/components/EditRoutine";
 import ShowRoutine from "@/components/ShowRoutine";
 import { AnimatePresence, motion } from "framer-motion";
@@ -94,7 +93,6 @@ export default function DashBoard() {
 
   // ── Hooks ──────────────────────────────────────────────────
   const router = useRouter();
-  const { theme } = useTheme();
   const { user: auth, setAuth } = useAuth();
 
   // ── Mark as mounted ────────────────────────────────────────
@@ -374,20 +372,28 @@ export default function DashBoard() {
   // ── Loading screen before mount ────────────────────────────
   if (!hasMounted) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
-        <div className="text-center">
-          <div className="relative w-24 h-24 mx-auto mb-8">
-            <div className="absolute inset-0 rounded-full border-4 border-t-blue-500 border-gray-800/40 animate-spin"></div>
-            <div className="absolute inset-4 rounded-full border-4 border-t-purple-500 border-gray-800/30 animate-[spin_2.8s_linear_infinite]"></div>
+      <div className="fixed inset-0 bg-[#eeeeee] dark:bg-[#111111] flex items-center justify-center z-50">
+        <div className="flex flex-col items-center gap-8">
+          {/* Logo */}
+          <div className="w-16 h-16 rounded-2xl bg-blue-600/10 border border-blue-600/20 flex items-center justify-center shadow-lg shadow-blue-600/10">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/Icon.png" alt="Daily Routine" className="w-10 h-10 object-contain" />
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-wide mb-3">
-            Initializing Dashboard
-          </h2>
-          <p className="text-gray-400 text-base sm:text-lg">
-            Preparing your routine... just a moment
-          </p>
-          <div className="mt-6 text-sm text-gray-600 animate-pulse">
-            {"• • •"}
+
+          {/* Spinner */}
+          <div className="relative w-10 h-10">
+            <div className="absolute inset-0 rounded-full border-2 border-blue-600/15"></div>
+            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-blue-600 animate-spin"></div>
+          </div>
+
+          {/* Text */}
+          <div className="text-center space-y-1.5">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+              Daily Routine
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Loading your dashboard…
+            </p>
           </div>
         </div>
       </div>
@@ -496,11 +502,7 @@ export default function DashBoard() {
       <div className="hidden lg:block w-full overflow-hidden fixed" style={{ top: "64px", height: "calc(100% - 64px)" }}>
         {/* Sidebar */}
         <motion.div
-          className={`h-full float-left ${
-            theme
-              ? "bg-white border-r-[1px] border-gray-200"
-              : "bg-black border-r-[1px] border-gray-800"
-          }`}
+          className={`h-full float-left bg-white border-r-[1px] border-gray-200 dark:bg-black dark:border-gray-800`}
           initial={{ width: sidebar.closed }}
           animate={{
             width: isSidebarOpen ? sidebar.open : sidebar.closed,
@@ -610,11 +612,7 @@ export default function DashBoard() {
       <div className="hidden sm:block lg:hidden w-full overflow-hidden fixed" style={{ top: "56px", height: "calc(100% - 56px)" }}>
         {/* Sidebar */}
         <motion.div
-          className={`h-full float-left ${
-            theme
-              ? "bg-white border-r-[1px] border-gray-200"
-              : "bg-black border-r-[1px] border-gray-800"
-          }`}
+          className={`h-full float-left bg-white border-r-[1px] border-gray-200 dark:bg-black dark:border-gray-800`}
           initial={{ width: sidebarTablet.closed }}
           animate={{
             width: isSidebarOpen ? sidebarTablet.open : sidebarTablet.closed,
@@ -724,11 +722,7 @@ export default function DashBoard() {
       <div className="block sm:hidden w-full overflow-hidden fixed" style={{ top: "56px", height: "calc(100% - 56px)" }}>
         {/* Sidebar */}
         <motion.div
-          className={`h-full float-left ${
-            theme
-              ? "bg-white border-r-[1px] border-gray-200"
-              : "bg-black border-r-[1px] border-gray-800"
-          }`}
+          className={`h-full float-left bg-white border-r-[1px] border-gray-200 dark:bg-black dark:border-gray-800`}
           initial={{ width: sidebarMobile.closed }}
           animate={{
             width: isSidebarOpen ? sidebarMobile.open : sidebarMobile.closed,
@@ -891,11 +885,7 @@ export default function DashBoard() {
       {taskAlert && (
         <div className="fixed z-50 bottom-5 right-5 sm:bottom-5 sm:right-5 lg:bottom-5 lg:right-5 w-[90vw] sm:w-[340px]">
           <div
-            className={`relative rounded-2xl shadow-2xl border px-5 py-4 ${
-              theme
-                ? "bg-white border-blue-500 text-gray-900"
-                : "bg-gray-900 border-blue-500 text-gray-100"
-            }`}
+            className={`relative rounded-2xl shadow-2xl border px-5 py-4 bg-white border-blue-500 text-gray-900 dark:bg-gray-900 dark:text-gray-100`}
           >
             <button
               onClick={dismissAlert}
@@ -905,9 +895,7 @@ export default function DashBoard() {
             </button>
             <div className="text-2xl mb-2">{"🔔"}</div>
             <p
-              className={`text-xs font-medium mb-1 ${
-                theme ? "text-gray-500" : "text-gray-400"
-              }`}
+              className={`text-xs font-medium mb-1 text-gray-500 dark:text-gray-400`}
             >
               Task Reminder
             </p>
@@ -915,9 +903,7 @@ export default function DashBoard() {
               Now it&apos;s {taskAlert.time}, time for task
             </p>
             <p
-              className={`text-base font-bold mt-0.5 ${
-                theme ? "text-blue-600" : "text-blue-400"
-              }`}
+              className={`text-base font-bold mt-0.5 text-blue-600 dark:text-blue-400`}
             >
               {taskAlert.name}
             </p>
@@ -955,11 +941,7 @@ export default function DashBoard() {
               </button>
               <button
                 onClick={dismissAlert}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition ${
-                  theme
-                    ? "border-gray-200 text-gray-600 hover:bg-gray-50"
-                    : "border-gray-700 text-gray-400 hover:bg-gray-800"
-                }`}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800`}
               >
                 Dismiss
               </button>

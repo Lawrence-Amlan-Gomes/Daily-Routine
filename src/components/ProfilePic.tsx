@@ -4,12 +4,10 @@
 import { updateUser } from "@/app/actions";
 import colors from "@/app/color/color";
 import { useAuth } from "@/app/hooks/useAuth";
-import { useTheme } from "@/app/hooks/useTheme";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 export default function ProfilePic() {
-  const { theme } = useTheme();
   const [editPic, setEditPic] = useState(false);
   const [image, setImage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -108,7 +106,7 @@ export default function ProfilePic() {
       setAuth({ ...auth, photo: imageData });
       await updateUser(auth.email, { firstTimeLogin: false });
       alert("Profile picture updated!");
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       alert("Failed to save photo. Try again.");
       // Revert on error
@@ -128,7 +126,7 @@ export default function ProfilePic() {
     try {
       await updateUser(auth.email, { firstTimeLogin: false });
       alert("Profile picture removed!");
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       alert("Failed to delete photo.");
       setImage(auth.photo || "");
@@ -144,18 +142,14 @@ export default function ProfilePic() {
           onClick={() => setEditPic((prev) => !prev)}
         >
           {isUploading ? (
-            <div
-              className={`w-full h-full flex justify-center items-center text-lg font-bold ${
-                theme ? "bg-black text-white" : "bg-white text-black"
-              }`}
-            >
+            <div className="w-full h-full flex justify-center items-center text-lg font-bold bg-black dark:bg-white text-white dark:text-black">
               Uploading...
             </div>
           ) : image ? (
             <Image
               priority
               src={image}
-              alt={theme ? "Profile Icon Light" : "Profile Icon Dark"}
+              alt="Profile"
               className="object-cover"
               width={800}
               height={800}
@@ -165,11 +159,20 @@ export default function ProfilePic() {
             <div className="h-full w-full relative">
               <Image
                 priority
-                src={theme ? "/profileIconLight.png" : "/profileIconDark.png"}
-                alt={theme ? "Profile Icon Light" : "Profile Icon Dark"}
+                src="/profileIconLight.png"
+                alt="Profile Icon"
                 fill
                 sizes="(max-width: 640px) 100px, 150px"
-                className="object-cover"
+                className="object-cover dark:hidden"
+                unoptimized={true}
+              />
+              <Image
+                priority
+                src="/profileIconDark.png"
+                alt="Profile Icon"
+                fill
+                sizes="(max-width: 640px) 100px, 150px"
+                className="object-cover hidden dark:block"
                 unoptimized={true}
               />
             </div>

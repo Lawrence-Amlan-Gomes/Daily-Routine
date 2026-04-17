@@ -2,7 +2,6 @@
 
 import { updateGoals } from "@/app/actions";
 import { useAuth } from "@/app/hooks/useAuth";
-import { useTheme } from "@/app/hooks/useTheme";
 import { IGoal, ISubtask } from "@/store/features/auth/authSlice";
 import {
   AlertTriangle,
@@ -136,13 +135,11 @@ function SubtaskRow({
   onToggle,
   onDelete,
   onRename,
-  theme,
 }: {
   sub: ISubtask;
   onToggle: () => void;
   onDelete: () => void;
   onRename: (name: string) => void;
-  theme: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [val, setVal] = useState(sub.name);
@@ -176,7 +173,7 @@ function SubtaskRow({
             }
           }}
           className={`flex-1 text-xs bg-transparent border-b outline-none ${
-            theme ? "border-gray-300" : "border-gray-700"
+            "border-gray-300 dark:border-gray-700"
           }`}
         />
       ) : (
@@ -205,12 +202,10 @@ function GoalForm({
   initial,
   onSave,
   onCancel,
-  theme,
 }: {
   initial: Partial<IGoal>;
   onSave: (goal: Omit<IGoal, "id" | "createdAt">) => void;
   onCancel: () => void;
-  theme: boolean;
 }) {
   const base = { ...emptyGoal(), ...initial };
   const [form, setForm] = useState(base);
@@ -236,15 +231,9 @@ function GoalForm({
     setSubtaskInput("");
   };
 
-  const inputCls = `w-full px-3 py-2 text-sm rounded-lg border outline-none transition ${
-    theme
-      ? "bg-white border-gray-200 focus:border-indigo-400 text-gray-900 placeholder-gray-400"
-      : "bg-gray-900 border-gray-700 focus:border-indigo-500 text-gray-100 placeholder-gray-600"
-  } [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute`;
+  const inputCls = "w-full px-3 py-2 text-sm rounded-lg border outline-none transition bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:border-indigo-400 dark:focus:border-indigo-500 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute";
 
-  const labelCls = `block text-[11px] font-bold uppercase tracking-widest mb-1 ${
-    theme ? "text-gray-500" : "text-gray-500"
-  }`;
+  const labelCls = "block text-[11px] font-bold uppercase tracking-widest mb-1 text-gray-500";
 
   return (
     <div className="space-y-4">
@@ -328,7 +317,7 @@ function GoalForm({
             />
             <Bell
               size={14}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${theme ? "text-gray-400" : "text-gray-300"}`}
+              className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 dark:text-gray-300"
             />
           </div>
         </div>
@@ -347,7 +336,7 @@ function GoalForm({
             />
             <Calendar
               size={14}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${theme ? "text-gray-400" : "text-gray-300"}`}
+              className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 dark:text-gray-300"
             />
           </div>
         </div>
@@ -362,7 +351,7 @@ function GoalForm({
             />
             <Clock
               size={14}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${theme ? "text-gray-400" : "text-gray-300"}`}
+              className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 dark:text-gray-300"
             />
           </div>
         </div>
@@ -382,7 +371,7 @@ function GoalForm({
                   : "border-transparent"
               }`}
               style={{
-                background: c || (theme ? "#e5e7eb" : "#374151"),
+                background: c || undefined,
               }}
               title={c || "No color"}
             />
@@ -419,9 +408,7 @@ function GoalForm({
               <span
                 key={tag}
                 className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
-                  theme
-                    ? "bg-indigo-50 text-indigo-700"
-                    : "bg-indigo-900/40 text-indigo-300"
+                  "bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"
                 }`}
               >
                 {tag}
@@ -467,16 +454,13 @@ function GoalForm({
         {form.subtasks.length > 0 && (
           <div
             className={`mt-2 px-3 py-2 rounded-lg border ${
-              theme
-                ? "bg-gray-50 border-gray-200"
-                : "bg-gray-900 border-gray-800"
+              "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800"
             }`}
           >
             {form.subtasks.map((sub) => (
               <SubtaskRow
                 key={sub.id}
                 sub={sub}
-                theme={theme}
                 onToggle={() =>
                   set(
                     "subtasks",
@@ -512,9 +496,7 @@ function GoalForm({
           className={`flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg border transition ${
             form.pinned
               ? "bg-amber-500 border-amber-400 text-white"
-              : theme
-                ? "border-gray-200 text-gray-600 hover:bg-gray-50"
-                : "border-gray-700 text-gray-400 hover:bg-gray-900"
+              : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900"
           }`}
         >
           {form.pinned ? <Pin size={14} /> : <PinOff size={14} />}
@@ -527,9 +509,7 @@ function GoalForm({
         <button
           onClick={onCancel}
           className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border transition ${
-            theme
-              ? "border-gray-200 text-gray-600 hover:bg-gray-50"
-              : "border-gray-700 text-gray-400 hover:bg-gray-900"
+            "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900"
           }`}
         >
           Cancel
@@ -562,7 +542,6 @@ function GoalCard({
   onTogglePin,
   onStatusChange,
   onSubtaskToggle,
-  theme,
   compact = false,
 }: {
   goal: IGoal;
@@ -571,7 +550,6 @@ function GoalCard({
   onTogglePin: () => void;
   onStatusChange: (status: IGoal["status"]) => void;
   onSubtaskToggle: (subId: string) => void;
-  theme: boolean;
   compact?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -594,7 +572,7 @@ function GoalCard({
   return (
     <div
       className={`rounded-2xl border transition-all duration-200 hover:shadow-md ${
-        theme ? "bg-white border-gray-200" : "bg-gray-950 border-gray-800"
+        "bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800"
       } ${goal.status === "archived" ? "opacity-60" : ""}`}
       style={{ borderLeftColor: goal.color || pc.color, borderLeftWidth: "3px" }}
     >
@@ -626,7 +604,7 @@ function GoalCard({
             )}
             <span
               className={`text-[11px] font-medium ${compact ? "hidden sm:inline" : ""} ${
-                theme ? "text-gray-400" : "text-gray-500"
+                "text-gray-400 dark:text-gray-500"
               }`}
             >
               {sc.label}
@@ -639,7 +617,7 @@ function GoalCard({
           <span
             className={`font-semibold text-sm leading-snug whitespace-nowrap truncate min-w-0 ${
               goal.status === "done" ? "opacity-50" : ""
-            } ${theme ? "text-gray-900" : "text-gray-100"}`}
+            } text-gray-900 dark:text-gray-100`}
           >
             {goal.name}
           </span>
@@ -656,9 +634,7 @@ function GoalCard({
             className={`p-1.5 rounded-lg transition ${
               goal.pinned
                 ? "text-amber-500"
-                : theme
-                  ? "text-gray-400 hover:bg-gray-50"
-                  : "text-gray-600 hover:bg-gray-800"
+                : "text-gray-400 dark:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
             }`}
           >
             {goal.pinned ? <Pin size={13} /> : <PinOff size={13} />}
@@ -667,9 +643,7 @@ function GoalCard({
             onClick={onEdit}
             title="Edit"
             className={`p-1.5 rounded-lg transition ${
-              theme
-                ? "text-gray-400 hover:bg-gray-50"
-                : "text-gray-600 hover:bg-gray-800"
+              "text-gray-400 dark:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
             }`}
           >
             <Edit3 size={13} />
@@ -677,11 +651,7 @@ function GoalCard({
           <button
             onClick={() => setExpanded((p) => !p)}
             title="Expand"
-            className={`p-1.5 rounded-lg transition ${
-              theme
-                ? "text-gray-400 hover:bg-gray-50"
-                : "text-gray-600 hover:bg-gray-800"
-            }`}
+            className="p-1.5 rounded-lg transition text-gray-400 dark:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
           >
             {expanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
           </button>
@@ -689,7 +659,7 @@ function GoalCard({
           <div className="ml-auto">
             {confirmDelete ? (
               <div className="flex items-center gap-1.5">
-                <span className={`text-[10px] ${theme ? "text-gray-500" : "text-gray-400"}`}>
+                <span className="text-[10px] text-gray-500 dark:text-gray-400">
                   Delete?
                 </span>
                 <button
@@ -701,9 +671,7 @@ function GoalCard({
                 <button
                   onClick={() => setConfirmDelete(false)}
                   className={`text-[10px] font-bold px-2 py-0.5 rounded-sm border transition ${
-                    theme
-                      ? "border-gray-200 text-gray-600 hover:bg-gray-50"
-                      : "border-gray-700 text-gray-400 hover:bg-gray-800"
+                    "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
                   }`}
                 >
                   No
@@ -713,9 +681,7 @@ function GoalCard({
               <button
                 onClick={() => setConfirmDelete(true)}
                 className={`p-1.5 rounded-lg transition ${
-                  theme
-                    ? "text-red-400 hover:bg-red-50"
-                    : "text-red-500 hover:bg-red-500/10"
+                  "text-red-400 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
                 }`}
                 title="Delete"
               >
@@ -751,9 +717,7 @@ function GoalCard({
                 ? "text-red-500"
                 : dueToday
                   ? "text-orange-500"
-                  : theme
-                    ? "text-gray-500"
-                    : "text-gray-400"
+                  : "text-gray-500 dark:text-gray-400"
             }`}
           >
             <Calendar size={11} />
@@ -769,7 +733,7 @@ function GoalCard({
               <span>Subtasks</span>
               <span>{subtasksDone}/{goal.subtasks.length}</span>
             </div>
-            <div className={`h-1.5 rounded-full overflow-hidden ${theme ? "bg-gray-100" : "bg-gray-800"}`}>
+            <div className="h-1.5 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800">
               <div
                 className="h-full rounded-full bg-indigo-500 transition-all"
                 style={{
@@ -784,10 +748,10 @@ function GoalCard({
       {/* Expanded content */}
       {expanded && (
         <div
-          className={`px-4 pb-4 pt-0 space-y-3 border-t ${compact ? "hidden sm:block" : ""} ${theme ? "border-gray-100" : "border-gray-800"}`}
+          className={`px-4 pb-4 pt-0 space-y-3 border-t border-gray-100 dark:border-gray-800 ${compact ? "hidden sm:block" : ""}`}
         >
           {goal.description && (
-            <p className={`text-xs leading-relaxed pt-3 ${theme ? "text-gray-600" : "text-gray-400"}`}>
+            <p className="text-xs leading-relaxed pt-3 text-gray-600 dark:text-gray-400">
               {goal.description}
             </p>
           )}
@@ -799,9 +763,7 @@ function GoalCard({
                 <span
                   key={tag}
                   className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full ${
-                    theme
-                      ? "bg-indigo-50 text-indigo-600"
-                      : "bg-indigo-900/30 text-indigo-400"
+                    "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
                   }`}
                 >
                   <Tag size={8} /> {tag}
@@ -812,7 +774,7 @@ function GoalCard({
 
           {/* Subtask checklist */}
           {goal.subtasks.length > 0 && (
-            <div className={`px-3 py-2 rounded-lg ${theme ? "bg-gray-50" : "bg-gray-900"}`}>
+            <div className="px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-900">
               {goal.subtasks.map((sub) => (
                 <div key={sub.id} className="flex items-center gap-2 py-1">
                   <button onClick={() => onSubtaskToggle(sub.id)}>
@@ -832,7 +794,7 @@ function GoalCard({
 
           {/* Reminder */}
           {goal.reminderAt && (
-            <div className={`flex items-center gap-1.5 text-[11px] ${theme ? "text-gray-500" : "text-gray-300"}`}>
+            <div className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-300">
               <Bell size={10} /> Reminder: {goal.reminderAt.replace("T", " ")}
             </div>
           )}
@@ -846,9 +808,7 @@ function GoalCard({
                 className={`text-[10px] font-bold px-2.5 py-1 rounded-full transition border ${
                   goal.status === s
                     ? "border-transparent"
-                    : theme
-                      ? "border-gray-200 opacity-50 hover:opacity-100"
-                      : "border-gray-700 opacity-50 hover:opacity-100"
+                    : "border-gray-200 dark:border-gray-700 opacity-50 hover:opacity-100"
                 }`}
                 style={
                   goal.status === s
@@ -876,7 +836,6 @@ function GoalCard({
 
 export default function Goals() {
   const { user: auth, setAuth } = useAuth();
-  const { theme } = useTheme();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -1094,31 +1053,31 @@ export default function Goals() {
   return (
     <div
       className={`flex h-screen overflow-hidden pt-14 lg:pt-16 font-sans ${
-        theme ? "bg-gray-100 text-gray-900" : "bg-black text-gray-100"
+        "bg-gray-100 dark:bg-black text-gray-900 dark:text-gray-100"
       }`}
     >
       {/* ── Left Sidebar ────────────────────────────────────────────────── */}
       <aside
         className={`flex-shrink-0 flex flex-col border-r overflow-hidden transition-all duration-300 ${
-          theme ? "bg-white border-gray-200" : "bg-gray-950 border-gray-800"
+          "bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800"
         } ${sidebarOpen ? "w-[70%] sm:w-2/5 lg:w-1/5" : "w-[20%] sm:w-[5%]"}`}
       >
         {/* ── Header (always visible) ── */}
-        <div className={`flex-shrink-0 border-b ${theme ? "border-gray-100" : "border-gray-800"}`}>
+        <div className="flex-shrink-0 border-b border-gray-100 dark:border-gray-800">
           {sidebarOpen ? (
             <div className="px-5 pt-5 pb-4">
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2.5">
                   <div
                     className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                      theme ? "bg-indigo-50" : "bg-indigo-900/30"
+                      "bg-indigo-50 dark:bg-indigo-900/30"
                     }`}
                   >
                     <Target size={16} className="text-indigo-500" />
                   </div>
                   <h1
                     className={`text-base font-bold ${
-                      theme ? "text-gray-900" : "text-gray-100"
+                      "text-gray-900 dark:text-gray-100"
                     }`}
                   >
                     Goals
@@ -1127,16 +1086,12 @@ export default function Goals() {
                 <button
                   onClick={() => setSidebarOpen(false)}
                   title="Collapse sidebar"
-                  className={`p-1.5 rounded-lg transition ${
-                    theme
-                      ? "text-gray-400 hover:bg-gray-100 hover:text-gray-700"
-                      : "text-gray-600 hover:bg-gray-800 hover:text-gray-300"
-                  }`}
+                  className="p-1.5 rounded-lg transition text-gray-400 dark:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300"
                 >
                   <PanelLeftClose size={15} />
                 </button>
               </div>
-              <p className={`text-xs pl-10 ${theme ? "text-gray-500" : "text-gray-500"}`}>
+              <p className="text-xs pl-10 text-gray-500">
                 {stats.done}/{stats.total} completed
                 {stats.overdue > 0 && (
                   <span className="text-red-500 ml-1.5">
@@ -1155,15 +1110,13 @@ export default function Goals() {
                 onClick={() => setSidebarOpen(true)}
                 title="Expand sidebar"
                 className={`p-1.5 rounded-lg transition ${
-                  theme
-                    ? "text-gray-400 hover:bg-gray-100 hover:text-gray-700"
-                    : "text-gray-600 hover:bg-gray-800 hover:text-gray-300"
+                  "text-gray-400 dark:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300"
                 }`}
               >
                 <PanelLeftOpen size={15} />
               </button>
 
-              <div className={`w-full border-t my-1 ${theme ? "border-gray-100" : "border-gray-800"}`} />
+              <div className="w-full border-t my-1 border-gray-100 dark:border-gray-800" />
 
               {/* All — blue button */}
               <button
@@ -1178,7 +1131,7 @@ export default function Goals() {
                 All
               </button>
 
-              <div className={`w-full border-t my-1 ${theme ? "border-gray-100" : "border-gray-800"}`} />
+              <div className="w-full border-t my-1 border-gray-100 dark:border-gray-800" />
 
               {/* Status circles */}
               {(Object.entries(STATUS_CONFIG) as [IGoal["status"], typeof STATUS_CONFIG[keyof typeof STATUS_CONFIG]][]).map(([key, cfg]) => (
@@ -1194,7 +1147,7 @@ export default function Goals() {
                 />
               ))}
 
-              <div className={`w-full border-t my-1 ${theme ? "border-gray-100" : "border-gray-800"}`} />
+              <div className="w-full border-t my-1 border-gray-100 dark:border-gray-800" />
 
               {/* Priority icons */}
               {(PRIORITY_OPTIONS.map((p) => {
@@ -1247,7 +1200,7 @@ export default function Goals() {
                 <div
                   key={s.label}
                   className={`rounded-xl p-3 border ${
-                    theme ? "bg-gray-50 border-gray-200" : "bg-gray-900 border-gray-800"
+                    "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800"
                   }`}
                 >
                   <s.Icon size={12} style={{ color: s.color }} className="mb-1.5" />
@@ -1259,7 +1212,7 @@ export default function Goals() {
                   </div>
                   <div
                     className={`text-[10px] font-medium mt-1 ${
-                      theme ? "text-gray-500" : "text-gray-600"
+                      "text-gray-500 dark:text-gray-600"
                     }`}
                   >
                     {s.label}
@@ -1280,9 +1233,7 @@ export default function Goals() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className={`w-full pl-9 pr-8 py-2 text-xs rounded-xl border outline-none transition ${
-                    theme
-                      ? "bg-gray-50 border-gray-200 focus:border-indigo-400 text-gray-900 placeholder-gray-400"
-                      : "bg-gray-900 border-gray-700 focus:border-indigo-500 text-gray-100 placeholder-gray-600"
+                    "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 focus:border-indigo-400 dark:focus:border-indigo-500 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600"
                   }`}
                 />
                 {search && (
@@ -1307,9 +1258,7 @@ export default function Goals() {
                 className={`w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition mb-1 ${
                   filterStatus === "all" && filterPriority === "all"
                     ? "bg-indigo-600 text-white"
-                    : theme
-                      ? "text-gray-700 hover:bg-gray-100"
-                      : "text-gray-400 hover:bg-gray-900"
+                    : "text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900"
                 }`}
               >
                 All
@@ -1318,7 +1267,7 @@ export default function Goals() {
               {/* Status */}
               <p
                 className={`text-[10px] font-bold uppercase tracking-widest px-3 pt-3 pb-1.5 ${
-                  theme ? "text-gray-400" : "text-gray-600"
+                  "text-gray-400 dark:text-gray-600"
                 }`}
               >
                 Status
@@ -1336,9 +1285,7 @@ export default function Goals() {
                     className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition mb-0.5 ${
                       isActive
                         ? "text-white"
-                        : theme
-                          ? "text-gray-700 hover:bg-gray-100"
-                          : "text-gray-400 hover:bg-gray-900"
+                        : "text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900"
                     }`}
                     style={isActive ? { background: cfg.color } : {}}
                   >
@@ -1353,9 +1300,7 @@ export default function Goals() {
 
               {/* Priority */}
               <p
-                className={`text-[10px] font-bold uppercase tracking-widest px-3 pt-3 pb-1.5 ${
-                  theme ? "text-gray-400" : "text-gray-600"
-                }`}
+                className="text-[10px] font-bold uppercase tracking-widest px-3 pt-3 pb-1.5 text-gray-400 dark:text-gray-600"
               >
                 Priority
               </p>
@@ -1373,9 +1318,7 @@ export default function Goals() {
                     className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition mb-0.5 ${
                       isActive
                         ? "text-white"
-                        : theme
-                          ? "text-gray-700 hover:bg-gray-100"
-                          : "text-gray-400 hover:bg-gray-900"
+                        : "text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900"
                     }`}
                     style={isActive ? { background: cfg.color } : {}}
                   >
@@ -1412,7 +1355,7 @@ export default function Goals() {
                     />
                     <span
                       className={`text-sm font-bold ${sidebarOpen ? "hidden sm:inline" : ""} ${
-                        theme ? "text-gray-700" : "text-gray-300"
+                        "text-gray-700 dark:text-gray-300"
                       }`}
                     >
                       {cfg.label}
@@ -1431,9 +1374,7 @@ export default function Goals() {
                     }}
                     title="Add goal"
                     className={`p-1 rounded-lg transition opacity-50 hover:opacity-100 ${
-                      theme
-                        ? "hover:bg-gray-200 text-gray-500"
-                        : "hover:bg-gray-800 text-gray-500"
+                      "hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-500"
                     }`}
                   >
                     <Plus size={14} />
@@ -1445,14 +1386,12 @@ export default function Goals() {
                   {colGoals.length === 0 ? (
                     <div
                       className={`rounded-2xl border border-dashed p-8 text-center ${
-                        theme
-                          ? "border-gray-300 bg-white/60"
-                          : "border-gray-800 bg-gray-900/30"
+                        "border-gray-300 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30"
                       }`}
                     >
                       <p
                         className={`text-xs ${
-                          theme ? "text-gray-400" : "text-gray-600"
+                          "text-gray-400 dark:text-gray-600"
                         }`}
                       >
                         No goals
@@ -1463,7 +1402,6 @@ export default function Goals() {
                       <GoalCard
                         key={goal.id}
                         goal={goal}
-                        theme={theme}
                         compact={sidebarOpen}
                         onEdit={() => {
                           setEditingGoal(goal);
@@ -1500,7 +1438,7 @@ export default function Goals() {
                 <span className="w-2.5 h-2.5 rounded-full bg-purple-400 flex-shrink-0" />
                 <span
                   className={`text-sm font-bold ${sidebarOpen ? "hidden sm:inline" : ""} ${
-                    theme ? "text-gray-500" : "text-gray-500"
+                    "text-gray-500"
                   }`}
                 >
                   Archived
@@ -1516,7 +1454,6 @@ export default function Goals() {
                     <GoalCard
                       key={goal.id}
                       goal={goal}
-                      theme={theme}
                       compact={sidebarOpen}
                       onEdit={() => {
                         setEditingGoal(goal);
@@ -1559,25 +1496,23 @@ export default function Goals() {
           />
           <div
             className={`relative w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl border shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] ${
-              theme ? "bg-white border-gray-200" : "bg-gray-950 border-gray-800"
+              "bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800"
             }`}
           >
             <div
               className={`flex items-center justify-between px-5 py-4 border-b flex-shrink-0 ${
-                theme ? "border-gray-100" : "border-gray-800"
+                "border-gray-100 dark:border-gray-800"
               }`}
             >
               <div className="flex items-center gap-2.5">
                 <div
-                  className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-                    theme ? "bg-indigo-50" : "bg-indigo-900/30"
-                  }`}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center bg-indigo-50 dark:bg-indigo-900/30"
                 >
                   <Target size={14} className="text-indigo-500" />
                 </div>
                 <h2
                   className={`text-sm font-bold ${
-                    theme ? "text-gray-900" : "text-gray-100"
+                    "text-gray-900 dark:text-gray-100"
                   }`}
                 >
                   {editingGoal ? "Edit Goal" : "New Goal"}
@@ -1589,9 +1524,7 @@ export default function Goals() {
                   setEditingGoal(null);
                 }}
                 className={`p-1.5 rounded-lg transition ${
-                  theme
-                    ? "text-gray-400 hover:bg-gray-100"
-                    : "text-gray-600 hover:bg-gray-800"
+                  "text-gray-400 dark:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
                 }`}
               >
                 <X size={16} />
@@ -1605,7 +1538,6 @@ export default function Goals() {
                   setIsFormOpen(false);
                   setEditingGoal(null);
                 }}
-                theme={theme}
               />
             </div>
           </div>
@@ -1617,9 +1549,7 @@ export default function Goals() {
         <div className="fixed z-50 bottom-5 right-5 w-[90vw] sm:w-[340px]">
           <div
             className={`relative rounded-2xl shadow-2xl border px-5 py-4 ${
-              theme
-                ? "bg-white border-orange-400 text-gray-900"
-                : "bg-gray-900 border-orange-500 text-gray-100"
+              "bg-white dark:bg-gray-900 border-orange-400 dark:border-orange-500 text-gray-900 dark:text-gray-100"
             }`}
           >
             <button
@@ -1630,7 +1560,7 @@ export default function Goals() {
             </button>
             <div className="text-2xl mb-2">🎯</div>
             <p
-              className={`text-xs font-medium mb-1 ${theme ? "text-gray-500" : "text-gray-400"}`}
+              className="text-xs font-medium mb-1 text-gray-500 dark:text-gray-400"
             >
               Goal Reminder
             </p>
@@ -1638,7 +1568,7 @@ export default function Goals() {
               Today is the reminder date for
             </p>
             <p
-              className={`text-base font-bold mt-0.5 ${theme ? "text-orange-600" : "text-orange-400"}`}
+              className="text-base font-bold mt-0.5 text-orange-600 dark:text-orange-400"
             >
               {goalAlert.name}
             </p>
@@ -1664,9 +1594,7 @@ export default function Goals() {
               <button
                 onClick={dismissGoalAlert}
                 className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition ${
-                  theme
-                    ? "border-gray-200 text-gray-600 hover:bg-gray-50"
-                    : "border-gray-700 text-gray-400 hover:bg-gray-800"
+                  "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
                 }`}
               >
                 Dismiss

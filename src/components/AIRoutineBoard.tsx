@@ -13,7 +13,6 @@ import {
   upsertAIRoutine,
 } from "@/app/actions";
 import { useAuth } from "@/app/hooks/useAuth";
-import { useTheme } from "@/app/hooks/useTheme";
 import { aiRoutineResponse } from "@/app/server";
 import { AnimatePresence, motion as m, motion, Variants } from "framer-motion";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -251,14 +250,12 @@ const renderBold = (text: string) => {
 interface ChatInputAreaProps {
   onSend: (text: string) => void;
   isThinking: boolean;
-  theme: boolean;
   suggestedText: { text: string; id: number };
 }
 
 const ChatInputArea = memo(function ChatInputArea({
   onSend,
   isThinking,
-  theme,
   suggestedText,
 }: ChatInputAreaProps) {
   const [text, setText] = useState("");
@@ -284,7 +281,7 @@ const ChatInputArea = memo(function ChatInputArea({
   return (
     <div
       className={`relative flex items-end gap-1.5 p-1.5 rounded-lg border ${
-        theme ? "bg-white border-gray-300" : "bg-gray-950 border-gray-700"
+"bg-white dark:bg-gray-950 border-gray-300 dark:border-gray-700"
       }`}
     >
       <textarea
@@ -294,9 +291,7 @@ const ChatInputArea = memo(function ChatInputArea({
         placeholder={isThinking ? "Thinking..." : "Ask AI to update your routine..."}
         rows={2}
         className={`flex-1 resize-none text-xs outline-none bg-transparent py-0.5 px-1 ${
-          theme
-            ? "text-gray-900 placeholder:text-gray-400"
-            : "text-gray-100 placeholder:text-gray-600"
+"text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-600"
         }`}
       />
       <button
@@ -316,7 +311,6 @@ const ChatInputArea = memo(function ChatInputArea({
 
 // ─── Main Component ────────────────────────────────────────
 export default function AIRoutineBoard() {
-  const { theme } = useTheme();
   const { user: auth, setAuth } = useAuth();
 
   // ── Sidebar state (mirrors DashBoard) ─────────────────────
@@ -1103,17 +1097,17 @@ export default function AIRoutineBoard() {
   // ── Timeline column ────────────────────────────────────────
   const renderTimelineColumn = () => (
     <div
-      className={`text-base pt-5 font-medium col-span-1 ${theme ? "text-gray-800" : "text-gray-200"}`}
+      className="text-base pt-5 font-medium col-span-1 text-gray-800 dark:text-gray-200"
     >
       {timeSlots.map((time) => (
         <div
           key={time}
-          className={`w-full text-xs border-t ${theme ? "border-gray-400" : "border-gray-500"}`}
+          className="w-full text-xs border-t border-gray-400 dark:border-gray-500"
           style={{ height: `${hourHeight / slotsPerHour}px` }}
         >
           <div className="flex relative justify-center items-center">
             <div
-              className={`absolute px-2 left-0 rounded-md text-xs font-medium shadow-sm ${theme ? "bg-white text-gray-700 border border-gray-200" : "bg-gray-900 text-gray-300 border border-gray-700"}`}
+              className="absolute px-2 left-0 rounded-md text-xs font-medium shadow-sm bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
             >
               {time}
             </div>
@@ -1131,7 +1125,7 @@ export default function AIRoutineBoard() {
               return Array.from({ length: count }).map((_, index) => (
                 <div
                   key={index}
-                  className={`w-[10%] absolute right-0 border-t ${theme ? "border-gray-400/70" : "border-gray-500/70"}`}
+                  className="w-[10%] absolute right-0 border-t border-gray-400/70 dark:border-gray-500/70"
                   style={{
                     top: `${(hourHeight / slotsPerHour / count) * index - 1}px`,
                   }}
@@ -1142,12 +1136,12 @@ export default function AIRoutineBoard() {
         </div>
       ))}
       <div
-        className={`w-full text-xs border-t ${theme ? "border-gray-400" : "border-gray-500"}`}
+        className="w-full text-xs border-t border-gray-400 dark:border-gray-500"
         style={{ height: "1px" }}
       >
         <div className="flex relative justify-center items-center">
           <div
-            className={`absolute px-2 left-0 rounded-md text-xs font-medium shadow-sm ${theme ? "bg-white text-gray-700 border border-gray-200" : "bg-gray-900 text-gray-300 border border-gray-700"}`}
+            className="absolute px-2 left-0 rounded-md text-xs font-medium shadow-sm bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
           >
             12:00 AM
           </div>
@@ -1176,9 +1170,7 @@ export default function AIRoutineBoard() {
         <div
           key={i}
           className={`text-sm overflow-hidden border-t transition-colors relative group cursor-pointer ${
-            theme
-              ? "bg-transparent text-gray-400 hover:bg-purple-50/40 border-t-gray-200"
-              : "bg-transparent text-gray-500 hover:bg-purple-950/20 border-t-gray-800"
+"bg-transparent text-gray-400 dark:text-gray-500 hover:bg-purple-50/40 dark:hover:bg-purple-950/20 border-t-gray-200 dark:border-t-gray-800"
           }`}
           style={{ height: `${height}px` }}
           onClick={() => {
@@ -1189,12 +1181,12 @@ export default function AIRoutineBoard() {
           {height >= 20 && (
             <div
               className={`absolute inset-[3px] rounded border-2 border-dashed flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100 ${
-                theme ? "border-purple-300" : "border-purple-700"
+"border-purple-300 dark:border-purple-700"
               }`}
             >
               {height >= 36 && (
                 <span
-                  className={`text-[9px] font-semibold flex items-center gap-1 ${theme ? "text-purple-400" : "text-purple-500"}`}
+                  className="text-[9px] font-semibold flex items-center gap-1 text-purple-400 dark:text-purple-500"
                 >
                   <span>+</span>
                   <span>{formatDuration(dur)} Free</span>
@@ -1219,12 +1211,8 @@ export default function AIRoutineBoard() {
           isDragging ? "opacity-40 ring-2 ring-inset ring-purple-400" : ""
         } ${
           isToday
-            ? theme
-              ? "bg-purple-100/70 text-black border-l-2 border-purple-500/60"
-              : "bg-purple-950/50 text-white border-l-2 border-purple-400/60"
-            : theme
-              ? "bg-gray-100/60 text-gray-800 hover:bg-gray-200/60"
-              : "bg-gray-800/50 text-gray-200 hover:bg-gray-700/70 border-t-gray-800"
+            ? "bg-purple-100/70 dark:bg-purple-950/50 text-black dark:text-white border-l-2 border-purple-500/60 dark:border-purple-400/60"
+            : "bg-gray-100/60 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200 hover:bg-gray-200/60 dark:hover:bg-gray-700/70 dark:border-t-gray-800"
         }`}
         style={{ height: `${height}px` }}
         onMouseEnter={
@@ -1367,12 +1355,12 @@ export default function AIRoutineBoard() {
         <div className="flex-1 flex flex-col items-center justify-center text-center px-4 py-8">
           <div className="text-4xl mb-4">✨</div>
           <h4
-            className={`text-sm font-bold mb-2 ${theme ? "text-gray-800" : "text-gray-200"}`}
+            className="text-sm font-bold mb-2 text-gray-800 dark:text-gray-200"
           >
             Premium Feature
           </h4>
           <p
-            className={`text-xs leading-relaxed mb-4 ${theme ? "text-gray-500" : "text-gray-500"}`}
+            className="text-xs leading-relaxed mb-4 text-gray-500"
           >
             Copy your routine here and refine it with a specialized AI daily
             routine expert. Get personalized suggestions, chat interactively,
@@ -1392,13 +1380,13 @@ export default function AIRoutineBoard() {
       return (
         <div className="flex-1 overflow-y-auto">
           <div
-            className={`px-3 py-2 text-[10px] font-semibold uppercase tracking-wide border-b ${theme ? "text-gray-400 border-gray-200" : "text-gray-600 border-gray-800"}`}
+            className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wide border-b text-gray-400 dark:text-gray-600 border-gray-200 dark:border-gray-800"
           >
             Past Conversations
           </div>
           {sortedHistoryDates.length === 0 ? (
             <div
-              className={`px-3 py-8 text-center text-[10px] ${theme ? "text-gray-400" : "text-gray-600"}`}
+              className="px-3 py-8 text-center text-[10px] text-gray-400 dark:text-gray-600"
             >
               No conversations yet
             </div>
@@ -1411,30 +1399,30 @@ export default function AIRoutineBoard() {
               return (
                 <div
                   key={date}
-                  className={`flex items-stretch border-b ${isActive ? (theme ? "bg-purple-50 border-purple-100" : "bg-purple-950/30 border-purple-900/30") : theme ? "border-gray-100" : "border-gray-800/50"}`}
+                  className={`flex items-stretch border-b ${isActive ? "bg-purple-50 dark:bg-purple-950/30 border-purple-100 dark:border-purple-900/30" : "border-gray-100 dark:border-gray-800/50"}`}
                 >
                   <button
                     onClick={() => {
                       setActiveDate(date);
                       setShowHistory(false);
                     }}
-                    className={`flex-1 text-left px-3 py-2.5 transition ${isActive ? "" : theme ? "hover:bg-gray-50" : "hover:bg-gray-900"}`}
+                    className={`flex-1 text-left px-3 py-2.5 transition ${isActive ? "" : "hover:bg-gray-50 dark:hover:bg-gray-900"}`}
                   >
                     <div className="flex items-center justify-between mb-0.5">
                       <span
-                        className={`text-[11px] font-semibold ${isActive ? (theme ? "text-purple-700" : "text-purple-400") : theme ? "text-gray-700" : "text-gray-300"}`}
+                        className={`text-[11px] font-semibold ${isActive ? "text-purple-700 dark:text-purple-400" : "text-gray-700 dark:text-gray-300"}`}
                       >
                         {formatDateLabel(date)}
                       </span>
                       <span
-                        className={`text-[9px] ${theme ? "text-gray-400" : "text-gray-600"}`}
+                        className="text-[9px] text-gray-400 dark:text-gray-600"
                       >
                         {msgCount} msg{msgCount !== 1 ? "s" : ""}
                       </span>
                     </div>
                     {lastMsg && (
                       <p
-                        className={`text-[10px] truncate ${theme ? "text-gray-500" : "text-gray-600"}`}
+                        className="text-[10px] truncate text-gray-500 dark:text-gray-600"
                       >
                         {lastMsg.role === "user" ? "You: " : "AI: "}
                         {lastMsg.text
@@ -1467,7 +1455,7 @@ export default function AIRoutineBoard() {
                       }
                       await clearChatSession(auth.email, date);
                     }}
-                    className={`flex-shrink-0 px-2.5 flex items-center justify-center transition ${theme ? "text-gray-300 hover:text-red-500 hover:bg-red-50" : "text-gray-700 hover:text-red-400 hover:bg-red-950/20"}`}
+                    className="flex-shrink-0 px-2.5 flex items-center justify-center transition text-gray-300 dark:text-gray-700 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20"
                     title="Delete this conversation"
                   >
                     <span className="text-[13px] font-bold leading-none">
@@ -1483,7 +1471,7 @@ export default function AIRoutineBoard() {
               setActiveDate(new Date().toLocaleDateString("en-CA"));
               setShowHistory(false);
             }}
-            className={`w-full text-left px-3 py-2.5 text-[11px] font-medium transition border-t ${theme ? "text-purple-600 hover:bg-purple-50 border-gray-100" : "text-purple-400 hover:bg-purple-950/20 border-gray-800"}`}
+            className="w-full text-left px-3 py-2.5 text-[11px] font-medium transition border-t text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/20 border-gray-100 dark:border-gray-800"
           >
             + New conversation (today)
           </button>
@@ -1501,12 +1489,12 @@ export default function AIRoutineBoard() {
             <div className="flex flex-col items-center justify-center h-full text-center px-3">
               <div className="text-3xl mb-3">✦</div>
               <h3
-                className={`text-xs font-bold mb-1.5 ${theme ? "text-gray-800" : "text-gray-200"}`}
+                className="text-xs font-bold mb-1.5 text-gray-800 dark:text-gray-200"
               >
                 AI Routine Builder
               </h3>
               <p
-                className={`text-[10px] leading-relaxed mb-3 ${theme ? "text-gray-500" : "text-gray-500"}`}
+                className="text-[10px] leading-relaxed mb-3 text-gray-500"
               >
                 Talk to AI to build and update your routine.
               </p>
@@ -1519,7 +1507,7 @@ export default function AIRoutineBoard() {
                   <button
                     key={s}
                     onClick={() => setSuggestedText((prev) => ({ text: s, id: prev.id + 1 }))}
-                    className={`w-full text-left text-[10px] px-2 py-1.5 rounded border transition ${theme ? "border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-purple-300" : "border-gray-800 text-gray-400 hover:bg-gray-900 hover:border-purple-700"}`}
+                    className="w-full text-left text-[10px] px-2 py-1.5 rounded border transition border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900 hover:border-purple-300 dark:hover:border-purple-700"
                   >
                     {s}
                   </button>
@@ -1530,15 +1518,15 @@ export default function AIRoutineBoard() {
             <>
               <div className="flex items-center gap-2 mb-2">
                 <div
-                  className={`flex-1 h-px ${theme ? "bg-gray-200" : "bg-gray-800"}`}
+                  className="flex-1 h-px bg-gray-200 dark:bg-gray-800"
                 />
                 <span
-                  className={`text-[9px] px-2 font-medium ${theme ? "text-gray-400" : "text-gray-600"}`}
+                  className="text-[9px] px-2 font-medium text-gray-400 dark:text-gray-600"
                 >
                   {formatDateLabel(activeDate)}
                 </span>
                 <div
-                  className={`flex-1 h-px ${theme ? "bg-gray-200" : "bg-gray-800"}`}
+                  className="flex-1 h-px bg-gray-200 dark:bg-gray-800"
                 />
               </div>
               {activeMessages.map((msg, i) => {
@@ -1551,12 +1539,12 @@ export default function AIRoutineBoard() {
                     {msg.role === "user" ? (
                       <div className="flex flex-col items-end gap-0.5">
                         <div
-                          className={`max-w-[85%] px-2.5 py-1.5 rounded-xl rounded-tr-sm text-xs leading-relaxed ${theme ? "bg-purple-600 text-white" : "bg-purple-700 text-white"}`}
+                          className="max-w-[85%] px-2.5 py-1.5 rounded-xl rounded-tr-sm text-xs leading-relaxed bg-purple-600 dark:bg-purple-700 text-white"
                         >
                           {msg.text}
                         </div>
                         <span
-                          className={`text-[9px] mr-1 ${theme ? "text-gray-400" : "text-gray-600"}`}
+                          className="text-[9px] mr-1 text-gray-400 dark:text-gray-600"
                         >
                           {formatTime(msg.timestamp)}
                         </span>
@@ -1564,13 +1552,13 @@ export default function AIRoutineBoard() {
                     ) : (
                       <div className="flex flex-col items-start gap-0.5">
                         <div
-                          className={`max-w-[92%] px-2.5 py-1.5 rounded-xl rounded-tl-sm text-xs leading-relaxed border ${theme ? "bg-gray-50 border-gray-200 text-gray-800" : "bg-gray-900 border-gray-800 text-gray-200"}`}
+                          className="max-w-[92%] px-2.5 py-1.5 rounded-xl rounded-tl-sm text-xs leading-relaxed border bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200"
                         >
                           {renderMessage(msg.text, isLoadingMsg)}
                         </div>
                         {!isLoadingMsg && (
                           <span
-                            className={`text-[9px] ml-1 ${theme ? "text-gray-400" : "text-gray-600"}`}
+                            className="text-[9px] ml-1 text-gray-400 dark:text-gray-600"
                           >
                             {formatTime(msg.timestamp)}
                           </span>
@@ -1589,7 +1577,7 @@ export default function AIRoutineBoard() {
         <div className="px-2 py-3 mt-2">
           {isLimitReached ? (
             <div
-              className={`text-center py-2 px-2 text-[10px] rounded border ${theme ? "bg-red-50 border-red-200 text-red-600" : "bg-red-950/30 border-red-800 text-red-400"}`}
+              className="text-center py-2 px-2 text-[10px] rounded border bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400"
             >
               Monthly limit reached ({MAX_RESPONSES} responses).
               <br />
@@ -1600,11 +1588,10 @@ export default function AIRoutineBoard() {
               <ChatInputArea
                 onSend={sendMessage}
                 isThinking={isThinking}
-                theme={theme}
                 suggestedText={suggestedText}
               />
               <div
-                className={`text-right text-[9px] mt-1 ${theme ? "text-gray-400" : "text-gray-600"}`}
+                className="text-right text-[9px] mt-1 text-gray-400 dark:text-gray-600"
               >
                 {getCurrentCount()} / {MAX_RESPONSES} this month
               </div>
@@ -1618,16 +1605,29 @@ export default function AIRoutineBoard() {
   // ── Not logged in / Loading ────────────────────────────────
   if (!hasMounted) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
-        <div className="text-center">
-          <div className="relative w-24 h-24 mx-auto mb-8">
-            <div className="absolute inset-0 rounded-full border-4 border-t-purple-500 border-gray-800/40 animate-spin"></div>
-            <div className="absolute inset-4 rounded-full border-4 border-t-blue-500 border-gray-800/30 animate-[spin_2.8s_linear_infinite]"></div>
+      <div className="fixed inset-0 bg-[#eeeeee] dark:bg-[#111111] flex items-center justify-center z-50">
+        <div className="flex flex-col items-center gap-8">
+          {/* Logo */}
+          <div className="w-16 h-16 rounded-2xl bg-blue-600/10 border border-blue-600/20 flex items-center justify-center shadow-lg shadow-blue-600/10">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/Icon.png" alt="AI Routine" className="w-10 h-10 object-contain" />
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-wide mb-3">
-            AI Routine
-          </h2>
-          <p className="text-gray-400">Loading...</p>
+
+          {/* Spinner */}
+          <div className="relative w-10 h-10">
+            <div className="absolute inset-0 rounded-full border-2 border-blue-600/15"></div>
+            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-blue-600 animate-spin"></div>
+          </div>
+
+          {/* Text */}
+          <div className="text-center space-y-1.5">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
+              AI Routine
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Preparing your AI assistant…
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -1636,9 +1636,9 @@ export default function AIRoutineBoard() {
   if (!auth) {
     return (
       <div
-        className={`min-h-screen flex items-center justify-center ${theme ? "bg-white" : "bg-black"}`}
+        className="min-h-screen flex items-center justify-center bg-white dark:bg-black"
       >
-        <p className={`text-lg ${theme ? "text-gray-700" : "text-gray-300"}`}>
+        <p className="text-lg text-gray-700 dark:text-gray-300">
           Please log in to use AI Routine.
         </p>
       </div>
@@ -1658,9 +1658,7 @@ export default function AIRoutineBoard() {
     <motion.div
       onClick={() => setIsSidebarOpen((prev) => !prev)}
       className={`flex absolute h-[${size}px] w-[${size}px] justify-center items-center cursor-pointer border-[1px] rounded-md z-10 transition-colors ${
-        theme
-          ? "border-purple-400 text-purple-600 hover:bg-purple-600 hover:text-white"
-          : "border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white"
+        "border-purple-400 dark:border-purple-600 text-purple-600 dark:text-purple-400 hover:bg-purple-600 hover:text-white"
       }`}
       style={{ top: parseInt(top) - 10, left }}
       whileTap={{ scale: 0.92 }}
@@ -1678,12 +1676,12 @@ export default function AIRoutineBoard() {
     <div className="h-full w-full flex flex-col">
       {/* Header */}
       <div
-        className={`flex items-center justify-between px-3 h-[50px] flex-shrink-0 border-b ${theme ? "border-gray-200" : "border-gray-800"}`}
+        className="flex items-center justify-between px-3 h-[50px] flex-shrink-0 border-b border-gray-200 dark:border-gray-800"
       >
         <div className="flex items-center gap-2 w-full justify-end">
           {!isPremium() && (
             <span
-              className={`text-sm font-bold ${theme ? "text-purple-700" : "text-purple-400"}`}
+              className="text-sm font-bold text-purple-700 dark:text-purple-400"
             >
               ✦ Your AI Routine
             </span>
@@ -1744,14 +1742,14 @@ export default function AIRoutineBoard() {
             {showHistory ? (
               <button
                 onClick={() => setShowHistory(false)}
-                className={`text-[10px] px-2 py-0.5 rounded border transition ${theme ? "bg-purple-100 border-purple-400 text-purple-700 hover:bg-purple-200" : "bg-purple-900/40 border-purple-600 text-purple-300 hover:bg-purple-900/60"}`}
+                className="text-[10px] px-2 py-0.5 rounded border transition bg-purple-100 dark:bg-purple-900/40 border-purple-400 dark:border-purple-600 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/60"
               >
                 Today
               </button>
             ) : (
               <button
                 onClick={() => setShowHistory(true)}
-                className={`text-[10px] px-2 py-0.5 rounded border transition ${theme ? "border-gray-300 text-gray-500 hover:bg-gray-100" : "border-gray-700 text-gray-500 hover:bg-gray-800"}`}
+                className="text-[10px] px-2 py-0.5 rounded border transition border-gray-300 dark:border-gray-700 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 History
               </button>
@@ -1768,8 +1766,10 @@ export default function AIRoutineBoard() {
     <>
       <style>{`
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: ${theme ? "#f8f8f8" : "#0f0f0f"}; }
-        ::-webkit-scrollbar-thumb { background: ${theme ? "#222222" : "#eeeeee"}; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: #f8f8f8; }
+        ::-webkit-scrollbar-thumb { background: #222222; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-track { background: #0f0f0f; }
+        .dark ::-webkit-scrollbar-thumb { background: #eeeeee; border-radius: 4px; }
       `}</style>
 
       {/* ═══════════════════════════════════════════════════ */}
@@ -1781,7 +1781,7 @@ export default function AIRoutineBoard() {
       >
         {/* Chat sidebar */}
         <motion.div
-          className={`h-full float-left ${theme ? "bg-white border-r-[1px] border-gray-200" : "bg-black border-r-[1px] border-gray-800"}`}
+          className="h-full float-left bg-white dark:bg-black border-r-[1px] border-gray-200 dark:border-gray-800"
           initial={{ width: sidebar.closed }}
           animate={{ width: isSidebarOpen ? sidebar.open : sidebar.closed }}
           transition={transition}
@@ -1814,31 +1814,31 @@ export default function AIRoutineBoard() {
         >
           <div
             ref={scrollContainerDesktopRef}
-            className={`h-full relative overflow-auto px-[10px] pb-[50px] ${theme ? "bg-[#ffffff]" : "bg-[#000000]"}`}
+            className="h-full relative overflow-auto px-[10px] pb-[50px] bg-[#ffffff] dark:bg-[#000000]"
           >
             {/* Sticky header */}
             <div className="sticky top-0 left-0 right-0 z-30 bg-inherit">
               <div
-                className={`h-[50px] w-full border-b-[1px] flex items-center justify-between px-6 ${theme ? "border-gray-300" : "border-gray-800"}`}
+                className="h-[50px] w-full border-b-[1px] flex items-center justify-between px-6 border-gray-300 dark:border-gray-800"
               >
                 {/* Zoom */}
                 <div className="flex items-center gap-2 sm:gap-3">
                   <button
                     onClick={() => setZoomLevel((p) => Math.max(1, p - 0.5))}
                     disabled={zoomLevel <= 1}
-                    className={`p-1.5 sm:p-2 rounded transition-colors flex items-center justify-center ${theme ? (zoomLevel <= 1 ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "text-purple-700 hover:text-purple-800 hover:bg-purple-50/70 bg-purple-50/70 border border-purple-800/20") : zoomLevel <= 1 ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "text-purple-400 hover:text-purple-300 hover:bg-purple-950/40 bg-purple-950/40 border border-purple-300/20"}`}
+                    className={`p-1.5 sm:p-2 rounded transition-colors flex items-center justify-center ${zoomLevel <= 1 ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed" : "text-purple-700 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:bg-purple-50/70 dark:hover:bg-purple-950/40 bg-purple-50/70 dark:bg-purple-950/40 border border-purple-800/20 dark:border-purple-300/20"}`}
                   >
                     <FaMinus size={10} />
                   </button>
                   <span
-                    className={`font-semibold min-w-[90px] text-center text-sm sm:text-base ${theme ? "text-gray-900" : "text-white"}`}
+                    className="font-semibold min-w-[90px] text-center text-sm sm:text-base text-gray-900 dark:text-white"
                   >
                     Zoom: {zoomLevel.toFixed(1)}x
                   </span>
                   <button
                     onClick={() => setZoomLevel((p) => Math.min(8, p + 0.5))}
                     disabled={zoomLevel >= 8}
-                    className={`p-1.5 sm:p-2 rounded transition-colors flex items-center justify-center ${theme ? (zoomLevel >= 8 ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "text-purple-700 hover:text-purple-800 hover:bg-purple-50/70 bg-purple-50/70 border border-purple-800/20") : zoomLevel >= 8 ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "text-purple-400 hover:text-purple-300 hover:bg-purple-950/40 bg-purple-950/40 border border-purple-300/20"}`}
+                    className={`p-1.5 sm:p-2 rounded transition-colors flex items-center justify-center ${zoomLevel >= 8 ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed" : "text-purple-700 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:bg-purple-50/70 dark:hover:bg-purple-950/40 bg-purple-50/70 dark:bg-purple-950/40 border border-purple-800/20 dark:border-purple-300/20"}`}
                   >
                     <FaPlus size={10} />
                   </button>
@@ -1847,7 +1847,7 @@ export default function AIRoutineBoard() {
                 {/* Jump to now */}
                 <button
                   onClick={scrollToNow}
-                  className={`group flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-lg font-medium text-sm transition-colors duration-200 border-[1px] ${theme ? "text-purple-700 hover:text-purple-800 hover:bg-purple-50/70 bg-purple-50/70 border-purple-800/20" : "text-purple-400 hover:text-purple-300 hover:bg-purple-950/40 bg-purple-950/40 border-purple-300/20"}`}
+                  className="group flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-lg font-medium text-sm transition-colors duration-200 border-[1px] text-purple-700 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:bg-purple-50/70 dark:hover:bg-purple-950/40 bg-purple-50/70 dark:bg-purple-950/40 border-purple-800/20 dark:border-purple-300/20"
                 >
                   <svg
                     className="w-4 h-4 sm:w-5 sm:h-5"
@@ -1869,18 +1869,18 @@ export default function AIRoutineBoard() {
                 <div className="flex items-center gap-2 sm:gap-4">
                   <button
                     onClick={rotateWeekRight}
-                    className={`p-1.5 rounded-md transition-colors flex items-center justify-center ${theme ? "text-purple-700 border-[1px] hover:text-purple-800 hover:bg-purple-50/70 bg-purple-50/70 border-purple-800/20" : "text-purple-400 border-[1px] hover:text-purple-300 hover:bg-purple-950/40 bg-purple-950/40 border-purple-300/20"}`}
+                    className="p-1.5 rounded-md transition-colors flex items-center justify-center text-purple-700 dark:text-purple-400 border-[1px] hover:text-purple-800 dark:hover:text-purple-300 hover:bg-purple-50/70 dark:hover:bg-purple-950/40 bg-purple-50/70 dark:bg-purple-950/40 border-purple-800/20 dark:border-purple-300/20"
                   >
                     <FaArrowLeft size={15} />
                   </button>
                   <span
-                    className={`font-medium text-sm sm:text-base ${theme ? "text-gray-900" : "text-white"}`}
+                    className="font-medium text-sm sm:text-base text-gray-900 dark:text-white"
                   >
                     Rotate Week
                   </span>
                   <button
                     onClick={rotateWeekLeft}
-                    className={`p-1.5 rounded-md transition-colors flex items-center justify-center ${theme ? "text-purple-700 border-[1px] hover:text-purple-800 hover:bg-purple-50/70 bg-purple-50/70 border-purple-800/20" : "text-purple-400 border-[1px] hover:text-purple-300 hover:bg-purple-950/40 bg-purple-950/40 border-purple-300/20"}`}
+                    className="p-1.5 rounded-md transition-colors flex items-center justify-center text-purple-700 dark:text-purple-400 border-[1px] hover:text-purple-800 dark:hover:text-purple-300 hover:bg-purple-50/70 dark:hover:bg-purple-950/40 bg-purple-50/70 dark:bg-purple-950/40 border-purple-800/20 dark:border-purple-300/20"
                   >
                     <FaArrowRight size={15} />
                   </button>
@@ -1889,12 +1889,12 @@ export default function AIRoutineBoard() {
 
               {/* Day headers */}
               <div
-                className={`h-[49px] w-full border-b ${theme ? "border-gray-300" : "border-gray-800"}`}
+                className="h-[49px] w-full border-b border-gray-300 dark:border-gray-800"
               >
                 <div className="grid grid-cols-1 sm:grid-cols-8 mx-auto h-full">
                   <div className="overflow-hidden">
                     <div
-                      className={`h-full flex items-center justify-center font-semibold text-sm sm:text-base ${theme ? "text-gray-700 bg-gray-100/40" : "text-gray-400 bg-gray-900/40"}`}
+                      className="h-full flex items-center justify-center font-semibold text-sm sm:text-base text-gray-700 dark:text-gray-400 bg-gray-100/40 dark:bg-gray-900/40"
                     >
                       Timeline
                     </div>
@@ -1902,10 +1902,10 @@ export default function AIRoutineBoard() {
                   {daysOfWeekOrder.map((day, idx) => (
                     <div
                       key={day.full}
-                      className={`overflow-hidden border-l cursor-pointer transition-colors ${idx === 6 ? "border-r" : ""} ${theme ? "border-gray-300" : "border-gray-800"}`}
+                      className={`overflow-hidden border-l cursor-pointer transition-colors border-gray-300 dark:border-gray-800 ${idx === 6 ? "border-r" : ""}`}
                     >
                       <div
-                        className={`h-full flex items-center justify-center font-semibold text-sm sm:text-base transition-all duration-150 ${day.full === today ? (theme ? "bg-purple-600/90 text-white shadow-sm" : "bg-purple-700/90 text-white shadow-sm") : theme ? "text-gray-800" : "text-gray-300"}`}
+                        className={`h-full flex items-center justify-center font-semibold text-sm sm:text-base transition-all duration-150 ${day.full === today ? "bg-purple-600/90 dark:bg-purple-700/90 text-white shadow-sm" : "text-gray-800 dark:text-gray-300"}`}
                       >
                         {day.full}
                       </div>
@@ -1924,7 +1924,7 @@ export default function AIRoutineBoard() {
                 return (
                   <div
                     key={day.full}
-                    className={`overflow-hidden border-l border-b pt-5 ${idx === 6 ? "border-r" : ""} ${dragState ? (theme ? "bg-purple-50/10" : "bg-purple-950/5") : ""} ${theme ? "border-gray-300" : "border-gray-800"}`}
+                    className={`overflow-hidden border-l border-b pt-5 border-gray-300 dark:border-gray-800 ${idx === 6 ? "border-r" : ""} ${dragState ? "bg-purple-50/10 dark:bg-purple-950/5" : ""}`}
                     onDragOver={(e) => {
                       e.preventDefault();
                       if (!dragState) return;
@@ -2044,9 +2044,7 @@ export default function AIRoutineBoard() {
                         dragState.previewStartMinutes !== null && (
                           <div
                             className={`absolute left-0 right-0 pointer-events-none z-20 border-2 border-dashed rounded ${
-                              theme
-                                ? "bg-purple-400/20 border-purple-500"
-                                : "bg-purple-500/20 border-purple-400"
+                              "bg-purple-400/20 dark:bg-purple-500/20 border-purple-500 dark:border-purple-400"
                             }`}
                             style={{
                               top: `${dragState.previewStartMinutes * pxPerMinute}px`,
@@ -2055,9 +2053,7 @@ export default function AIRoutineBoard() {
                           >
                             <div
                               className={`text-[10px] font-semibold px-2 py-0.5 rounded-sm mt-1 ml-1 inline-block ${
-                                theme
-                                  ? "bg-purple-500 text-white"
-                                  : "bg-purple-400 text-gray-900"
+                                "bg-purple-500 dark:bg-purple-400 text-white dark:text-gray-900"
                               }`}
                             >
                               {minutesToTime(dragState.previewStartMinutes)} →{" "}
@@ -2074,11 +2070,11 @@ export default function AIRoutineBoard() {
               })}
               {/* Now line */}
               <div
-                className={`absolute w-[90%] ml-[10%] h-[2px] border-t-2 z-20 ${theme ? "border-purple-600" : "border-purple-500"}`}
+                className="absolute w-[90%] ml-[10%] h-[2px] border-t-2 z-20 border-purple-600 dark:border-purple-500"
                 style={{ top: `${nowHeight - 1}px` }}
               />
               <div
-                className={`absolute text-xs font-bold px-2.5 py-1 rounded-md left-[6.8%] z-20 shadow-sm border ${theme ? "bg-purple-600 text-white border-purple-700" : "bg-purple-700 text-white border-purple-600"}`}
+                className="absolute text-xs font-bold px-2.5 py-1 rounded-md left-[6.8%] z-20 shadow-sm border bg-purple-600 dark:bg-purple-700 text-white border-purple-700 dark:border-purple-600"
                 style={{ top: `${nowHeight - 13}px` }}
               >
                 Now
@@ -2096,7 +2092,7 @@ export default function AIRoutineBoard() {
         style={{ top: "56px", height: "calc(100% - 56px)" }}
       >
         <motion.div
-          className={`h-full float-left ${theme ? "bg-white border-r-[1px] border-gray-200" : "bg-black border-r-[1px] border-gray-800"}`}
+          className="h-full float-left bg-white dark:bg-black border-r-[1px] border-gray-200 dark:border-gray-800"
           initial={{ width: sidebarTablet.closed }}
           animate={{
             width: isSidebarOpen ? sidebarTablet.open : sidebarTablet.closed,
@@ -2131,37 +2127,37 @@ export default function AIRoutineBoard() {
         >
           <div
             ref={scrollContainerTabletRef}
-            className={`h-full relative overflow-auto px-[10px] pb-[30px] ${theme ? "bg-[#ffffff]" : "bg-[#000000]"}`}
+            className="h-full relative overflow-auto px-[10px] pb-[30px] bg-[#ffffff] dark:bg-[#000000]"
           >
             {/* Sticky header */}
             <div className="sticky top-0 left-0 z-30 bg-inherit">
               <div
-                className={`h-[50px] w-full border-b-[1px] flex items-center justify-between ${theme ? "border-gray-300" : "border-gray-800"}`}
+                className="h-[50px] w-full border-b-[1px] flex items-center justify-between border-gray-300 dark:border-gray-800"
               >
                 <div className="flex items-center gap-2 sm:gap-3">
                   <button
                     onClick={() => setZoomLevel((p) => Math.max(1, p - 0.5))}
                     disabled={zoomLevel <= 1}
-                    className={`p-1.5 sm:p-2 rounded transition-colors flex items-center justify-center ${theme ? (zoomLevel >= 8 ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "text-purple-700 hover:text-purple-800 hover:bg-purple-50/70 bg-purple-50/70 border border-purple-800/20") : zoomLevel >= 8 ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "text-purple-400 hover:text-purple-300 hover:bg-purple-950/40 bg-purple-950/40 border border-purple-300/20"}`}
+                    className={`p-1.5 sm:p-2 rounded transition-colors flex items-center justify-center ${zoomLevel >= 8 ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed" : "text-purple-700 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:bg-purple-50/70 dark:hover:bg-purple-950/40 bg-purple-50/70 dark:bg-purple-950/40 border border-purple-800/20 dark:border-purple-300/20"}`}
                   >
                     <FaMinus size={10} />
                   </button>
                   <span
-                    className={`font-semibold min-w-[90px] text-center text-sm sm:text-base ${theme ? "text-gray-900" : "text-white"}`}
+                    className="font-semibold min-w-[90px] text-center text-sm sm:text-base text-gray-900 dark:text-white"
                   >
                     Zoom: {zoomLevel.toFixed(1)}x
                   </span>
                   <button
                     onClick={() => setZoomLevel((p) => Math.min(8, p + 0.5))}
                     disabled={zoomLevel >= 8}
-                    className={`p-1.5 sm:p-2 rounded transition-colors flex items-center justify-center ${theme ? (zoomLevel >= 8 ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "text-purple-700 hover:text-purple-800 hover:bg-purple-50/70 bg-purple-50/70 border border-purple-800/20") : zoomLevel >= 8 ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "text-purple-400 hover:text-purple-300 hover:bg-purple-950/40 bg-purple-950/40 border border-purple-300/20"}`}
+                    className={`p-1.5 sm:p-2 rounded transition-colors flex items-center justify-center ${zoomLevel >= 8 ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed" : "text-purple-700 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:bg-purple-50/70 dark:hover:bg-purple-950/40 bg-purple-50/70 dark:bg-purple-950/40 border border-purple-800/20 dark:border-purple-300/20"}`}
                   >
                     <FaPlus size={10} />
                   </button>
                 </div>
                 <button
                   onClick={scrollToNow}
-                  className={`group flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-lg font-medium text-xs ml-2 transition-colors duration-200 border-[1px] ${theme ? "text-purple-700 hover:text-purple-800 hover:bg-purple-50/70 bg-purple-50/70 border-purple-800/20" : "text-purple-400 hover:text-purple-300 hover:bg-purple-950/40 bg-purple-950/40 border-purple-300/20"}`}
+                  className="group flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-lg font-medium text-xs ml-2 transition-colors duration-200 border-[1px] text-purple-700 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:bg-purple-50/70 dark:hover:bg-purple-950/40 bg-purple-50/70 dark:bg-purple-950/40 border-purple-800/20 dark:border-purple-300/20"
                 >
                   <svg
                     className="w-4 h-4 sm:w-5 sm:h-5"
@@ -2182,7 +2178,7 @@ export default function AIRoutineBoard() {
 
               {/* Date capsules */}
               <div
-                className={`w-full py-2 border-b flex items-center justify-between gap-1.5 sm:gap-2.5 ${theme ? "border-gray-300" : "border-gray-800"}`}
+                className="w-full py-2 border-b flex items-center justify-between gap-1.5 sm:gap-2.5 border-gray-300 dark:border-gray-800"
               >
                 {weekRealDates.map((d, idx) => {
                   const isSelected = selectedDateIndex === idx;
@@ -2193,7 +2189,7 @@ export default function AIRoutineBoard() {
                         setSelectedDay(d.dayName.toLowerCase() as Day);
                         setSelectedDateIndex(idx);
                       }}
-                      className={`flex-1 max-w-[72px] sm:max-w-[88px] h-[30px] rounded-md sm:rounded-lg flex items-center justify-center text-[11px] sm:text-xs font-medium transition-all border shadow-sm ${isSelected ? (theme ? "bg-purple-600 border-purple-500 text-white" : "bg-purple-700 border-purple-500 text-white") : d.isToday ? (theme ? "bg-purple-50 border-purple-300 text-purple-800" : "bg-purple-950/60 border-purple-600 text-purple-300") : theme ? "border-gray-300 text-gray-700 hover:bg-gray-100" : "border-gray-700 text-gray-300 hover:bg-gray-800/60"}`}
+                      className={`flex-1 max-w-[72px] sm:max-w-[88px] h-[30px] rounded-md sm:rounded-lg flex items-center justify-center text-[11px] sm:text-xs font-medium transition-all border shadow-sm ${isSelected ? "bg-purple-600 dark:bg-purple-700 border-purple-500 text-white" : d.isToday ? "bg-purple-50 dark:bg-purple-950/60 border-purple-300 dark:border-purple-600 text-purple-800 dark:text-purple-300" : "border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/60"}`}
                     >
                       <div className="font-semibold tracking-tight">
                         {d.shortDay}
@@ -2224,7 +2220,7 @@ export default function AIRoutineBoard() {
                   const tasks = buildTasksWithGaps(aiRoutine[dayKey] || []);
                   return (
                     <div
-                      className={`border-l pt-5 border-b col-span-1 ${theme ? "border-gray-300" : "border-gray-800"}`}
+                      className="border-l pt-5 border-b col-span-1 border-gray-300 dark:border-gray-800"
                       onDragOver={(e) => {
                         e.preventDefault();
                         if (!dragState || dragState.dayKey !== dayKey) return;
@@ -2298,9 +2294,7 @@ export default function AIRoutineBoard() {
                           dragState.previewStartMinutes !== null && (
                             <div
                               className={`absolute left-0 right-0 pointer-events-none z-20 border-2 border-dashed rounded ${
-                                theme
-                                  ? "bg-purple-400/20 border-purple-500"
-                                  : "bg-purple-500/20 border-purple-400"
+                                "bg-purple-400/20 dark:bg-purple-500/20 border-purple-500 dark:border-purple-400"
                               }`}
                               style={{
                                 top: `${dragState.previewStartMinutes * pxPerMinute}px`,
@@ -2309,9 +2303,7 @@ export default function AIRoutineBoard() {
                             >
                               <div
                                 className={`text-[10px] font-semibold px-2 py-0.5 rounded-sm mt-1 ml-1 inline-block ${
-                                  theme
-                                    ? "bg-purple-500 text-white"
-                                    : "bg-purple-400 text-gray-900"
+                                  "bg-purple-500 dark:bg-purple-400 text-white dark:text-gray-900"
                                 }`}
                               >
                                 {minutesToTime(dragState.previewStartMinutes)} →{" "}
@@ -2327,11 +2319,11 @@ export default function AIRoutineBoard() {
                   );
                 })()}
               <div
-                className={`absolute left-[35%] right-0 h-[2px] border-t-2 z-20 ${theme ? "border-purple-600" : "border-purple-500"}`}
+                className="absolute left-[35%] right-0 h-[2px] border-t-2 z-20 border-purple-600 dark:border-purple-500"
                 style={{ top: `${nowHeight - 1}px` }}
               />
               <div
-                className={`absolute text-xs font-bold px-2.5 py-1 rounded-md left-[32%] z-20 shadow-sm border ${theme ? "bg-purple-600 text-white border-purple-700" : "bg-purple-700 text-white border-purple-600"}`}
+                className="absolute text-xs font-bold px-2.5 py-1 rounded-md left-[32%] z-20 shadow-sm border bg-purple-600 dark:bg-purple-700 text-white border-purple-700 dark:border-purple-600"
                 style={{ top: `${nowHeight - 13}px` }}
               >
                 Now
@@ -2349,7 +2341,7 @@ export default function AIRoutineBoard() {
         style={{ top: "56px", height: "calc(100% - 56px)" }}
       >
         <motion.div
-          className={`h-full float-left ${theme ? "bg-white border-r-[1px] border-gray-200" : "bg-black border-r-[1px] border-gray-800"}`}
+          className="h-full float-left bg-white dark:bg-black border-r-[1px] border-gray-200 dark:border-gray-800"
           initial={{ width: sidebarMobile.closed }}
           animate={{
             width: isSidebarOpen ? sidebarMobile.open : sidebarMobile.closed,
@@ -2373,11 +2365,7 @@ export default function AIRoutineBoard() {
 
         <motion.div
           onClick={() => setIsSidebarOpen((prev) => !prev)}
-          className={`flex absolute h-[25px] w-[25px] justify-center items-center cursor-pointer border-[1px] rounded-md top-[10px] left-[2%] z-10 transition-colors ${
-            theme
-              ? "border-purple-400 text-purple-600 hover:bg-purple-600 hover:text-white"
-              : "border-purple-600 text-purple-400 hover:bg-purple-600 hover:text-white"
-          }`}
+          className="flex absolute h-[25px] w-[25px] justify-center items-center cursor-pointer border-[1px] rounded-md top-[10px] left-[2%] z-10 transition-colors border-purple-400 dark:border-purple-600 text-purple-600 dark:text-purple-400 hover:bg-purple-600 hover:text-white"
           whileTap={{ scale: 0.92 }}
         >
           {isSidebarOpen ? (
@@ -2398,38 +2386,38 @@ export default function AIRoutineBoard() {
         >
           <div
             ref={scrollContainerRef}
-            className={`h-full block mt-0 relative overflow-auto ${!isSidebarOpen ? "px-[10px]" : "px-0"} pb-[80px] ${theme ? "bg-[#ffffff]" : "bg-[#000000]"}`}
+            className={`h-full block mt-0 relative overflow-auto ${!isSidebarOpen ? "px-[10px]" : "px-0"} pb-[80px] bg-[#ffffff] dark:bg-[#000000]`}
           >
             {/* Sticky header */}
             {!isSidebarOpen && (
               <div className="sticky top-0 left-0 z-30 bg-inherit">
                 <div
-                  className={`h-[55px] pb-[3px] w-full border-b-[1px] flex items-center justify-between ${theme ? "border-gray-300" : "border-gray-800"}`}
+                  className="h-[55px] pb-[3px] w-full border-b-[1px] flex items-center justify-between border-gray-300 dark:border-gray-800"
                 >
                   <div className="flex items-center gap-1.5 sm:gap-3">
                     <button
                       onClick={() => setZoomLevel((p) => Math.max(1, p - 0.5))}
                       disabled={zoomLevel <= 1}
-                      className={`p-1 rounded transition-colors flex items-center justify-center ${theme ? (zoomLevel >= 8 ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "text-purple-700 hover:text-purple-800 hover:bg-purple-50/70 bg-purple-50/70 border border-purple-800/20") : zoomLevel >= 8 ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "text-purple-400 hover:text-purple-300 hover:bg-purple-950/40 bg-purple-950/40 border border-purple-300/20"}`}
+                      className={`p-1 rounded transition-colors flex items-center justify-center ${zoomLevel >= 8 ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed" : "text-purple-700 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:bg-purple-50/70 dark:hover:bg-purple-950/40 bg-purple-50/70 dark:bg-purple-950/40 border border-purple-800/20 dark:border-purple-300/20"}`}
                     >
                       <FaMinus size={10} />
                     </button>
                     <span
-                      className={`font-semibold min-w-[70px] text-center text-xs ${theme ? "text-gray-900" : "text-white"}`}
+                      className="font-semibold min-w-[70px] text-center text-xs text-gray-900 dark:text-white"
                     >
                       Zoom: {zoomLevel.toFixed(1)}x
                     </span>
                     <button
                       onClick={() => setZoomLevel((p) => Math.min(8, p + 0.5))}
                       disabled={zoomLevel >= 8}
-                      className={`p-1 rounded transition-colors flex items-center justify-center ${theme ? (zoomLevel >= 8 ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "text-purple-700 hover:text-purple-800 hover:bg-purple-50/70 bg-purple-50/70 border border-purple-800/20") : zoomLevel >= 8 ? "bg-gray-700 text-gray-500 cursor-not-allowed" : "text-purple-400 hover:text-purple-300 hover:bg-purple-950/40 bg-purple-950/40 border border-purple-300/20"}`}
+                      className={`p-1 rounded transition-colors flex items-center justify-center ${zoomLevel >= 8 ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed" : "text-purple-700 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:bg-purple-50/70 dark:hover:bg-purple-950/40 bg-purple-50/70 dark:bg-purple-950/40 border border-purple-800/20 dark:border-purple-300/20"}`}
                     >
                       <FaPlus size={10} />
                     </button>
                   </div>
                   <button
                     onClick={scrollToNow}
-                    className={`group flex items-center gap-2 px-2 py-1.5 rounded-lg font-medium text-xs ml-2 transition-colors duration-200 border-[1px] ${theme ? "text-purple-700 hover:text-purple-800 hover:bg-purple-50/70 bg-purple-50/70 border-purple-800/20" : "text-purple-400 hover:text-purple-300 hover:bg-purple-950/40 bg-purple-950/40 border-purple-300/20"}`}
+                    className="group flex items-center gap-2 px-2 py-1.5 rounded-lg font-medium text-xs ml-2 transition-colors duration-200 border-[1px] text-purple-700 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:bg-purple-50/70 dark:hover:bg-purple-950/40 bg-purple-50/70 dark:bg-purple-950/40 border-purple-800/20 dark:border-purple-300/20"
                   >
                     <svg
                       className="w-4 h-4"
@@ -2450,7 +2438,7 @@ export default function AIRoutineBoard() {
 
                 {/* Date capsules */}
                 <div
-                  className={`w-full py-2 border-b flex items-center justify-between gap-1.5 ${theme ? "border-gray-300" : "border-gray-800"}`}
+                  className="w-full py-2 border-b flex items-center justify-between gap-1.5 border-gray-300 dark:border-gray-800"
                 >
                   {weekRealDates.map((d, idx) => {
                     const isSelected = selectedDateIndex === idx;
@@ -2461,7 +2449,7 @@ export default function AIRoutineBoard() {
                           setSelectedDay(d.dayName.toLowerCase() as Day);
                           setSelectedDateIndex(idx);
                         }}
-                        className={`flex-1 max-w-[72px] h-[30px] rounded-md flex items-center justify-center text-[11px] font-medium transition-all border shadow-sm ${isSelected ? (theme ? "bg-purple-600 border-purple-500 text-white" : "bg-purple-700 border-purple-500 text-white") : d.isToday ? (theme ? "bg-purple-50 border-purple-300 text-purple-800" : "bg-purple-950/60 border-purple-600 text-purple-300") : theme ? "border-gray-300 text-gray-700 hover:bg-gray-100" : "border-gray-700 text-gray-300 hover:bg-gray-800/60"}`}
+                        className={`flex-1 max-w-[72px] h-[30px] rounded-md flex items-center justify-center text-[11px] font-medium transition-all border shadow-sm ${isSelected ? "bg-purple-600 dark:bg-purple-700 border-purple-500 text-white" : d.isToday ? "bg-purple-50 dark:bg-purple-950/60 border-purple-300 dark:border-purple-600 text-purple-800 dark:text-purple-300" : "border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/60"}`}
                       >
                         <div className="font-semibold tracking-tight">
                           {d.shortDay}
@@ -2495,7 +2483,7 @@ export default function AIRoutineBoard() {
                   const tasks = buildTasksWithGaps(aiRoutine[dayKey] || []);
                   return (
                     <div
-                      className={`${isSidebarOpen ? "pt-1" : "border-l pt-5"} border-b col-span-1 ${theme ? "border-gray-300" : "border-gray-800"}`}
+                      className={`${isSidebarOpen ? "pt-1" : "border-l pt-5"} border-b col-span-1 border-gray-300 dark:border-gray-800`}
                       onDragOver={(e) => {
                         e.preventDefault();
                         if (!dragState || dragState.dayKey !== dayKey) return;
@@ -2568,22 +2556,14 @@ export default function AIRoutineBoard() {
                           dragState.dayKey === dayKey &&
                           dragState.previewStartMinutes !== null && (
                             <div
-                              className={`absolute left-0 right-0 pointer-events-none z-20 border-2 border-dashed rounded ${
-                                theme
-                                  ? "bg-purple-400/20 border-purple-500"
-                                  : "bg-purple-500/20 border-purple-400"
-                              }`}
+                              className="absolute left-0 right-0 pointer-events-none z-20 border-2 border-dashed rounded bg-purple-400/20 dark:bg-purple-500/20 border-purple-500 dark:border-purple-400"
                               style={{
                                 top: `${dragState.previewStartMinutes * pxPerMinute}px`,
                                 height: `${dragState.taskDuration * pxPerMinute}px`,
                               }}
                             >
                               <div
-                                className={`text-[10px] font-semibold px-2 py-0.5 rounded-sm mt-1 ml-1 inline-block ${
-                                  theme
-                                    ? "bg-purple-500 text-white"
-                                    : "bg-purple-400 text-gray-900"
-                                }`}
+                                className="text-[10px] font-semibold px-2 py-0.5 rounded-sm mt-1 ml-1 inline-block bg-purple-500 dark:bg-purple-400 text-white dark:text-gray-900"
                               >
                                 {minutesToTime(dragState.previewStartMinutes)} →{" "}
                                 {minutesToTime(
@@ -2600,11 +2580,11 @@ export default function AIRoutineBoard() {
               {!isSidebarOpen && (
                 <>
                   <div
-                    className={`absolute left-[35%] right-0 h-[2px] border-t-2 z-20 ${theme ? "border-purple-600" : "border-purple-500"}`}
+                    className="absolute left-[35%] right-0 h-[2px] border-t-2 z-20 border-purple-600 dark:border-purple-500"
                     style={{ top: `${nowHeight - 1}px` }}
                   />
                   <div
-                    className={`absolute text-xs font-bold px-2.5 py-1 rounded-md left-[27%] z-20 shadow-sm border ${theme ? "bg-purple-600 text-white border-purple-700" : "bg-purple-700 text-white border-purple-600"}`}
+                    className="absolute text-xs font-bold px-2.5 py-1 rounded-md left-[27%] z-20 shadow-sm border bg-purple-600 dark:bg-purple-700 text-white border-purple-700 dark:border-purple-600"
                     style={{ top: `${nowHeight - 13}px` }}
                   >
                     Now
@@ -2619,9 +2599,7 @@ export default function AIRoutineBoard() {
       {hoveredTask && (
         <div
           className={`fixed z-50 pointer-events-none px-3 py-2 rounded-lg shadow-xl border text-xs max-w-[200px] ${
-            theme
-              ? "bg-white border-gray-200 text-gray-800"
-              : "bg-gray-900 border-gray-700 text-gray-100"
+            "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100"
           }`}
           style={{ left: cursorPos.x + 14, top: cursorPos.y + 10 }}
         >
@@ -2629,12 +2607,12 @@ export default function AIRoutineBoard() {
             {hoveredTask.name}
           </div>
           <div
-            className={`text-[10px] ${theme ? "text-gray-500" : "text-gray-400"}`}
+            className="text-[10px] text-gray-500 dark:text-gray-400"
           >
             {hoveredTask.time}
           </div>
           <div
-            className={`text-[10px] ${theme ? "text-gray-400" : "text-gray-500"}`}
+            className="text-[10px] text-gray-400 dark:text-gray-500"
           >
             {formatDuration(hoveredTask.dur)}
           </div>
@@ -2646,9 +2624,7 @@ export default function AIRoutineBoard() {
         <div className="fixed z-50 bottom-5 left-5 w-[90vw] sm:w-[340px]">
           <div
             className={`relative rounded-2xl shadow-2xl border px-5 py-4 ${
-              theme
-                ? "bg-white border-purple-500 text-gray-900"
-                : "bg-gray-900 border-purple-500 text-gray-100"
+              "bg-white dark:bg-gray-900 border-purple-500 text-gray-900 dark:text-gray-100"
             }`}
           >
             <button
@@ -2659,7 +2635,7 @@ export default function AIRoutineBoard() {
             </button>
             <div className="text-2xl mb-2">🔔</div>
             <p
-              className={`text-xs font-medium mb-1 ${theme ? "text-gray-500" : "text-gray-400"}`}
+              className="text-xs font-medium mb-1 text-gray-500 dark:text-gray-400"
             >
               AI Routine Reminder
             </p>
@@ -2667,7 +2643,7 @@ export default function AIRoutineBoard() {
               Now it&apos;s {taskAlert.time}, time for task
             </p>
             <p
-              className={`text-base font-bold mt-0.5 ${theme ? "text-purple-600" : "text-purple-400"}`}
+              className="text-base font-bold mt-0.5 text-purple-600 dark:text-purple-400"
             >
               {taskAlert.name}
             </p>
@@ -2687,17 +2663,13 @@ export default function AIRoutineBoard() {
       {portalMode && (
         <div
           className={`fixed bottom-4 right-4 z-50 w-[300px] rounded-xl shadow-2xl border text-sm ${
-            theme
-              ? "bg-white border-gray-200 text-gray-800"
-              : "bg-gray-950 border-gray-700 text-gray-100"
+            "bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100"
           }`}
         >
           {/* Header */}
           <div
             className={`flex items-center justify-between px-3 py-2.5 border-b rounded-t-xl ${
-              theme
-                ? "bg-gray-50 border-gray-200"
-                : "bg-gray-900 border-gray-800"
+              "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -2733,9 +2705,7 @@ export default function AIRoutineBoard() {
                 }
               }}
               className={`w-full px-2.5 py-1.5 rounded border text-xs outline-none focus:border-purple-500 ${
-                theme
-                  ? "bg-white border-gray-300"
-                  : "bg-gray-900 border-gray-700"
+                "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700"
               }`}
             />
 
@@ -2750,9 +2720,7 @@ export default function AIRoutineBoard() {
                   className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition border ${
                     portalCategory === cat
                       ? "bg-purple-600 border-purple-500 text-white"
-                      : theme
-                        ? "bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200"
-                        : "bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700"
+                      : "bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
                   }`}
                 >
                   {CATEGORY_DOT[cat] && (
@@ -2790,7 +2758,7 @@ export default function AIRoutineBoard() {
                       onChange={(e) =>
                         setHour(e.target.value.replace(/\D/g, "").slice(0, 2))
                       }
-                      className={`px-2 py-1 rounded border text-xs text-center outline-none focus:border-purple-500 ${theme ? "bg-white border-gray-300" : "bg-gray-900 border-gray-700"}`}
+                      className="px-2 py-1 rounded border text-xs text-center outline-none focus:border-purple-500 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700"
                     />
                     <input
                       type="text"
@@ -2800,12 +2768,12 @@ export default function AIRoutineBoard() {
                       onChange={(e) =>
                         setMinute(e.target.value.replace(/\D/g, "").slice(0, 2))
                       }
-                      className={`px-2 py-1 rounded border text-xs text-center outline-none focus:border-purple-500 ${theme ? "bg-white border-gray-300" : "bg-gray-900 border-gray-700"}`}
+                      className="px-2 py-1 rounded border text-xs text-center outline-none focus:border-purple-500 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700"
                     />
                     <select
                       value={period}
                       onChange={(e) => setPeriod(e.target.value as "AM" | "PM")}
-                      className={`px-1 py-1 rounded border text-xs text-center outline-none focus:border-purple-500 ${theme ? "bg-white border-gray-300" : "bg-gray-900 border-gray-700"}`}
+                      className="px-1 py-1 rounded border text-xs text-center outline-none focus:border-purple-500 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700"
                     >
                       <option>AM</option>
                       <option>PM</option>
@@ -2820,12 +2788,8 @@ export default function AIRoutineBoard() {
               <div
                 className={`text-[10px] text-center py-1 rounded ${
                   portalMessage.type === "success"
-                    ? theme
-                      ? "bg-green-100 text-green-700"
-                      : "bg-green-900/40 text-green-300"
-                    : theme
-                      ? "bg-red-100 text-red-700"
-                      : "bg-red-900/40 text-red-300"
+                    ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"
+                    : "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
                 }`}
               >
                 {portalMessage.text}
@@ -2860,9 +2824,7 @@ export default function AIRoutineBoard() {
               <button
                 onClick={closePortal}
                 className={`py-1.5 px-3 rounded text-xs font-semibold border transition ${
-                  theme
-                    ? "border-gray-300 text-gray-600 hover:bg-gray-100"
-                    : "border-gray-700 text-gray-400 hover:bg-gray-800"
+                  "border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
                 }`}
               >
                 Cancel

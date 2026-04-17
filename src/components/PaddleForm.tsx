@@ -3,7 +3,6 @@
 
 import { useAuth } from "@/app/hooks/useAuth";
 import { usePrice } from "@/app/hooks/usePrice";
-import { useTheme } from "@/app/hooks/useTheme";
 import { initializePaddle, Paddle } from "@paddle/paddle-js";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -11,7 +10,6 @@ import { useEffect, useState } from "react";
 export default function PaddleForm() {
   const { user: auth, setAuth } = useAuth();
   const { wantToPaymentType, wantToPaymentDuration } = usePrice();
-  const { theme } = useTheme();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -172,11 +170,7 @@ export default function PaddleForm() {
   }, [auth, wantToPaymentType, wantToPaymentDuration, router]);
 
   return (
-    <div
-      className={`min-h-screen w-full flex items-center justify-center p-4 ${
-        theme ? "bg-white" : "bg-black"
-      }`}
-    >
+    <div className="min-h-screen w-full flex items-center justify-center p-4 bg-white dark:bg-black">
       <div
         className={`w-full max-w-4xl mx-auto  bg-[#fefefe] border-[1px] border-[#cccccc] rounded-lg overflow-hidden`}
       >

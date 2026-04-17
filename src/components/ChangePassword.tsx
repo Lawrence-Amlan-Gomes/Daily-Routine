@@ -4,15 +4,13 @@
 import { verifyAndChangePassword } from "@/app/actions";
 import colors from "@/app/color/color";
 import { useAuth } from "@/app/hooks/useAuth";
-import { useTheme } from "@/app/hooks/useTheme";
+import EachField from "@/components/EachField";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import EachField from "@/components/EachField";
 
 const ChangePassword = () => {
   const router = useRouter();
-  const { theme } = useTheme();
   const { user: auth } = useAuth();
 
   const [oldPassword, setOldPassword] = useState("");
@@ -79,10 +77,7 @@ const ChangePassword = () => {
       await verifyAndChangePassword(auth.email, oldPassword, newPassword);
       setSuccess(true);
     } catch (err: unknown) {
-      if (
-        err instanceof Error &&
-        err.message === "INCORRECT_OLD_PASSWORD"
-      ) {
+      if (err instanceof Error && err.message === "INCORRECT_OLD_PASSWORD") {
         setOldError({ iserror: true, error: "Current password is incorrect" });
       } else {
         setServerMsg("Something went wrong. Please try again.");
@@ -117,22 +112,16 @@ const ChangePassword = () => {
       onKeyDown={(e) => {
         if (e.key === "Enter") submitForm();
       }}
-      className={`min-h-screen w-full flex items-center justify-center sm:px-0 px-6 pt-[80px] md:pt-[100px] ${
-        theme ? `bg-white ${colors.bgLight}` : `bg-black ${colors.bgDark}`
-      }`}
+      className={`min-h-screen w-full flex items-center justify-center sm:px-0 px-6 pt-[80px] md:pt-[100px] bg-white dark:bg-black ${colors.bgLight} dark:${colors.bgDark}`}
     >
       <div
-        className={`w-full sm:w-[440px] lg:w-[460px] xl:w-[480px] rounded-xl p-8 sm:p-10 ${
-          theme ? colors.cardLight : colors.cardDark
-        }`}
+        className={`w-full sm:w-[440px] lg:w-[460px] xl:w-[480px] rounded-xl p-8 sm:p-10 ${colors.cardLight} dark:${colors.cardDark}`}
       >
         {success ? (
           /* ── Success state ── */
           <div className="flex flex-col items-center text-center py-4">
             <div
-              className={`w-16 h-16 rounded-full flex items-center justify-center mb-5 ${
-                theme ? "bg-green-100" : "bg-green-900/30"
-              }`}
+              className={`w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-green-100 dark:bg-green-900/30`}
             >
               <svg
                 className="w-8 h-8 text-green-500"
@@ -151,11 +140,7 @@ const ChangePassword = () => {
             <h1 className="text-2xl font-bold tracking-tight mb-2">
               Password Updated!
             </h1>
-            <p
-              className={`text-sm mb-8 ${
-                theme ? "text-gray-500" : "text-gray-400"
-              }`}
-            >
+            <p className={`text-sm mb-8 text-gray-500 dark:text-gray-400`}>
               Your password has been changed successfully.
             </p>
             <button
@@ -170,9 +155,7 @@ const ChangePassword = () => {
             {/* ── Header ── */}
             <div className="text-center mb-8">
               <div
-                className={`w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 ${
-                  theme ? "bg-blue-50" : "bg-blue-900/30"
-                }`}
+                className={`w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 bg-blue-50 dark:bg-blue-900/30`}
               >
                 <svg
                   className="w-6 h-6 text-blue-500"
@@ -191,11 +174,7 @@ const ChangePassword = () => {
               <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">
                 Change Password
               </h1>
-              <p
-                className={`mt-2 text-sm ${
-                  theme ? "text-gray-500" : "text-gray-400"
-                }`}
-              >
+              <p className={`mt-2 text-sm text-gray-500 dark:text-gray-400`}>
                 Update your account password below
               </p>
             </div>
@@ -258,11 +237,7 @@ const ChangePassword = () => {
             {/* Server error */}
             {serverMsg && (
               <div
-                className={`mt-3 flex items-start gap-2 text-sm rounded-lg px-3 py-2.5 ${
-                  theme
-                    ? "bg-red-50 text-red-700 border border-red-200"
-                    : "bg-red-900/20 text-red-400 border border-red-800/40"
-                }`}
+                className={`mt-3 flex items-start gap-2 text-sm rounded-lg px-3 py-2.5 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/40`}
               >
                 <svg
                   className="w-4 h-4 mt-0.5 shrink-0"
@@ -285,17 +260,11 @@ const ChangePassword = () => {
             <button
               onClick={submitForm}
               disabled={!isFormValid || isLoading}
-              className={`
-                w-full mt-6 py-2.5 rounded-lg font-semibold text-sm lg:text-base
-                transition-all duration-200 active:scale-[0.98]
-                ${
-                  isFormValid && !isLoading
-                    ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-sm hover:shadow-md"
-                    : theme
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-gray-800 text-gray-500 cursor-not-allowed"
-                }
-              `}
+              className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed ${
+                isFormValid && !isLoading
+                  ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-sm hover:shadow-md"
+                  : "bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+              }`}
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -309,9 +278,7 @@ const ChangePassword = () => {
 
             {/* Back link */}
             <p
-              className={`mt-6 text-center text-sm ${
-                theme ? "text-gray-500" : "text-gray-400"
-              }`}
+              className={`mt-6 text-center text-sm text-gray-500 dark:text-gray-400`}
             >
               <Link
                 href="/profile"

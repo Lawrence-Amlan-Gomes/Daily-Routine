@@ -1,7 +1,8 @@
 // src/app/layout.tsx
 // This is the root layout for the Next.js application.
-import { Google_Sans } from "next/font/google";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import type { Metadata } from "next";
+import { Google_Sans } from "next/font/google";
 import Script from "next/script";
 import ClientLayout from "./ClientLayout";
 import "./globals.css";
@@ -10,7 +11,10 @@ const myFont = Google_Sans({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "https://mydailyroutine.app";
+const siteUrl =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  process.env.NEXTAUTH_URL ||
+  "https://mydailyroutine.app";
 const siteName = "My Daily Routine";
 
 export const metadata: Metadata = {
@@ -98,7 +102,9 @@ export default async function RootLayout({
             }),
           }}
         />
-        <ClientLayout>{children}</ClientLayout>
+        <ThemeProvider>
+          <ClientLayout>{children}</ClientLayout>
+        </ThemeProvider>
       </body>
     </html>
   );

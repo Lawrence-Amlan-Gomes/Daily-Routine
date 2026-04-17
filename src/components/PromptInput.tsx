@@ -1,7 +1,6 @@
 "use client";
 
 import colors from "@/app/color/color";
-import { useTheme } from "@/app/hooks/useTheme";
 import { useEffect, useState } from "react";
 import { FaArrowUp } from "react-icons/fa";
 
@@ -19,7 +18,6 @@ export default function PromptInput({
   aiResponse: string;
 }) {
   const [iAmThinking, setIAmThinking] = useState(false);
-  const { theme } = useTheme();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -38,18 +36,10 @@ export default function PromptInput({
 
   return (
     <div
-      className={`relative w-full h-full overflow-hidden p-[1%] border-[1px] rounded-lg ${
-        theme
-          ? "bg-[#ffffff] border-[#333333]"
-          : "bg-[#000000] border-[#444444]"
-      }`}
+      className={`relative w-full h-full overflow-hidden p-[1%] border-[1px] rounded-lg bg-[#ffffff] dark:bg-[#000000] border-[#333333] dark:border-[#444444]`}
     >
       <textarea
-        className={`w-full h-full text-[12px] sm:text-[16px] pl-[3%] pr-[15%] py-[1%] sm:pl-[2%] rounded-lg resize-none overflow-y-auto outline-none scrollbar-thin ${
-          theme
-            ? "bg-white text-black placeholder:text-[#666666] scrollbar-thumb-[#222222] scrollbar-track-[#f8f8f8]"
-            : "bg-black text-[#eeeeee] placeholder:text-[#888888] scrollbar-thumb-[#eeeeee] scrollbar-track-[#0f0f0f]"
-        }`}
+        className={`w-full h-full text-[12px] sm:text-[16px] pl-[3%] pr-[15%] py-[1%] sm:pl-[2%] rounded-lg resize-none overflow-y-auto outline-none scrollbar-thin bg-white dark:bg-black text-black dark:text-[#eeeeee] placeholder:text-[#666666] dark:placeholder:text-[#888888] scrollbar-thumb-[#222222] dark:scrollbar-thumb-[#eeeeee] scrollbar-track-[#f8f8f8] dark:scrollbar-track-[#0f0f0f]`}
         placeholder={
           iAmThinking
             ? "I am thinking..."

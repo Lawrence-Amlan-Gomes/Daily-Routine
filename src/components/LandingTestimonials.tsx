@@ -1,13 +1,11 @@
 "use client";
 import colors from "@/app/color/color";
-import { useTheme } from "@/app/hooks/useTheme";
 import testimonials from "@/app/testimonials/testimonials";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import TestimonialCard from "./TestimonialCard";
 
 export default function LandingTestimonials() {
-  const { theme } = useTheme();
   const [numtestimonials, setNumtestimonials] = useState(6);
 
   useEffect(() => {
@@ -30,32 +28,19 @@ export default function LandingTestimonials() {
   return (
     <div className="px-[5%] sm:px-[10%] mb-[5%] pb-[5%] w-full">
       <div className="mb-8">
-        <div
-          className={`flex items-center mb-5 gap-4 ${
-            theme ? "text-[#333333]" : "text-[#dddddd]"
-          }`}
-        >
-          <h1
-            className={`text-3xl sm:text-4xl lg:text-5xl font-bold mb-2 ${
-              theme ? "text-[#333333]" : "text-[#dddddd]"
-            }`}
-          >
+        <div className="flex items-center mb-5 gap-4 text-[#333333] dark:text-[#dddddd]">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2 text-[#333333] dark:text-[#dddddd]">
             Testimonials
           </h1>
           <div
             className="flex-grow h-[1px]"
             style={{
-              backgroundImage: theme
-                ? "linear-gradient(to right, rgba(51, 51, 51, 0), rgba(51, 51, 51, 1))"
-                : "linear-gradient(to right, rgba(221, 221, 221, 0), rgba(221, 221, 221, 0.4))",
+              backgroundImage:
+                "linear-gradient(to right, rgba(51, 51, 51, 0), rgba(51, 51, 51, 1))",
             }}
           />
         </div>
-        <p
-          className={`text-base lg:text-md w-full md:w-[50%] mt-2 ${
-            theme ? "text-[#666666]" : "text-[#aaaaaa]"
-          }`}
-        >
+        <p className="text-base lg:text-md w-full md:w-[50%] mt-2 text-[#666666] dark:text-[#aaaaaa]">
           Here’s what job seekers are saying about Recruiter’s Reply. Their
           stories prove: one click turns cold outreach into warm conversations.
         </p>

@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/app/hooks/useAuth";
-import { useTheme } from "@/app/hooks/useTheme";
 import { IStatEntry } from "@/store/features/auth/authSlice";
 import {
   BarChart,
@@ -186,7 +185,7 @@ function getLast12Weeks(): { label: string; start: string; end: string }[] {
 
 /** Calculate current consecutive-day streak. */
 function getCurrentStreak(stats: IStatEntry[]): number {
-  const dates = [...new Set(stats.map((s) => s.date))].sort().reverse();
+  const dates = [...new Set(stats.filter((s) => s.completedTasks.length > 0).map((s) => s.date))].sort().reverse();
   if (!dates.length) return 0;
   let streak = 0;
   const today = new Date();
@@ -201,7 +200,7 @@ function getCurrentStreak(stats: IStatEntry[]): number {
 
 /** Calculate all-time best streak. */
 function getBestStreak(stats: IStatEntry[]): number {
-  const dates = [...new Set(stats.map((s) => s.date))].sort();
+  const dates = [...new Set(stats.filter((s) => s.completedTasks.length > 0).map((s) => s.date))].sort();
   if (!dates.length) return 0;
   let best = 1,
     cur = 1;
@@ -217,7 +216,7 @@ function getBestStreak(stats: IStatEntry[]): number {
 
 /** Completion % for a single day entry (0–100). */
 function pct(entry: IStatEntry): number {
-  if (!entry.totalTasks) return 0;
+  if (!entry.totalTasks || !entry.completedTasks.length) return 0;
   return Math.min(100, Math.round((entry.completedTasks.length / entry.totalTasks) * 100));
 }
 
@@ -645,9 +644,24 @@ function EmptyState({ t }: { t: ThemeTokens }) {
 // =============================================================================
 
 export default function StatsRoutine() {
-  const { theme } = useTheme();
   const { user: auth } = useAuth();
-  const t = getTokens(theme); // theme===true → light
+
+  // Detect dark mode from the HTML element class (set by ThemeProvider)
+  const [isDark, setIsDark] = useState(false);
+  const updateIsDark = useCallback(() => {
+    setIsDark(document.documentElement.classList.contains("dark"));
+  }, []);
+  useEffect(() => {
+    updateIsDark();
+    const observer = new MutationObserver(updateIsDark);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    return () => observer.disconnect();
+  }, [updateIsDark]);
+
+  const t = getTokens(!isDark); // !isDark === isLight
 
   const [activeTab, setActiveTab] = useState<ViewTab>("overview");
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
@@ -758,19 +772,11 @@ export default function StatsRoutine() {
         )
       : 0;
 
-  const highestMonth = monthlyData.reduce(
-    (best, m) => (m.count > best.count ? m : best),
-    {
-      shortLabel: "—",
-      count: 0,
-      fullName: "—",
-      monthKey: "",
-      uniqueDays: 0,
-      uniqueTasks: 0,
-    },
-  );
-
   const completedWithData = completedMonthly.filter((m) => m.count > 0);
+
+  const highestMonth = completedWithData.length > 0
+    ? completedWithData.reduce((best, m) => (m.count > best.count ? m : best))
+    : null;
   const lowestMonth =
     completedWithData.length > 0
       ? completedWithData.reduce((best, m) => (m.count < best.count ? m : best))
@@ -1402,12 +1408,12 @@ export default function StatsRoutine() {
               />
               <StatCard
                 label="Best Month"
-                value={highestMonth.count > 0 ? highestMonth.shortLabel : "—"}
+                value={highestMonth ? highestMonth.shortLabel : "—"}
                 icon={Flame}
                 color="#f43f5e"
                 t={t}
                 sub={
-                  highestMonth.count > 0
+                  highestMonth
                     ? `${highestMonth.count}% avg`
                     : undefined
                 }
@@ -1464,7 +1470,7 @@ export default function StatsRoutine() {
                         <Cell
                           key={i}
                           fill={
-                            m.count === highestMonth.count && m.count > 0
+                            highestMonth && m.count === highestMonth.count && m.count > 0
                               ? "#f43f5e"
                               : "#6366f1"
                           }

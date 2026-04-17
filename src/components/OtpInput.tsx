@@ -1,7 +1,6 @@
 "use client";
 
 import { ClipboardEvent, KeyboardEvent, useRef } from "react";
-import { useTheme } from "@/app/hooks/useTheme";
 
 interface OtpInputProps {
   value: string;
@@ -10,7 +9,6 @@ interface OtpInputProps {
 }
 
 const OtpInput = ({ value, onChange, hasError = false }: OtpInputProps) => {
-  const { theme } = useTheme();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Pad to 6 chars so each box always has a controlled value
@@ -49,7 +47,10 @@ const OtpInput = ({ value, onChange, hasError = false }: OtpInputProps) => {
 
   const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    const pasted = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 6);
     onChange(pasted);
     const focusIndex = Math.min(pasted.length, 5);
     inputRefs.current[focusIndex]?.focus();
@@ -59,12 +60,8 @@ const OtpInput = ({ value, onChange, hasError = false }: OtpInputProps) => {
     rounded-lg border-2 outline-none transition-all duration-200 bg-transparent`;
 
   const colorClass = hasError
-    ? theme
-      ? "border-red-400 text-red-600 focus:border-red-500"
-      : "border-red-500 text-red-400 focus:border-red-400"
-    : theme
-      ? "border-gray-200 text-gray-900 focus:border-green-500 focus:shadow-[0_0_0_3px_rgba(22,163,74,0.15)]"
-      : "border-gray-600 text-white focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(74,222,128,0.15)]";
+    ? "border-red-400 dark:border-red-500 text-red-600 dark:text-red-400 focus:border-red-500 dark:focus:border-red-400"
+    : "border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white focus:border-green-500 dark:focus:border-green-400 focus:shadow-[0_0_0_3px_rgba(22,163,74,0.15)] dark:focus:shadow-[0_0_0_3px_rgba(74,222,128,0.15)]";
 
   return (
     <div className="flex gap-2 sm:gap-3">

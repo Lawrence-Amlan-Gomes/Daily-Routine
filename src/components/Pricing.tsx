@@ -4,12 +4,10 @@
 import colors from "@/app/color/color";
 import { useAuth } from "@/app/hooks/useAuth";
 import { usePrice } from "@/app/hooks/usePrice";
-import { useTheme } from "@/app/hooks/useTheme";
 import Link from "next/link";
 import { useEffect } from "react";
 
 export default function Pricing() {
-  const { theme } = useTheme();
   const { user: auth } = useAuth();
 
   const {
@@ -167,40 +165,26 @@ export default function Pricing() {
     return (plan.priceAnnual / 12).toFixed(2).replace(/\.00$/, "");
   };
 
-  const is = theme; // shorthand: true = light, false = dark
-
   return (
     <div
-      className={`h-full py-8 sm:pt-[6%] pt-[80px] px-4 sm:px-6 overflow-auto scrollbar relative ${
-        is
-          ? "bg-[#f8f9fb] scrollbar-thumb-black scrollbar-track-[#eeeeee]"
-          : "bg-[#0a0a0f] scrollbar-thumb-white scrollbar-track-[#222222]"
-      }`}
+      className={`h-full py-8 sm:pt-[6%] pt-[80px] px-4 sm:px-6 overflow-auto scrollbar relative bg-[#f8f9fb] scrollbar-thumb-black scrollbar-track-[#eeeeee] dark:bg-[#0a0a0f] dark:scrollbar-thumb-white dark:scrollbar-track-[#222222]`}
     >
       <div className="max-w-5xl mb-[5%] mx-auto">
 
         {/* ── Header ── */}
         <div className="text-center mb-8 sm:mb-10">
           <span
-            className={`inline-block mb-3 px-3 py-1 rounded-full text-xs font-semibold tracking-widest uppercase ${
-              is
-                ? "bg-blue-50 text-blue-600 border border-blue-100"
-                : "bg-blue-950/60 text-blue-400 border border-blue-900"
-            }`}
+            className={`inline-block mb-3 px-3 py-1 rounded-full text-xs font-semibold tracking-widest uppercase bg-blue-50 text-blue-600 border border-blue-100 dark:bg-blue-950/60 dark:text-blue-400 dark:border-blue-900`}
           >
             Pricing
           </span>
           <h1
-            className={`text-3xl sm:text-4xl font-bold tracking-tight mb-3 ${
-              is ? "text-[#0a0a0a]" : "text-[#f0f0f0]"
-            }`}
+            className={`text-3xl sm:text-4xl font-bold tracking-tight mb-3 text-[#0a0a0a] dark:text-[#f0f0f0]`}
           >
             Simple, transparent pricing
           </h1>
           <p
-            className={`text-base sm:text-lg max-w-xl mx-auto ${
-              is ? "text-gray-500" : "text-gray-400"
-            }`}
+            className={`text-base sm:text-lg max-w-xl mx-auto text-gray-500 dark:text-gray-400`}
           >
             Start free, upgrade when you&apos;re ready. No hidden fees.
           </p>
@@ -209,20 +193,14 @@ export default function Pricing() {
         {/* ── Billing toggle ── */}
         <div className="flex justify-center items-center gap-3 mb-8 sm:mb-10">
           <div
-            className={`flex rounded-xl p-1 ${
-              is ? "bg-gray-200/70" : "bg-gray-900"
-            }`}
+            className={`flex rounded-xl p-1 bg-gray-200/70 dark:bg-gray-900`}
           >
             <button
               onClick={() => setBillingPeriod("monthly")}
               className={`px-5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 billingPeriod === "monthly"
-                  ? is
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "bg-gray-700 text-white shadow-sm"
-                  : is
-                    ? "text-gray-500 hover:text-gray-700"
-                    : "text-gray-400 hover:text-gray-200"
+                  ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white"
+                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
             >
               Monthly
@@ -231,12 +209,8 @@ export default function Pricing() {
               onClick={() => setBillingPeriod("annual")}
               className={`px-5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
                 billingPeriod === "annual"
-                  ? is
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "bg-gray-700 text-white shadow-sm"
-                  : is
-                    ? "text-gray-500 hover:text-gray-700"
-                    : "text-gray-400 hover:text-gray-200"
+                  ? "bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white"
+                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               }`}
             >
               Annually
@@ -244,9 +218,7 @@ export default function Pricing() {
                 className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
                   billingPeriod === "annual"
                     ? "bg-green-500/20 text-green-600"
-                    : is
-                      ? "bg-green-100 text-green-600"
-                      : "bg-green-950 text-green-400"
+                    : "bg-green-100 text-green-600 dark:bg-green-950 dark:text-green-400"
                 }`}
               >
                 Save 8%
@@ -268,14 +240,10 @@ export default function Pricing() {
 
             const cardBase = `relative flex flex-col rounded-2xl transition-all duration-200 overflow-hidden`;
             const cardStyle = plan.isMostPopular
-              ? is
-                ? `${cardBase} bg-white border-2 border-blue-500 shadow-xl shadow-blue-100 ${isSelected ? "scale-[1.01]" : ""}`
-                : `${cardBase} bg-gray-950 border-2 border-blue-500 shadow-xl shadow-blue-950 ${isSelected ? "scale-[1.01]" : ""}`
+              ? `${cardBase} bg-white dark:bg-gray-950 border-2 border-blue-500 shadow-xl shadow-blue-100 dark:shadow-blue-950 ${isSelected ? "scale-[1.01]" : ""}`
               : plan.badge === "Admin Only"
-                ? `${cardBase} ${is ? "bg-white border border-orange-300" : "bg-gray-950 border border-orange-900"}`
-                : is
-                  ? `${cardBase} bg-white border border-gray-200 hover:border-gray-300 hover:shadow-md ${isSelected ? "shadow-md" : ""}`
-                  : `${cardBase} bg-gray-950 border border-gray-800 hover:border-gray-700 hover:shadow-lg ${isSelected ? "shadow-lg" : ""}`;
+                ? `${cardBase} bg-white border border-orange-300 dark:bg-gray-950 dark:border-orange-900`
+                : `${cardBase} bg-white border border-gray-200 hover:border-gray-300 hover:shadow-md dark:bg-gray-950 dark:border-gray-800 dark:hover:border-gray-700 dark:hover:shadow-lg ${isSelected ? "shadow-md dark:shadow-lg" : ""}`;
 
             return (
               <div
@@ -296,9 +264,7 @@ export default function Pricing() {
                   {/* Title + Badge */}
                   <div className="flex items-center justify-between mb-1">
                     <h3
-                      className={`text-lg sm:text-xl font-bold ${
-                        is ? "text-gray-900" : "text-gray-100"
-                      }`}
+                      className={`text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100`}
                     >
                       {plan.title}
                     </h3>
@@ -317,9 +283,7 @@ export default function Pricing() {
 
                   {/* Description */}
                   <p
-                    className={`text-sm mb-5 ${
-                      is ? "text-gray-500" : "text-gray-400"
-                    }`}
+                    className={`text-sm mb-5 text-gray-500 dark:text-gray-400`}
                   >
                     {plan.description}
                   </p>
@@ -329,16 +293,12 @@ export default function Pricing() {
                     {plan.id === "free" ? (
                       <div className="flex items-end gap-1">
                         <span
-                          className={`text-4xl font-extrabold ${
-                            is ? "text-gray-900" : "text-gray-100"
-                          }`}
+                          className={`text-4xl font-extrabold text-gray-900 dark:text-gray-100`}
                         >
                           $0
                         </span>
                         <span
-                          className={`text-sm mb-1.5 ${
-                            is ? "text-gray-400" : "text-gray-500"
-                          }`}
+                          className={`text-sm mb-1.5 text-gray-400 dark:text-gray-500`}
                         >
                           / 30 days
                         </span>
@@ -347,25 +307,19 @@ export default function Pricing() {
                       <>
                         <div className="flex items-end gap-1">
                           <span
-                            className={`text-4xl font-extrabold ${
-                              is ? "text-gray-900" : "text-gray-100"
-                            }`}
+                            className={`text-4xl font-extrabold text-gray-900 dark:text-gray-100`}
                           >
                             ${price}
                           </span>
                           <span
-                            className={`text-sm mb-1.5 ${
-                              is ? "text-gray-400" : "text-gray-500"
-                            }`}
+                            className={`text-sm mb-1.5 text-gray-400 dark:text-gray-500`}
                           >
                             / year
                           </span>
                         </div>
                         {monthlyEquiv && (
                           <p
-                            className={`text-xs mt-0.5 ${
-                              is ? "text-gray-400" : "text-gray-500"
-                            }`}
+                            className={`text-xs mt-0.5 text-gray-400 dark:text-gray-500`}
                           >
                             ~${monthlyEquiv}/mo, billed annually
                           </p>
@@ -374,16 +328,12 @@ export default function Pricing() {
                     ) : (
                       <div className="flex items-end gap-1">
                         <span
-                          className={`text-4xl font-extrabold ${
-                            is ? "text-gray-900" : "text-gray-100"
-                          }`}
+                          className={`text-4xl font-extrabold text-gray-900 dark:text-gray-100`}
                         >
                           ${price}
                         </span>
                         <span
-                          className={`text-sm mb-1.5 ${
-                            is ? "text-gray-400" : "text-gray-500"
-                          }`}
+                          className={`text-sm mb-1.5 text-gray-400 dark:text-gray-500`}
                         >
                           / month
                         </span>
@@ -403,11 +353,7 @@ export default function Pricing() {
                             onClick={() =>
                               setWantToPayment("Standard", billingPeriod)
                             }
-                            className={`w-full py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                              is
-                                ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                : "bg-gray-800 text-gray-200 hover:bg-gray-700"
-                            }`}
+                            className={`w-full py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700`}
                           >
                             Upgrade to continue →
                           </button>
@@ -417,11 +363,7 @@ export default function Pricing() {
                       <div className="mb-5">
                         <Link href={auth ? "/dashBoard" : "/login"} className="w-full">
                           <button
-                            className={`w-full py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                              is
-                                ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                : "bg-gray-800 text-gray-200 hover:bg-gray-700"
-                            }`}
+                            className={`w-full py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700`}
                           >
                             Use Now
                           </button>
@@ -440,9 +382,7 @@ export default function Pricing() {
                               ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-200"
                               : plan.badge === "Admin Only"
                                 ? "bg-orange-500 text-white hover:bg-orange-600"
-                                : is
-                                  ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                  : "bg-gray-800 text-gray-200 hover:bg-gray-700"
+                                : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
                           }`}
                         >
                           {plan.isMostPopular ? "Get Started" : plan.cta}
@@ -461,9 +401,7 @@ export default function Pricing() {
                               ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-200"
                               : plan.badge === "Admin Only"
                                 ? "bg-orange-500 text-white hover:bg-orange-600"
-                                : is
-                                  ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                  : "bg-gray-800 text-gray-200 hover:bg-gray-700"
+                                : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
                           }`}
                         >
                           {plan.isMostPopular ? "Get Started" : plan.cta}
@@ -474,9 +412,7 @@ export default function Pricing() {
 
                   {/* Divider */}
                   <div
-                    className={`h-px w-full mb-4 ${
-                      is ? "bg-gray-100" : "bg-gray-800"
-                    }`}
+                    className={`h-px w-full mb-4 bg-gray-100 dark:bg-gray-800`}
                   />
 
                   {/* Features list */}
@@ -489,7 +425,7 @@ export default function Pricing() {
                           fill="none"
                           xmlns="http://www.w3.org/2000/svg"
                         >
-                          <circle cx="8" cy="8" r="8" className={is ? "fill-green-50" : "fill-green-950"} />
+                          <circle cx="8" cy="8" r="8" className="fill-green-50 dark:fill-green-950" />
                           <path
                             d="M4.5 8.5L7 11L11.5 5.5"
                             stroke="currentColor"
@@ -499,9 +435,7 @@ export default function Pricing() {
                           />
                         </svg>
                         <span
-                          className={`text-sm leading-snug ${
-                            is ? "text-gray-600" : "text-gray-400"
-                          }`}
+                          className={`text-sm leading-snug text-gray-600 dark:text-gray-400`}
                         >
                           {feature.value}
                         </span>
@@ -516,9 +450,7 @@ export default function Pricing() {
 
         {/* ── Footer note ── */}
         <p
-          className={`text-center text-xs mt-8 ${
-            is ? "text-gray-400" : "text-gray-600"
-          }`}
+          className={`text-center text-xs mt-8 text-gray-400 dark:text-gray-600`}
         >
           All plans include SSL security. Cancel or change your plan at any time.
         </p>

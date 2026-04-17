@@ -5,7 +5,6 @@ import { SessionProvider } from "next-auth/react";
 import ReduxProvider from "@/store/ReduxProvider";
 import TopNavbar from "@/components/TopNavbar";
 import TopNavBarWarper from "@/components/TopNavBarWarper";
-import ThemeWrapper from "@/components/ThemeWrapper";
 
 export default function ClientLayout({
   children,
@@ -15,10 +14,10 @@ export default function ClientLayout({
   return (
     <ReduxProvider>
       <SessionProvider>
-        <ThemeWrapper>
+        <div className="min-h-screen w-full bg-white dark:bg-black">
           <TopNavbar />
           <TopNavBarWarper>{children}</TopNavBarWarper>
-        </ThemeWrapper>
+        </div>
       </SessionProvider>
     </ReduxProvider>
   );

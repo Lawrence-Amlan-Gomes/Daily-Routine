@@ -3,7 +3,6 @@
 
 import { resetPassword } from "@/app/actions";
 import colors from "@/app/color/color";
-import { useTheme } from "@/app/hooks/useTheme";
 import EachField from "@/components/EachField";
 import OtpInput from "@/components/OtpInput";
 import Link from "next/link";
@@ -13,7 +12,6 @@ import { useEffect, useRef, useState } from "react";
 type Step = "email" | "otp" | "reset" | "success";
 
 const ForgotPassword = () => {
-  const { theme } = useTheme();
   const router = useRouter();
 
   const [step, setStep] = useState<Step>("email");
@@ -203,29 +201,21 @@ const ForgotPassword = () => {
 
   return (
     <div
-      className={`min-h-screen w-full flex items-center justify-center sm:px-0 px-6 pt-[80px] md:pt-[100px] ${
-        theme ? `bg-white ${colors.bgLight}` : `bg-black ${colors.bgDark}`
-      }`}
+      className={`min-h-screen w-full flex items-center justify-center sm:px-0 px-6 pt-[80px] md:pt-[100px] bg-white ${colors.bgLight} dark:bg-black dark:${colors.bgDark}`}
     >
       <div
-        className={`w-full sm:w-[440px] lg:w-[480px] rounded-xl p-8 sm:p-10 ${
-          theme ? colors.cardLight : colors.cardDark
-        }`}
+        className={`w-full sm:w-[440px] lg:w-[480px] rounded-xl p-8 sm:p-10 ${colors.cardLight} dark:${colors.cardDark}`}
       >
         {/* ── STEP 1: Email ─────────────────────────────────────────── */}
         {step === "email" && (
           <>
             <div className="text-center mb-8">
               <div
-                className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4 ${
-                  theme ? "bg-green-50" : "bg-green-900/30"
-                }`}
+                className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4 bg-green-50 dark:bg-green-900/30`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className={`w-7 h-7 ${
-                    theme ? "text-green-600" : "text-green-400"
-                  }`}
+                  className={`w-7 h-7 text-green-600 dark:text-green-400`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -242,9 +232,7 @@ const ForgotPassword = () => {
                 Forgot password?
               </h1>
               <p
-                className={`mt-2 text-sm ${
-                  theme ? "text-gray-500" : "text-gray-400"
-                }`}
+                className={`mt-2 text-sm text-gray-500 dark:text-gray-400`}
               >
                 Enter your email and we&apos;ll send you a verification code.
               </p>
@@ -264,11 +252,7 @@ const ForgotPassword = () => {
 
             {sendError && (
               <div
-                className={`mt-3 flex items-start gap-2 text-sm rounded-lg px-3 py-2.5 ${
-                  theme
-                    ? "bg-red-50 text-red-700 border border-red-200"
-                    : "bg-red-900/20 text-red-400 border border-red-800/40"
-                }`}
+                className={`mt-3 flex items-start gap-2 text-sm rounded-lg px-3 py-2.5 bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800/40`}
               >
                 <svg
                   className="w-4 h-4 mt-0.5 shrink-0"
@@ -295,9 +279,7 @@ const ForgotPassword = () => {
                 ${
                   !emailError.iserror && !isSendingOtp
                     ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer shadow-sm hover:shadow-md"
-                    : theme
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-500"
                 }`}
             >
               {isSendingOtp ? (
@@ -311,9 +293,7 @@ const ForgotPassword = () => {
             </button>
 
             <p
-              className={`mt-6 text-center text-sm ${
-                theme ? "text-gray-500" : "text-gray-400"
-              }`}
+              className={`mt-6 text-center text-sm text-gray-500 dark:text-gray-400`}
             >
               Remember your password?{" "}
               <Link
@@ -330,15 +310,11 @@ const ForgotPassword = () => {
         {step === "otp" && (
           <div className="flex flex-col items-center">
             <div
-              className={`w-16 h-16 rounded-full flex items-center justify-center mb-5 ${
-                theme ? "bg-green-50" : "bg-green-900/30"
-              }`}
+              className={`w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-green-50 dark:bg-green-900/30`}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className={`w-8 h-8 ${
-                  theme ? "text-green-600" : "text-green-400"
-                }`}
+                className={`w-8 h-8 text-green-600 dark:text-green-400`}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -353,22 +329,16 @@ const ForgotPassword = () => {
             </div>
 
             <h2
-              className={`text-xl sm:text-2xl font-bold mb-2 ${
-                theme ? "text-gray-800" : "text-gray-100"
-              }`}
+              className={`text-xl sm:text-2xl font-bold mb-2 text-gray-800 dark:text-gray-100`}
             >
               Check your inbox
             </h2>
             <p
-              className={`text-sm text-center mb-7 max-w-xs leading-relaxed ${
-                theme ? "text-gray-500" : "text-gray-400"
-              }`}
+              className={`text-sm text-center mb-7 max-w-xs leading-relaxed text-gray-500 dark:text-gray-400`}
             >
               We sent a 6-digit verification code to{" "}
               <span
-                className={`font-semibold ${
-                  theme ? "text-gray-700" : "text-gray-200"
-                }`}
+                className={`font-semibold text-gray-700 dark:text-gray-200`}
               >
                 {email}
               </span>
@@ -388,9 +358,7 @@ const ForgotPassword = () => {
             <div className="min-h-[28px] mt-3 mb-1 w-full flex justify-center">
               {otpError && (
                 <p
-                  className={`text-xs sm:text-sm font-medium flex items-center gap-1.5 ${
-                    theme ? "text-red-600" : "text-red-400"
-                  }`}
+                  className={`text-xs sm:text-sm font-medium flex items-center gap-1.5 text-red-600 dark:text-red-400`}
                 >
                   <svg
                     className="w-3.5 h-3.5 shrink-0"
@@ -410,9 +378,7 @@ const ForgotPassword = () => {
               )}
               {otpSuccess && !otpError && (
                 <p
-                  className={`text-xs sm:text-sm font-medium flex items-center gap-1.5 ${
-                    theme ? "text-green-600" : "text-green-400"
-                  }`}
+                  className={`text-xs sm:text-sm font-medium flex items-center gap-1.5 text-green-600 dark:text-green-400`}
                 >
                   <svg
                     className="w-3.5 h-3.5 shrink-0"
@@ -440,12 +406,8 @@ const ForgotPassword = () => {
                 transition-all duration-200 active:scale-[0.98]
                 ${
                   !isVerifying && otpCode.length === 6
-                    ? theme
-                      ? "bg-green-600 hover:bg-green-700 text-white shadow-sm cursor-pointer"
-                      : "bg-green-600 hover:bg-green-500 text-white shadow-sm cursor-pointer"
-                    : theme
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                    ? "bg-green-600 hover:bg-green-700 dark:hover:bg-green-500 text-white shadow-sm cursor-pointer"
+                    : "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-500"
                 }`}
             >
               {isVerifying ? (
@@ -466,12 +428,8 @@ const ForgotPassword = () => {
                 border transition-all duration-200 active:scale-[0.98]
                 ${
                   isSendingOtp || otpCountdown > 0
-                    ? theme
-                      ? "border-gray-200 text-gray-400 cursor-not-allowed bg-transparent"
-                      : "border-gray-700 text-gray-600 cursor-not-allowed bg-transparent"
-                    : theme
-                      ? "border-gray-300 text-gray-600 hover:border-gray-400 hover:bg-gray-50 cursor-pointer bg-transparent"
-                      : "border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-800/50 cursor-pointer bg-transparent"
+                    ? "border-gray-200 text-gray-400 cursor-not-allowed bg-transparent dark:border-gray-700 dark:text-gray-600"
+                    : "border-gray-300 text-gray-600 hover:border-gray-400 hover:bg-gray-50 cursor-pointer bg-transparent dark:border-gray-600 dark:text-gray-300 dark:hover:border-gray-400 dark:hover:bg-gray-800/50"
                 }`}
             >
               {isSendingOtp
@@ -488,12 +446,7 @@ const ForgotPassword = () => {
                 setOtpError("");
                 setOtpSuccess("");
               }}
-              className={`mt-5 text-xs sm:text-sm underline underline-offset-2 transition-colors duration-200 cursor-pointer bg-transparent border-none
-                ${
-                  theme
-                    ? "text-gray-400 hover:text-gray-600"
-                    : "text-gray-500 hover:text-gray-300"
-                }`}
+              className={`mt-5 text-xs sm:text-sm underline underline-offset-2 transition-colors duration-200 cursor-pointer bg-transparent border-none text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300`}
             >
               ← Back
             </button>
@@ -505,15 +458,11 @@ const ForgotPassword = () => {
           <>
             <div className="text-center mb-8">
               <div
-                className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4 ${
-                  theme ? "bg-green-50" : "bg-green-900/30"
-                }`}
+                className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4 bg-green-50 dark:bg-green-900/30`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className={`w-7 h-7 ${
-                    theme ? "text-green-600" : "text-green-400"
-                  }`}
+                  className={`w-7 h-7 text-green-600 dark:text-green-400`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -530,15 +479,11 @@ const ForgotPassword = () => {
                 Set new password
               </h2>
               <p
-                className={`mt-2 text-sm ${
-                  theme ? "text-gray-500" : "text-gray-400"
-                }`}
+                className={`mt-2 text-sm text-gray-500 dark:text-gray-400`}
               >
                 Choose a strong password for{" "}
                 <span
-                  className={`font-semibold ${
-                    theme ? "text-gray-700" : "text-gray-200"
-                  }`}
+                  className={`font-semibold text-gray-700 dark:text-gray-200`}
                 >
                   {email}
                 </span>
@@ -572,11 +517,7 @@ const ForgotPassword = () => {
 
             {resetError && (
               <div
-                className={`mt-3 flex items-start gap-2 text-sm rounded-lg px-3 py-2.5 ${
-                  theme
-                    ? "bg-red-50 text-red-700 border border-red-200"
-                    : "bg-red-900/20 text-red-400 border border-red-800/40"
-                }`}
+                className={`mt-3 flex items-start gap-2 text-sm rounded-lg px-3 py-2.5 bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800/40`}
               >
                 <svg
                   className="w-4 h-4 mt-0.5 shrink-0"
@@ -603,9 +544,7 @@ const ForgotPassword = () => {
                 ${
                   canSubmitReset && !isResetting
                     ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer shadow-sm hover:shadow-md"
-                    : theme
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-gray-800 dark:text-gray-500"
                 }`}
             >
               {isResetting ? (
@@ -624,15 +563,11 @@ const ForgotPassword = () => {
         {step === "success" && (
           <div className="flex flex-col items-center py-4 text-center">
             <div
-              className={`w-20 h-20 rounded-full flex items-center justify-center mb-5 ${
-                theme ? "bg-green-50" : "bg-green-900/30"
-              }`}
+              className={`w-20 h-20 rounded-full flex items-center justify-center mb-5 bg-green-50 dark:bg-green-900/30`}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className={`w-10 h-10 ${
-                  theme ? "text-green-600" : "text-green-400"
-                }`}
+                className={`w-10 h-10 text-green-600 dark:text-green-400`}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -646,16 +581,12 @@ const ForgotPassword = () => {
               </svg>
             </div>
             <h2
-              className={`text-2xl font-bold mb-2 ${
-                theme ? "text-gray-800" : "text-gray-100"
-              }`}
+              className={`text-2xl font-bold mb-2 text-gray-800 dark:text-gray-100`}
             >
               Password reset!
             </h2>
             <p
-              className={`text-sm mb-8 ${
-                theme ? "text-gray-500" : "text-gray-400"
-              }`}
+              className={`text-sm mb-8 text-gray-500 dark:text-gray-400`}
             >
               Your password has been updated successfully. You can now sign in
               with your new password.

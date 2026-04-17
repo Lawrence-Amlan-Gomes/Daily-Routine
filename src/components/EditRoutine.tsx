@@ -5,7 +5,6 @@
 
 import { updateRoutine, updateStats, getAIRoutineDoc } from "@/app/actions";
 import { useAuth } from "@/app/hooks/useAuth";
-import { useTheme } from "@/app/hooks/useTheme";
 import { IRoutine, IRoutineItem, IStatEntry } from "@/store/features/auth/authSlice";
 import { useEffect, useMemo, useState } from "react";
 
@@ -53,7 +52,6 @@ function TimeInputGroup({
   setMinute,
   period,
   setPeriod,
-  theme,
 }: {
   label: string;
   hour: string;
@@ -62,7 +60,6 @@ function TimeInputGroup({
   setMinute: (v: string) => void;
   period: "AM" | "PM";
   setPeriod: (v: "AM" | "PM") => void;
-  theme: boolean;
 }) {
   return (
     <div>
@@ -77,7 +74,7 @@ function TimeInputGroup({
             setHour(e.target.value.replace(/\D/g, "").slice(0, 2))
           }
           className={`w-full px-2 py-1 border-[1px] focus:border-blue-500 text-center rounded ${
-            theme ? "bg-white border-gray-300" : "bg-gray-900 border-gray-700"
+            "bg-white border-gray-300 dark:bg-gray-900 dark:border-gray-700"
           }`}
         />
         <input
@@ -89,14 +86,14 @@ function TimeInputGroup({
             setMinute(e.target.value.replace(/\D/g, "").slice(0, 2))
           }
           className={`w-full px-2 py-1 border-[1px] focus:border-blue-500 text-center rounded ${
-            theme ? "bg-white border-gray-300" : "bg-gray-900 border-gray-700"
+            "bg-white border-gray-300 dark:bg-gray-900 dark:border-gray-700"
           }`}
         />
         <select
           value={period}
           onChange={(e) => setPeriod(e.target.value as "AM" | "PM")}
           className={`w-full px-2 py-1 border-[1px] focus:border-blue-500 text-center rounded ${
-            theme ? "bg-white border-gray-300" : "bg-gray-900 border-gray-700"
+            "bg-white border-gray-300 dark:bg-gray-900 dark:border-gray-700"
           }`}
         >
           <option>AM</option>
@@ -278,7 +275,6 @@ export default function EditRoutine({
   settingsMode,
   setSettingsMode,
 }: EditRoutineProps) {
-  const { theme } = useTheme();
   const { user: auth, setAuth } = useAuth();
 
   // ── Clock tick for re-evaluating active task every minute ──────────
@@ -1245,9 +1241,7 @@ export default function EditRoutine({
           className={`px-3 py-1 text-xs rounded-md font-medium transition ${
             allDays.every((d) => selected.has(d))
               ? "bg-blue-600 text-white hover:bg-blue-700"
-              : theme
-                ? "bg-gray-300 text-gray-800 hover:bg-gray-400"
-                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              : "bg-gray-300 text-gray-800 hover:bg-gray-400 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
           }`}
         >
           {allLabel || "All"}
@@ -1265,9 +1259,7 @@ export default function EditRoutine({
           className={`px-2 py-1 text-xs rounded-md capitalize transition ${
             selected.has(day)
               ? "bg-blue-600 text-white"
-              : theme
-                ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
           }`}
         >
           {day.slice(0, 3)}
@@ -1342,24 +1334,24 @@ export default function EditRoutine({
   if (settingsMode) {
     return (
       <div
-        className={`w-full h-full flex flex-col ${theme ? "bg-gray-50" : "bg-gray-950 text-gray-100"}`}
+        className={"w-full h-full flex flex-col bg-gray-50 dark:bg-gray-950 dark:text-gray-100"}
       >
         {/* Header */}
-        <div className={`p-4 border-b flex-shrink-0 flex items-center justify-end ${theme ? "border-gray-200" : "border-gray-800"}`}>
+        <div className={"p-4 border-b flex-shrink-0 flex items-center justify-end border-gray-200 dark:border-gray-800"}>
           <h2 className="text-lg font-bold">Shift Tasks</h2>
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
           {/* Select days */}
-          <div className={`p-3 rounded border ${theme ? "bg-white border-gray-200" : "bg-gray-900 border-gray-800"}`}>
-            <p className={`text-xs font-medium mb-2 ${theme ? "text-gray-500" : "text-gray-400"}`}>Select days</p>
+          <div className={"p-3 rounded border bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800"}>
+            <p className={"text-xs font-medium mb-2 text-gray-500 dark:text-gray-400"}>Select days</p>
             <div className="flex flex-wrap gap-1.5">
               <button
                 onClick={() => setSelectedShiftDays(selectedShiftDays.size === 7 ? new Set() : new Set(daysOfWeek))}
                 className={`px-2 py-1 text-xs font-medium rounded-md transition border ${
                   selectedShiftDays.size === 7
                     ? "bg-blue-600 text-white border-blue-600"
-                    : theme ? "bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300" : "bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-700"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:border-gray-700"
                 }`}
               >
                 All
@@ -1375,7 +1367,7 @@ export default function EditRoutine({
                   className={`px-2 py-1 text-xs font-medium rounded-md capitalize transition border ${
                     selectedShiftDays.has(day)
                       ? "bg-blue-600 text-white border-blue-600"
-                      : theme ? "bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300" : "bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-700"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:border-gray-700"
                   }`}
                 >
                   {day.slice(0, 3)}
@@ -1385,8 +1377,8 @@ export default function EditRoutine({
           </div>
 
           {/* Direction */}
-          <div className={`p-3 rounded border ${theme ? "bg-white border-gray-200" : "bg-gray-900 border-gray-800"}`}>
-            <p className={`text-xs font-medium mb-2 ${theme ? "text-gray-500" : "text-gray-400"}`}>Direction</p>
+          <div className={"p-3 rounded border bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800"}>
+            <p className={"text-xs font-medium mb-2 text-gray-500 dark:text-gray-400"}>Direction</p>
             <div className="grid grid-cols-2 gap-2">
               {(["up", "down"] as const).map((dir) => (
                 <button
@@ -1395,7 +1387,7 @@ export default function EditRoutine({
                   className={`py-2 rounded text-xs font-medium transition border ${
                     shiftDirection === dir
                       ? "bg-emerald-600 text-white border-emerald-600"
-                      : theme ? "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200" : "bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700"
+                      : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-700"
                   }`}
                 >
                   {dir === "up" ? "⬆ Earlier" : "⬇ Later"}
@@ -1405,8 +1397,8 @@ export default function EditRoutine({
           </div>
 
           {/* Shift amount */}
-          <div className={`p-3 rounded border ${theme ? "bg-white border-gray-200" : "bg-gray-900 border-gray-800"}`}>
-            <p className={`text-xs font-medium mb-2 ${theme ? "text-gray-500" : "text-gray-400"}`}>Shift by</p>
+          <div className={"p-3 rounded border bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800"}>
+            <p className={"text-xs font-medium mb-2 text-gray-500 dark:text-gray-400"}>Shift by</p>
             <div className="grid grid-cols-3 gap-2">
               <div>
                 <div className="text-xs opacity-70 mb-1">Hours</div>
@@ -1423,7 +1415,7 @@ export default function EditRoutine({
                     if (!isNaN(v)) setShiftHours(Math.min(23, v));
                   }}
                   className={`w-full px-2 py-1 border-[1px] focus:border-blue-500 text-center rounded outline-none ${
-                    theme ? "bg-white border-gray-300" : "bg-gray-900 border-gray-700"
+                    "bg-white border-gray-300 dark:bg-gray-900 dark:border-gray-700"
                   }`}
                 />
               </div>
@@ -1442,15 +1434,13 @@ export default function EditRoutine({
                     if (!isNaN(v)) setShiftMinutes(Math.min(59, v));
                   }}
                   className={`w-full px-2 py-1 border-[1px] focus:border-blue-500 text-center rounded outline-none ${
-                    theme ? "bg-white border-gray-300" : "bg-gray-900 border-gray-700"
+                    "bg-white border-gray-300 dark:bg-gray-900 dark:border-gray-700"
                   }`}
                 />
               </div>
               <div>
                 <div className="text-xs opacity-70 mb-1">Total</div>
-                <div className={`w-full px-2 py-1 border-[1px] text-center rounded text-xs font-medium ${
-                  theme ? "bg-gray-50 border-gray-300 text-gray-600" : "bg-gray-800 border-gray-700 text-gray-400"
-                }`}>
+                <div className={"w-full px-2 py-1 border-[1px] text-center rounded text-xs font-medium bg-gray-50 border-gray-300 text-gray-600 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400"}>
                   {shiftHours * 60 + shiftMinutes}m
                 </div>
               </div>
@@ -1463,7 +1453,7 @@ export default function EditRoutine({
             disabled={selectedShiftDays.size === 0 || shiftHours * 60 + shiftMinutes < 1}
             className={`w-full py-2 rounded font-medium text-sm transition flex items-center justify-center gap-1.5 ${
               selectedShiftDays.size === 0 || shiftHours * 60 + shiftMinutes < 1
-                ? theme ? "bg-gray-300 text-gray-600 cursor-not-allowed" : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                ? "bg-gray-300 text-gray-600 cursor-not-allowed dark:bg-gray-800 dark:text-gray-500"
                 : "bg-green-600 hover:bg-green-700 text-white"
             }`}
           >
@@ -1476,11 +1466,7 @@ export default function EditRoutine({
 
   return (
     <div
-      className={`w-full h-full flex flex-col ${
-        theme
-          ? "bg-gray-50 border-gray-200"
-          : "bg-gray-950 text-gray-100 border-gray-800"
-      }`}
+      className={"w-full h-full flex flex-col bg-gray-50 border-gray-200 dark:bg-gray-950 dark:text-gray-100 dark:border-gray-800"}
     >
       <style>{`
         @keyframes task-blink {
@@ -1511,9 +1497,7 @@ export default function EditRoutine({
             className={`px-2 py-1 text-xs rounded-md capitalize transition ${
               selectedDay === day
                 ? "bg-blue-600 text-white shadow-sm"
-                : theme
-                  ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
             }`}
           >
             {day.slice(0, 3)}
@@ -1545,11 +1529,7 @@ export default function EditRoutine({
               placeholder={`Search tasks on ${selectedDay.charAt(0).toUpperCase()}${selectedDay.slice(1)}...`}
               value={taskSearchQuery}
               onChange={(e) => setTaskSearchQuery(e.target.value)}
-              className={`w-full px-3 py-2 pr-10 text-sm rounded border transition ${
-                theme
-                  ? "bg-white border-gray-300 focus:border-blue-500 placeholder-gray-500"
-                  : "bg-gray-900 border-gray-700 focus:border-blue-500 placeholder-gray-500 text-gray-100"
-              } outline-none`}
+              className={"w-full px-3 py-2 pr-10 text-sm rounded border transition bg-white border-gray-300 focus:border-blue-500 placeholder-gray-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 outline-none"}
             />
             {taskSearchQuery && (
               <button
@@ -1575,12 +1555,8 @@ export default function EditRoutine({
                 disabled={copyingFromAI}
                 className={`whitespace-nowrap text-[12px] font-medium py-2 px-2.5 rounded transition ${
                   copyingFromAI
-                    ? theme
-                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                      : "bg-gray-800 text-gray-500 cursor-not-allowed"
-                    : theme
-                      ? "bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-300"
-                      : "bg-purple-950/50 text-purple-300 hover:bg-purple-900/60 border border-purple-700"
+                    ? "bg-gray-300 text-gray-600 cursor-not-allowed dark:bg-gray-800 dark:text-gray-500"
+                    : "bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-300 dark:bg-purple-950/50 dark:text-purple-300 dark:hover:bg-purple-900/60 dark:border-purple-700"
                 }`}
               >
                 {copyingFromAI ? "Copying..." : "✦ Copy From AI"}
@@ -1591,9 +1567,7 @@ export default function EditRoutine({
               disabled={loading || !hasUnsavedChanges}
               className={`whitespace-nowrap text-[12px] font-medium py-2 px-3.5 rounded transition ${
                 loading || !hasUnsavedChanges
-                  ? theme
-                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                    : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                  ? "bg-gray-300 text-gray-600 cursor-not-allowed dark:bg-gray-800 dark:text-gray-500"
                   : "bg-green-600 hover:bg-green-700 text-white"
               }`}
             >
@@ -1615,11 +1589,7 @@ export default function EditRoutine({
                 placeholder={`Search tasks on ${selectedDay.charAt(0).toUpperCase()}${selectedDay.slice(1)}...`}
                 value={taskSearchQuery}
                 onChange={(e) => setTaskSearchQuery(e.target.value)}
-                className={`w-full px-3 py-2 pr-10 text-sm rounded border transition ${
-                  theme
-                    ? "bg-white border-gray-300 focus:border-blue-500 placeholder-gray-500"
-                    : "bg-gray-900 border-gray-700 focus:border-blue-500 placeholder-gray-500 text-gray-100"
-                } outline-none`}
+                className={`w-full px-3 py-2 pr-10 text-sm rounded border transition bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 focus:border-blue-500 placeholder-gray-500 dark:text-gray-100 outline-none`}
               />
               {taskSearchQuery && (
                 <button
@@ -1659,12 +1629,8 @@ export default function EditRoutine({
                   disabled={copyingFromAI}
                   className={`text-[12px] font-medium py-1 px-2 rounded transition ${
                     copyingFromAI
-                      ? theme
-                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                        : "bg-gray-800 text-gray-500 cursor-not-allowed"
-                      : theme
-                        ? "bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-300"
-                        : "bg-purple-950/50 text-purple-300 hover:bg-purple-900/60 border border-purple-700"
+                      ? "bg-gray-300 text-gray-600 cursor-not-allowed dark:bg-gray-800 dark:text-gray-500"
+                      : "bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-300 dark:bg-purple-950/50 dark:text-purple-300 dark:hover:bg-purple-900/60 dark:border-purple-700"
                   }`}
                 >
                   {copyingFromAI ? "Copying..." : "✦ Copy From AI"}
@@ -1675,9 +1641,7 @@ export default function EditRoutine({
                 disabled={loading || !hasUnsavedChanges}
                 className={`text-[12px] font-medium py-1 px-2 rounded transition ${
                   loading || !hasUnsavedChanges
-                    ? theme
-                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                      : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                    ? "bg-gray-300 text-gray-600 cursor-not-allowed dark:bg-gray-800 dark:text-gray-500"
                     : "bg-green-600 hover:bg-green-700 text-white"
                 }`}
               >
@@ -1706,12 +1670,8 @@ export default function EditRoutine({
         <div
           className={`text-xs text-center py-2 mx-3 mb-3 rounded ${
             message.type === "success"
-              ? theme
-                ? "bg-green-100 text-green-800"
-                : "bg-green-900/70 text-green-200"
-              : theme
-                ? "bg-red-100 text-red-800"
-                : "bg-red-900/70 text-red-200"
+              ? "bg-green-100 text-green-800 dark:bg-green-900/70 dark:text-green-200"
+              : "bg-red-100 text-red-800 dark:bg-red-900/70 dark:text-red-200"
           }`}
         >
           {message.text}
@@ -1721,22 +1681,14 @@ export default function EditRoutine({
       {/* ─── Scrollable task list ──────────────────── */}
       <div className="flex-1 overflow-hidden pl-3 pb-5">
         <div
-          className={`space-y-2 overflow-y-auto scrollbar-thin h-full pr-3 ${
-            theme
-              ? "bg-[#ffffff] scrollbar-thumb-gray-400 scrollbar-track-[#f8f8f8]"
-              : "bg-gray-950 scrollbar-thumb-gray-600 scrollbar-track-gray-900"
-          }`}
+          className={"space-y-2 overflow-y-auto scrollbar-thin h-full pr-3 bg-[#ffffff] scrollbar-thumb-gray-400 scrollbar-track-[#f8f8f8] dark:bg-gray-950 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-900"}
         >
           {/* ── Add Task Form ────────────────────────── */}
           {editingIndex === null && (
             <>
               {isPortalOpen ? (
                 <div
-                  className={`p-3 rounded text-sm border ${
-                    theme
-                      ? "bg-white border-gray-200"
-                      : "bg-gray-900 border-gray-800"
-                  }`}
+                  className={"p-3 rounded text-sm border bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800"}
                 >
                   <div className="flex justify-between items-center mb-2">
                     <h4 className="text-xs font-medium opacity-70">
@@ -1759,11 +1711,7 @@ export default function EditRoutine({
                       if (e.key === "Enter" && !isAddDisabled) addTask();
                       if (e.key === "Escape") setIsPortalOpen(false);
                     }}
-                    className={`w-full px-3 py-2 text-sm rounded border mb-3 ${
-                      theme
-                        ? "bg-white border-gray-300 focus:border-blue-500"
-                        : "bg-gray-900 border-gray-700 focus:border-blue-500"
-                    } outline-none`}
+                    className={"w-full px-3 py-2 text-sm rounded border mb-3 bg-white border-gray-300 focus:border-blue-500 dark:bg-gray-900 dark:border-gray-700 outline-none"}
                   />
 
                   <div className="mb-3">
@@ -1779,9 +1727,7 @@ export default function EditRoutine({
                           className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition border ${
                             newCategory === cat
                               ? "bg-blue-600 border-blue-500 text-white"
-                              : theme
-                                ? "bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200"
-                                : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                              : "bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
                           }`}
                         >
                           <span
@@ -1802,7 +1748,6 @@ export default function EditRoutine({
                       setMinute={setFromMinute}
                       period={fromPeriod}
                       setPeriod={setFromPeriod}
-                      theme={theme}
                     />
                     <TimeInputGroup
                       label="To"
@@ -1812,7 +1757,6 @@ export default function EditRoutine({
                       setMinute={setToMinute}
                       period={toPeriod}
                       setPeriod={setToPeriod}
-                      theme={theme}
                     />
                   </div>
 
@@ -1830,9 +1774,7 @@ export default function EditRoutine({
                       disabled={isAddDisabled}
                       className={`w-full text-sm font-medium py-2 rounded transition ${
                         isAddDisabled
-                          ? theme
-                            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                            : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                          ? "bg-gray-300 text-gray-600 cursor-not-allowed dark:bg-gray-800 dark:text-gray-500"
                           : "bg-green-600 hover:bg-green-700 text-white"
                       }`}
                     >
@@ -1870,9 +1812,7 @@ export default function EditRoutine({
                         selectedDaysForMultiAdd.size === 0 ||
                         !!multiDayAddValidationError ||
                         !newName.trim()
-                          ? theme
-                            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                            : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                          ? "bg-gray-300 text-gray-600 cursor-not-allowed dark:bg-gray-800 dark:text-gray-500"
                           : "bg-blue-600 hover:bg-blue-700 text-white"
                       }`}
                     >
@@ -1889,11 +1829,7 @@ export default function EditRoutine({
               ) : (
                 <button
                   onClick={() => setIsPortalOpen(true)}
-                  className={`w-full text-sm font-medium py-[12px] rounded border-dashed border-2 transition ${
-                    theme
-                      ? "border-gray-300 text-gray-600 hover:bg-gray-100"
-                      : "border-gray-700 text-gray-400 hover:bg-gray-900"
-                  }`}
+                  className={"w-full text-sm font-medium py-[12px] rounded border-dashed border-2 transition border-gray-300 text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-900"}
                 >
                   + Add New Task
                 </button>
@@ -1914,11 +1850,7 @@ export default function EditRoutine({
                   {editingIndex === originalIndex ? (
                     /* ── Edit Portal ───────────────────── */
                     <div
-                      className={`p-3 rounded text-sm border ${
-                        theme
-                          ? "bg-white border-gray-200"
-                          : "bg-gray-900 border-gray-800"
-                      }`}
+                      className={"p-3 rounded text-sm border bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800"}
                     >
                       <div className="flex justify-between items-center mb-2">
                         <h4 className="text-xs font-medium opacity-70">
@@ -1941,11 +1873,7 @@ export default function EditRoutine({
                           if (e.key === "Enter" && !isAddDisabled) editTask();
                           if (e.key === "Escape") setEditingIndex(null);
                         }}
-                        className={`w-full px-3 py-2 text-sm rounded border mb-3 ${
-                          theme
-                            ? "bg-white border-gray-300 focus:border-blue-500"
-                            : "bg-gray-900 border-gray-700 focus:border-blue-500"
-                        } outline-none`}
+                        className={"w-full px-3 py-2 text-sm rounded border mb-3 bg-white border-gray-300 focus:border-blue-500 dark:bg-gray-900 dark:border-gray-700 outline-none"}
                       />
 
                       <div className="mb-3">
@@ -1963,9 +1891,7 @@ export default function EditRoutine({
                               className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition border ${
                                 newCategory === cat
                                   ? "bg-blue-600 border-blue-500 text-white"
-                                  : theme
-                                    ? "bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200"
-                                    : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                                  : "bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
                               }`}
                             >
                               <span
@@ -1986,8 +1912,7 @@ export default function EditRoutine({
                           setMinute={setFromMinute}
                           period={fromPeriod}
                           setPeriod={setFromPeriod}
-                          theme={theme}
-                        />
+                            />
                         <TimeInputGroup
                           label="To"
                           hour={toHour}
@@ -1996,8 +1921,7 @@ export default function EditRoutine({
                           setMinute={setToMinute}
                           period={toPeriod}
                           setPeriod={setToPeriod}
-                          theme={theme}
-                        />
+                            />
                       </div>
 
                       <div className="text-xs text-center opacity-70 mt-3">
@@ -2014,9 +1938,7 @@ export default function EditRoutine({
                           disabled={isAddDisabled}
                           className={`w-full text-[13px] font-medium py-2 rounded transition ${
                             isAddDisabled
-                              ? theme
-                                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                                : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                              ? "bg-gray-300 text-gray-600 cursor-not-allowed dark:bg-gray-800 dark:text-gray-500"
                               : "bg-green-600 hover:bg-green-700 text-white"
                           }`}
                         >
@@ -2063,9 +1985,7 @@ export default function EditRoutine({
                             selectedDaysForMultiEdit.size === 0 ||
                             !!multiDayEditValidationError ||
                             !newName.trim()
-                              ? theme
-                                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                                : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                              ? "bg-gray-300 text-gray-600 cursor-not-allowed dark:bg-gray-800 dark:text-gray-500"
                               : "bg-blue-600 hover:bg-blue-700 text-white"
                           }`}
                         >
@@ -2093,11 +2013,7 @@ export default function EditRoutine({
                                 setSwapSearchQuery(e.target.value);
                                 setSelectedDaysForSwap(new Set());
                               }}
-                              className={`w-full px-3 py-2 text-sm rounded border ${
-                                theme
-                                  ? "bg-white border-gray-300 focus:border-blue-500"
-                                  : "bg-gray-900 border-gray-700 focus:border-blue-500"
-                              } outline-none`}
+                              className={"w-full px-3 py-2 text-sm rounded border bg-white border-gray-300 focus:border-blue-500 dark:bg-gray-900 dark:border-gray-700 outline-none"}
                             />
 
                             {swapSearchQuery.trim() &&
@@ -2105,11 +2021,7 @@ export default function EditRoutine({
                               swapSuggestion &&
                               swapSuggestion.length > 0 && (
                                 <div
-                                  className={`absolute z-10 w-full mt-1 rounded border shadow-md overflow-hidden ${
-                                    theme
-                                      ? "bg-white border-gray-200"
-                                      : "bg-gray-800 border-gray-700"
-                                  }`}
+                                  className={"absolute z-10 w-full mt-1 rounded border shadow-md overflow-hidden bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700"}
                                 >
                                   {swapSuggestion.map((suggestion) => (
                                     <button
@@ -2118,11 +2030,7 @@ export default function EditRoutine({
                                         setSwapSearchQuery(suggestion.name);
                                         setSelectedDaysForSwap(new Set());
                                       }}
-                                      className={`w-full text-left px-3 py-2 text-xs transition ${
-                                        theme
-                                          ? "hover:bg-blue-50 text-gray-800"
-                                          : "hover:bg-gray-700 text-gray-200"
-                                      }`}
+                                      className={"w-full text-left px-3 py-2 text-xs transition hover:bg-blue-50 text-gray-800 dark:hover:bg-gray-700 dark:text-gray-200"}
                                     >
                                       <span className="font-medium">
                                         {suggestion.name}
@@ -2188,9 +2096,7 @@ export default function EditRoutine({
                                 className={`w-full text-[13px] font-medium py-2 rounded transition ${
                                   selectedDaysForSwap.size === 0 ||
                                   !!swapValidationError
-                                    ? theme
-                                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                                      : "bg-gray-800 text-gray-500 cursor-not-allowed"
+                                    ? "bg-gray-300 text-gray-600 cursor-not-allowed dark:bg-gray-800 dark:text-gray-500"
                                     : "bg-purple-600 hover:bg-purple-700 text-white"
                                 }`}
                               >
@@ -2220,11 +2126,7 @@ export default function EditRoutine({
                     /* ── Task Card ────────────────────── */
                     <div
                       onClick={() => openEditPortal(originalIndex)}
-                      className={`flex items-center justify-between p-2 rounded text-sm cursor-pointer ${
-                        theme ? "bg-white" : "bg-gray-900"
-                      } border ${
-                        theme ? "border-gray-200" : "border-gray-800"
-                      } ${
+                      className={`flex items-center justify-between p-2 rounded text-sm cursor-pointer bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 ${
                         currentActiveTask === task.name &&
                         selectedDay ===
                           (["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][new Date().getDay()] as Day)

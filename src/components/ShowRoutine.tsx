@@ -4,7 +4,6 @@
 "use client";
 
 import { useAuth } from "@/app/hooks/useAuth";
-import { useTheme } from "@/app/hooks/useTheme";
 import { IRoutine, IRoutineItem } from "@/store/features/auth/authSlice";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -120,7 +119,6 @@ export default function ShowRoutine({
   updateRoutineWithHistory,
   syncDrag,
 }: ShowRoutineProps) {
-  const { theme } = useTheme();
   const { user: auth, setAuth } = useAuth();
 
   // ── State ──────────────────────────────────────────────────
@@ -334,33 +332,15 @@ export default function ShowRoutine({
   // ── Auth guards ────────────────────────────────────────────
   if (!auth) {
     return (
-      <div
-        className={`min-h-screen flex items-center justify-center p-4 sm:p-6 ${
-          theme
-            ? "bg-gradient-to-br from-gray-50 via-white to-gray-100"
-            : "bg-gradient-to-br bg-black"
-        }`}
-      >
+      <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:bg-black dark:from-black dark:via-black dark:to-black">
         <div className="text-center max-w-md w-full mx-auto">
-          <h2
-            className={`text-2xl sm:text-3xl font-bold mb-4 tracking-tight ${
-              theme ? "text-gray-900" : "text-gray-100"
-            }`}
-          >
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 tracking-tight text-gray-900 dark:text-gray-100">
             Please sign in
           </h2>
-          <p
-            className={`text-base sm:text-lg leading-relaxed mb-6 ${
-              theme ? "text-gray-600" : "text-gray-400"
-            }`}
-          >
+          <p className="text-base sm:text-lg leading-relaxed mb-6 text-gray-600 dark:text-gray-400">
             Log in to access and manage your personal routine and schedule.
           </p>
-          <p
-            className={`text-sm italic ${
-              theme ? "text-gray-500" : "text-gray-500"
-            }`}
-          >
+          <p className="text-sm italic text-gray-500">
             {"Your productive day is just one click away"}
           </p>
         </div>
@@ -370,55 +350,25 @@ export default function ShowRoutine({
 
   if (!auth.routine) {
     return (
-      <div
-        className={`min-h-screen flex items-center justify-center p-4 sm:p-6 ${
-          theme
-            ? "bg-gradient-to-br from-gray-50 via-white to-gray-100"
-            : "bg-gradient-to-br bg-black"
-        }`}
-      >
+      <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:bg-black dark:from-black dark:via-black dark:to-black">
         <div className="text-center max-w-md w-full mx-auto">
           <div className="mb-8 flex justify-center">
             <div className="relative w-20 h-20">
-              <div
-                className={`absolute inset-0 rounded-full border-4 animate-spin ${
-                  theme
-                    ? "border-t-blue-500 border-blue-200/30"
-                    : "border-t-blue-600 border-blue-900/30"
-                }`}
-              />
-              <div
-                className={`absolute inset-3 rounded-full border-4 animate-[spin_3s_linear_infinite] ${
-                  theme
-                    ? "border-t-purple-500 border-purple-200/20"
-                    : "border-t-purple-600 border-purple-900/20"
-                }`}
-              />
+              <div className="absolute inset-0 rounded-full border-4 animate-spin border-t-blue-500 dark:border-t-blue-600 border-blue-200/30 dark:border-blue-900/30" />
+              <div className="absolute inset-3 rounded-full border-4 animate-[spin_3s_linear_infinite] border-t-purple-500 dark:border-t-purple-600 border-purple-200/20 dark:border-purple-900/20" />
             </div>
           </div>
-          <h2
-            className={`text-2xl sm:text-3xl font-bold mb-5 ${
-              theme ? "text-gray-900" : "text-gray-100"
-            }`}
-          >
+          <h2 className="text-2xl sm:text-3xl font-bold mb-5 text-gray-900 dark:text-gray-100">
             {auth?.firstTimeLogin
               ? "Preparing your routine"
               : "Loading your schedule"}
           </h2>
-          <p
-            className={`text-base sm:text-lg leading-relaxed mb-6 max-w-prose mx-auto ${
-              theme ? "text-gray-600" : "text-gray-400"
-            }`}
-          >
+          <p className="text-base sm:text-lg leading-relaxed mb-6 max-w-prose mx-auto text-gray-600 dark:text-gray-400">
             {auth?.firstTimeLogin
               ? "We're setting up your perfect weekly planner \u2014 this will only take a moment..."
               : "Fetching your latest routine data... Please wait."}
           </p>
-          <p
-            className={`text-sm sm:text-base font-medium ${
-              theme ? "text-gray-500" : "text-gray-500"
-            }`}
-          >
+          <p className="text-sm sm:text-base font-medium text-gray-500">
             {auth?.firstTimeLogin
               ? "First time? Let's make your schedule amazing together!"
               : "Hang tight \u2014 almost ready..."}
@@ -467,27 +417,15 @@ export default function ShowRoutine({
 
   /** Render the timeline column (time labels + minor lines) */
   const renderTimelineColumn = () => (
-    <div
-      className={`text-base pt-5 font-medium col-span-1 ${
-        theme ? "text-gray-800" : "text-gray-200"
-      }`}
-    >
+    <div className="text-base pt-5 font-medium col-span-1 text-gray-800 dark:text-gray-200">
       {timeSlots.map((time) => (
         <div
           key={time}
-          className={`w-full text-xs border-t ${
-            theme ? "border-gray-400" : "border-gray-500"
-          }`}
+          className="w-full text-xs border-t border-gray-400 dark:border-gray-500"
           style={{ height: `${hourHeight / slotsPerHour}px` }}
         >
           <div className="flex relative justify-center items-center">
-            <div
-              className={`absolute px-2 left-0 rounded-md text-xs font-medium shadow-sm ${
-                theme
-                  ? "bg-white text-gray-700 border border-gray-200"
-                  : "bg-gray-900 text-gray-300 border border-gray-700"
-              }`}
-            >
+            <div className="absolute px-2 left-0 rounded-md text-xs font-medium shadow-sm bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
               {time}
             </div>
             {/* Minor division lines */}
@@ -505,9 +443,7 @@ export default function ShowRoutine({
               return Array.from({ length: count }).map((_, index) => (
                 <div
                   key={index}
-                  className={`w-[10%] absolute right-0 border-t ${
-                    theme ? "border-gray-400/70" : "border-gray-500/70"
-                  }`}
+                  className="w-[10%] absolute right-0 border-t border-gray-400/70 dark:border-gray-500/70"
                   style={{
                     top: `${(hourHeight / slotsPerHour / count) * index - 1}px`,
                   }}
@@ -519,19 +455,11 @@ export default function ShowRoutine({
       ))}
       {/* Final 12:00 AM label */}
       <div
-        className={`w-full text-xs border-t ${
-          theme ? "border-gray-400" : "border-gray-500"
-        }`}
+        className="w-full text-xs border-t border-gray-400 dark:border-gray-500"
         style={{ height: `1px` }}
       >
         <div className="flex relative justify-center items-center">
-          <div
-            className={`absolute px-2 left-0 rounded-md text-xs font-medium shadow-sm ${
-              theme
-                ? "bg-white text-gray-700 border border-gray-200"
-                : "bg-gray-900 text-gray-300 border border-gray-700"
-            }`}
-          >
+          <div className="absolute px-2 left-0 rounded-md text-xs font-medium shadow-sm bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
             12:00 AM
           </div>
         </div>
@@ -694,26 +622,16 @@ export default function ShowRoutine({
         } ${
           task.name !== "dummy" && isToday
             ? hasTodoGoal
-              ? theme
-                ? "bg-orange-400/30 text-black cursor-grab border-l-2 border-orange-500/70"
-                : "bg-orange-900/50 text-white cursor-grab border-l-2 border-orange-500/70"
-              : theme
-                ? "bg-blue-600/30 text-black cursor-grab border-l-2 border-blue-600/50"
-                : "bg-blue-950/70 text-white cursor-grab border-l-2 border-blue-500/50"
-            : theme
-              ? task.name === "dummy"
-                ? "bg-transparent text-gray-600 hover:bg-gray-50/50 cursor-pointer"
-                : "bg-gray-100/60 text-gray-800 hover:bg-gray-200/60 cursor-grab"
-              : task.name === "dummy"
-                ? "bg-transparent text-gray-500 hover:bg-gray-800/30 cursor-pointer border-t-gray-800"
-                : "bg-gray-800/50 text-gray-200 hover:bg-gray-700/70 cursor-grab border-t-gray-800"
+              ? "bg-orange-400/30 dark:bg-orange-900/50 text-black dark:text-white cursor-grab border-l-2 border-orange-500/70"
+              : "bg-blue-600/30 dark:bg-blue-950/70 text-black dark:text-white cursor-grab border-l-2 border-blue-600/50 dark:border-blue-500/50"
+            : task.name === "dummy"
+              ? "bg-transparent text-gray-600 dark:text-gray-500 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 cursor-pointer dark:border-t-gray-800"
+              : "bg-gray-100/60 dark:bg-gray-800/50 text-gray-800 dark:text-gray-200 hover:bg-gray-200/60 dark:hover:bg-gray-700/70 cursor-grab dark:border-t-gray-800"
         }`}
         style={{ height: `${height}px` }}
       >
         {matchedGoal && height >= 30 && (
-          <div className={`flex items-center gap-1 px-2 pt-1 pb-0.5 text-[9px] font-semibold truncate ${
-            theme ? "text-orange-700" : "text-orange-300"
-          }`}>
+          <div className="flex items-center gap-1 px-2 pt-1 pb-0.5 text-[9px] font-semibold truncate text-orange-700 dark:text-orange-300">
             <span className="truncate">🎯 {matchedGoal.name}</span>
             <span className="opacity-60 flex-shrink-0">· Todo</span>
             <span className="opacity-60 flex-shrink-0">· {matchedGoal.time}</span>
@@ -906,19 +824,13 @@ export default function ShowRoutine({
       <>
         <div
           ref={scrollContainerRef}
-          className={`h-full hidden lg:block relative scrollbar-thin overflow-auto px-[10px] pb-[50px] ${
-            theme
-              ? "bg-[#ffffff] scrollbar-thumb-black scrollbar-track-[#eeeeee]"
-              : "bg-[#000000] scrollbar-thumb-white scrollbar-track-gray-950"
-          } ${isSettingsOpen ? "blur-sm pointer-events-none" : ""}`}
+          className={`h-full hidden lg:block relative scrollbar-thin overflow-auto px-[10px] pb-[50px] bg-[#ffffff] dark:bg-[#000000] scrollbar-thumb-black dark:scrollbar-thumb-white scrollbar-track-[#eeeeee] dark:scrollbar-track-gray-950 ${isSettingsOpen ? "blur-sm pointer-events-none" : ""}`}
         >
           {/* Sticky header */}
           <div className="sticky top-0 left-0 right-0 z-30 bg-inherit">
             <div
               id="nav"
-              className={`h-[50px] w-full border-b-[1px] flex items-center justify-between px-6 ${
-                theme ? "border-gray-300" : "border-gray-800"
-              }`}
+              className="h-[50px] w-full border-b-[1px] flex items-center justify-between px-6 border-gray-300 dark:border-gray-800"
             >
               {/* Zoom controls */}
               <div className="flex items-center gap-2 sm:gap-3">
@@ -926,35 +838,23 @@ export default function ShowRoutine({
                   onClick={() => setZoomLevel((p) => Math.max(1, p - 0.5))}
                   disabled={zoomLevel <= 1}
                   className={`p-1.5 sm:p-2 rounded transition-colors flex items-center justify-center ${
-                    theme
-                      ? zoomLevel <= 1
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "text-green-700 hover:text-green-800 hover:bg-green-50/70 bg-green-50/70 border border-green-800/20"
-                      : zoomLevel <= 1
-                        ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                        : "text-green-400 hover:text-green-300 hover:bg-green-950/40 bg-green-950/40 border border-green-300/20"
+                    zoomLevel <= 1
+                      ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
+                      : "text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:bg-green-50/70 dark:hover:bg-green-950/40 bg-green-50/70 dark:bg-green-950/40 border border-green-800/20 dark:border-green-300/20"
                   }`}
                 >
                   <FaMinus size={10} />
                 </button>
-                <span
-                  className={`font-semibold min-w-[90px] text-center text-sm sm:text-base ${
-                    theme ? "text-gray-900" : "text-white"
-                  }`}
-                >
+                <span className="font-semibold min-w-[90px] text-center text-sm sm:text-base text-gray-900 dark:text-white">
                   Zoom: {zoomLevel.toFixed(1)}x
                 </span>
                 <button
                   onClick={() => setZoomLevel((p) => Math.min(8, p + 0.5))}
                   disabled={zoomLevel >= 8}
                   className={`p-1.5 sm:p-2 rounded transition-colors flex items-center justify-center ${
-                    theme
-                      ? zoomLevel >= 8
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "text-green-700 hover:text-green-800 hover:bg-green-50/70 bg-green-50/70 border border-green-800/20"
-                      : zoomLevel >= 8
-                        ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                        : "text-green-400 hover:text-green-300 hover:bg-green-950/40 bg-green-950/40 border border-green-300/20"
+                    zoomLevel >= 8
+                      ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
+                      : "text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:bg-green-50/70 dark:hover:bg-green-950/40 bg-green-50/70 dark:bg-green-950/40 border border-green-800/20 dark:border-green-300/20"
                   }`}
                 >
                   <FaPlus size={10} />
@@ -964,11 +864,7 @@ export default function ShowRoutine({
               {/* Jump to now */}
               <button
                 onClick={scrollToNow}
-                className={`group flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-lg font-medium text-sm sm:text-base transition-colors duration-200 border-[1px] ${
-                  theme
-                    ? "text-green-700 hover:text-green-800 hover:bg-green-50/70 bg-green-50/70 border-green-800/20"
-                    : "text-green-400 hover:text-green-300 hover:bg-green-950/40 bg-green-950/40 border-green-300/20"
-                }`}
+                className="group flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-lg font-medium text-sm sm:text-base transition-colors duration-200 border-[1px] text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:bg-green-50/70 dark:hover:bg-green-950/40 bg-green-50/70 dark:bg-green-950/40 border-green-800/20 dark:border-green-300/20"
               >
                 <svg
                   className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:scale-110"
@@ -996,29 +892,17 @@ export default function ShowRoutine({
                 <button
                   onClick={rotateWeekRight}
                   title="Rotate week left"
-                  className={`p-1.5 rounded-md transition-colors flex items-center justify-center ${
-                    theme
-                      ? "text-green-700 border-[1px] hover:text-green-800 hover:bg-green-50/70 bg-green-50/70 border-green-800/20"
-                      : "text-green-400 border-[1px] hover:text-green-300 hover:bg-green-950/40 bg-green-950/40 border-green-300/20"
-                  }`}
+                  className="p-1.5 rounded-md transition-colors flex items-center justify-center text-green-700 dark:text-green-400 border-[1px] hover:text-green-800 dark:hover:text-green-300 hover:bg-green-50/70 dark:hover:bg-green-950/40 bg-green-50/70 dark:bg-green-950/40 border-green-800/20 dark:border-green-300/20"
                 >
                   <FaArrowLeft size={15} />
                 </button>
-                <span
-                  className={`font-medium text-sm sm:text-base ${
-                    theme ? "text-gray-900" : "text-white"
-                  }`}
-                >
+                <span className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">
                   Rotate Week
                 </span>
                 <button
                   onClick={rotateWeekLeft}
                   title="Rotate week right"
-                  className={`p-1.5 rounded-md transition-colors flex items-center justify-center ${
-                    theme
-                      ? "text-green-700 border-[1px] hover:text-green-800 hover:bg-green-50/70 bg-green-50/70 border-green-800/20"
-                      : "text-green-400 border-[1px] hover:text-green-300 hover:bg-green-950/40 bg-green-950/40 border-green-300/20"
-                  }`}
+                  className="p-1.5 rounded-md transition-colors flex items-center justify-center text-green-700 dark:text-green-400 border-[1px] hover:text-green-800 dark:hover:text-green-300 hover:bg-green-50/70 dark:hover:bg-green-950/40 bg-green-50/70 dark:bg-green-950/40 border-green-800/20 dark:border-green-300/20"
                 >
                   <FaArrowRight size={15} />
                 </button>
@@ -1027,16 +911,12 @@ export default function ShowRoutine({
 
             {/* Day headers */}
             <div
-              className={`h-[49px] w-full border-b ${
-                theme ? "border-gray-300" : "border-gray-800"
-              }`}
+              className="h-[49px] w-full border-b border-gray-300 dark:border-gray-800"
             >
               <div className="grid grid-cols-1 sm:grid-cols-8 mx-auto h-full">
                 <div className="overflow-hidden">
                   <div
-                    className={`h-full flex items-center justify-center font-semibold text-sm sm:text-base ${
-                      theme ? "text-gray-700" : "text-gray-400"
-                    } bg-opacity-50 ${theme ? "bg-gray-100/40" : "bg-gray-900/40"}`}
+                    className="h-full flex items-center justify-center font-semibold text-sm sm:text-base text-gray-700 dark:text-gray-400 bg-opacity-50 bg-gray-100/40 dark:bg-gray-900/40"
                   >
                     Timeline
                   </div>
@@ -1051,17 +931,13 @@ export default function ShowRoutine({
                     }}
                     className={`overflow-hidden border-l cursor-pointer transition-colors ${
                       idx === 6 ? "border-r" : ""
-                    } ${theme ? "border-gray-300" : "border-gray-800"}`}
+                    } border-gray-300 dark:border-gray-800`}
                   >
                     <div
                       className={`h-full flex items-center justify-center font-semibold text-sm sm:text-base transition-all duration-150 ${
                         day.full === today
-                          ? theme
-                            ? "bg-blue-600/90 text-white shadow-sm"
-                            : "bg-blue-700/90 text-white shadow-sm"
-                          : theme
-                            ? "text-gray-800"
-                            : "text-gray-300"
+                          ? "bg-blue-600/90 dark:bg-blue-700/90 text-white shadow-sm"
+                          : "text-gray-800 dark:text-gray-300"
                       }`}
                     >
                       {day.full}
@@ -1085,7 +961,7 @@ export default function ShowRoutine({
                   key={day.full}
                   className={`overflow-hidden border-l border-b pt-5 ${
                     idx === 6 ? "border-r" : ""
-                  } ${dragState ? (theme ? "bg-blue-50/30" : "bg-blue-950/10") : ""} ${theme ? "border-gray-300" : "border-gray-800"}`}
+                  } ${dragState ? "bg-blue-50/30 dark:bg-blue-950/10" : ""} border-gray-300 dark:border-gray-800`}
                   onDragOver={(e) => {
                     e.preventDefault();
                     if (!dragState) return;
@@ -1258,16 +1134,10 @@ export default function ShowRoutine({
                         return (
                           <div
                             key={g.id}
-                            className={`absolute left-0 right-0 z-10 group border-t-2 border-dashed cursor-pointer ${
-                              theme ? "border-orange-400" : "border-orange-500"
-                            }`}
+                            className="absolute left-0 right-0 z-10 group border-t-2 border-dashed cursor-pointer border-orange-400 dark:border-orange-500"
                             style={{ top: `${topPx}px` }}
                           >
-                            <div className={`hidden group-hover:inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-semibold rounded-br-md ${
-                              theme
-                                ? "bg-orange-100 text-orange-700 border border-orange-300"
-                                : "bg-orange-950/80 text-orange-300 border border-orange-700"
-                            }`}>
+                            <div className="hidden group-hover:inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-semibold rounded-br-md bg-orange-100 dark:bg-orange-950/80 text-orange-700 dark:text-orange-300 border border-orange-300 dark:border-orange-700">
                               <span>🎯 {g.name}</span>
                               <span className="opacity-60">· Todo</span>
                               <span className="opacity-60">· {g.time}</span>
@@ -1282,22 +1152,14 @@ export default function ShowRoutine({
                       (dragState.previewDayKey ?? dragState.dayKey) === day.full.toLowerCase() &&
                       dragState.previewStartMinutes !== null && (
                         <div
-                          className={`absolute left-0 right-0 pointer-events-none z-20 border-2 border-dashed rounded ${
-                            theme
-                              ? "bg-blue-400/20 border-blue-500"
-                              : "bg-blue-500/20 border-blue-400"
-                          }`}
+                          className="absolute left-0 right-0 pointer-events-none z-20 border-2 border-dashed rounded bg-blue-400/20 dark:bg-blue-500/20 border-blue-500 dark:border-blue-400"
                           style={{
                             top: `${dragState.previewStartMinutes * pxPerMinute}px`,
                             height: `${dragState.taskDuration * pxPerMinute}px`,
                           }}
                         >
                           <div
-                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-sm mt-1 ml-1 inline-block ${
-                              theme
-                                ? "bg-blue-500 text-white"
-                                : "bg-blue-400 text-gray-900"
-                            }`}
+                            className="text-[10px] font-semibold px-2 py-0.5 rounded-sm mt-1 ml-1 inline-block bg-blue-500 dark:bg-blue-400 text-white dark:text-gray-900"
                           >
                             {minutesToTimeStr(dragState.previewStartMinutes)} →{" "}
                             {minutesToTimeStr(
@@ -1314,17 +1176,11 @@ export default function ShowRoutine({
 
             {/* Now line */}
             <div
-              className={`absolute w-[90%] ml-[10%] h-[2px] border-t-2 z-20 ${
-                theme ? "border-green-600" : "border-green-500"
-              }`}
+              className="absolute w-[90%] ml-[10%] h-[2px] border-t-2 z-20 border-green-600 dark:border-green-500"
               style={{ top: `${nowHeight - 1}px` }}
             />
             <div
-              className={`absolute text-xs font-bold px-2.5 py-1 rounded-md left-[6.8%] z-20 shadow-sm border ${
-                theme
-                  ? "bg-green-600 text-white border-green-700"
-                  : "bg-green-700 text-white border-green-600"
-              }`}
+              className="absolute text-xs font-bold px-2.5 py-1 rounded-md left-[6.8%] z-20 shadow-sm border bg-green-600 dark:bg-green-700 text-white border-green-700 dark:border-green-600"
               style={{ top: `${nowHeight - 13}px` }}
             >
               Now
@@ -1333,14 +1189,12 @@ export default function ShowRoutine({
         </div>
       {hoveredTask && (
         <div
-          className={`fixed z-50 pointer-events-none px-3 py-2 rounded-lg shadow-xl border text-xs max-w-[200px] ${
-            theme ? "bg-white border-gray-200 text-gray-800" : "bg-gray-900 border-gray-700 text-gray-100"
-          }`}
+          className="fixed z-50 pointer-events-none px-3 py-2 rounded-lg shadow-xl border text-xs max-w-[200px] bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100"
           style={{ left: cursorPos.x + 14, top: cursorPos.y + 10 }}
         >
           <div className="font-semibold mb-0.5 truncate">{hoveredTask.name}</div>
-          <div className={`text-[10px] ${theme ? "text-gray-500" : "text-gray-400"}`}>{hoveredTask.time}</div>
-          <div className={`text-[10px] ${theme ? "text-gray-400" : "text-gray-500"}`}>{formatDuration(hoveredTask.minutes)}</div>
+          <div className="text-[10px] text-gray-500 dark:text-gray-400">{hoveredTask.time}</div>
+          <div className="text-[10px] text-gray-400 dark:text-gray-500">{formatDuration(hoveredTask.minutes)}</div>
         </div>
       )}
       </>
@@ -1360,11 +1214,7 @@ export default function ShowRoutine({
     <>
       <div
         ref={scrollContainerRef}
-        className={`${containerClass} ${
-          theme
-            ? "bg-[#ffffff] scrollbar-thumb-black scrollbar-track-[#eeeeee]"
-            : "bg-[#000000] scrollbar-thumb-white scrollbar-track-gray-900"
-        }`}
+        className={`${containerClass} bg-[#ffffff] dark:bg-[#000000] scrollbar-thumb-black dark:scrollbar-thumb-white scrollbar-track-[#eeeeee] dark:scrollbar-track-gray-900`}
       >
         {/* Sticky header area */}
         <div className="sticky top-0 left-0 z-30 bg-inherit">
@@ -1373,44 +1223,30 @@ export default function ShowRoutine({
             !isSidebarOpen ? (
               <div
                 id="nav"
-                className={`h-[55px] pb-[3px] w-full border-b-[1px] flex items-center justify-between ${
-                  theme ? "border-gray-300" : "border-gray-800"
-                }`}
+                className="h-[55px] pb-[3px] w-full border-b-[1px] flex items-center justify-between border-gray-300 dark:border-gray-800"
               >
                 <div className="flex items-center gap-1.5 sm:gap-3">
                   <button
                     onClick={() => setZoomLevel((p) => Math.max(1, p - 0.5))}
                     disabled={zoomLevel <= 1}
                     className={`p-1 rounded transition-colors flex items-center justify-center ${
-                      theme
-                        ? zoomLevel >= 8
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "text-green-700 hover:text-green-800 hover:bg-green-50/70 bg-green-50/70 border border-green-800/20"
-                        : zoomLevel >= 8
-                          ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                          : "text-green-400 hover:text-green-300 hover:bg-green-950/40 bg-green-950/40 border border-green-300/20"
+                      zoomLevel >= 8
+                        ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
+                        : "text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:bg-green-50/70 dark:hover:bg-green-950/40 bg-green-50/70 dark:bg-green-950/40 border border-green-800/20 dark:border-green-300/20"
                     }`}
                   >
                     <FaMinus size={10} className="sm:size-11" />
                   </button>
-                  <span
-                    className={`font-semibold min-w-[70px] sm:min-w-[90px] text-center text-xs sm:text-sm ${
-                      theme ? "text-gray-900" : "text-white"
-                    }`}
-                  >
+                  <span className="font-semibold min-w-[70px] sm:min-w-[90px] text-center text-xs sm:text-sm text-gray-900 dark:text-white">
                     Zoom: {zoomLevel.toFixed(1)}x
                   </span>
                   <button
                     onClick={() => setZoomLevel((p) => Math.min(8, p + 0.5))}
                     disabled={zoomLevel >= 8}
                     className={`p-1 rounded transition-colors flex items-center justify-center ${
-                      theme
-                        ? zoomLevel >= 8
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                          : "text-green-700 hover:text-green-800 hover:bg-green-50/70 bg-green-50/70 border border-green-800/20"
-                        : zoomLevel >= 8
-                          ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                          : "text-green-400 hover:text-green-300 hover:bg-green-950/40 bg-green-950/40 border border-green-300/20"
+                      zoomLevel >= 8
+                        ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
+                        : "text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:bg-green-50/70 dark:hover:bg-green-950/40 bg-green-50/70 dark:bg-green-950/40 border border-green-800/20 dark:border-green-300/20"
                     }`}
                   >
                     <FaPlus size={10} className="sm:size-11" />
@@ -1418,11 +1254,7 @@ export default function ShowRoutine({
                 </div>
                 <button
                   onClick={scrollToNow}
-                  className={`group flex items-center gap-2 px-2 py-1.5 rounded-lg font-medium text-xs ml-2 transition-colors duration-200 border-[1px] ${
-                    theme
-                      ? "text-green-700 hover:text-green-800 hover:bg-green-50/70 bg-green-50/70 border-green-800/20"
-                      : "text-green-400 hover:text-green-300 hover:bg-green-950/40 bg-green-950/40 border-green-300/20"
-                  }`}
+                  className="group flex items-center gap-2 px-2 py-1.5 rounded-lg font-medium text-xs ml-2 transition-colors duration-200 border-[1px] text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:bg-green-50/70 dark:hover:bg-green-950/40 bg-green-50/70 dark:bg-green-950/40 border-green-800/20 dark:border-green-300/20"
                 >
                   <svg
                     className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:scale-110"
@@ -1452,44 +1284,30 @@ export default function ShowRoutine({
             /* Tablet zoom bar */
             <div
               id="nav"
-              className={`h-[50px] w-full border-b-[1px] flex items-center justify-between ${
-                theme ? "border-gray-300" : "border-gray-800"
-              }`}
+              className="h-[50px] w-full border-b-[1px] flex items-center justify-between border-gray-300 dark:border-gray-800"
             >
               <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   onClick={() => setZoomLevel((p) => Math.max(1, p - 0.5))}
                   disabled={zoomLevel <= 1}
                   className={`p-1.5 sm:p-2 rounded transition-colors flex items-center justify-center ${
-                    theme
-                      ? zoomLevel >= 8
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "text-green-700 hover:text-green-800 hover:bg-green-50/70 bg-green-50/70 border border-green-800/20"
-                      : zoomLevel >= 8
-                        ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                        : "text-green-400 hover:text-green-300 hover:bg-green-950/40 bg-green-950/40 border border-green-300/20"
+                    zoomLevel >= 8
+                      ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
+                      : "text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:bg-green-50/70 dark:hover:bg-green-950/40 bg-green-50/70 dark:bg-green-950/40 border border-green-800/20 dark:border-green-300/20"
                   }`}
                 >
                   <FaMinus size={10} />
                 </button>
-                <span
-                  className={`font-semibold min-w-[90px] text-center text-sm sm:text-base ${
-                    theme ? "text-gray-900" : "text-white"
-                  }`}
-                >
+                <span className="font-semibold min-w-[90px] text-center text-sm sm:text-base text-gray-900 dark:text-white">
                   Zoom: {zoomLevel.toFixed(1)}x
                 </span>
                 <button
                   onClick={() => setZoomLevel((p) => Math.min(8, p + 0.5))}
                   disabled={zoomLevel >= 8}
                   className={`p-1.5 sm:p-2 rounded transition-colors flex items-center justify-center ${
-                    theme
-                      ? zoomLevel >= 8
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "text-green-700 hover:text-green-800 hover:bg-green-50/70 bg-green-50/70 border border-green-800/20"
-                      : zoomLevel >= 8
-                        ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                        : "text-green-400 hover:text-green-300 hover:bg-green-950/40 bg-green-950/40 border border-green-300/20"
+                    zoomLevel >= 8
+                      ? "bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed"
+                      : "text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:bg-green-50/70 dark:hover:bg-green-950/40 bg-green-50/70 dark:bg-green-950/40 border border-green-800/20 dark:border-green-300/20"
                   }`}
                 >
                   <FaPlus size={10} />
@@ -1497,11 +1315,7 @@ export default function ShowRoutine({
               </div>
               <button
                 onClick={scrollToNow}
-                className={`group flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-lg font-medium text-xs ml-2 transition-colors duration-200 border-[1px] ${
-                  theme
-                    ? "text-green-700 hover:text-green-800 hover:bg-green-50/70 bg-green-50/70 border-green-800/20"
-                    : "text-green-400 hover:text-green-300 hover:bg-green-950/40 bg-green-950/40 border-green-300/20"
-                }`}
+                className="group flex items-center gap-2 px-4 sm:px-5 py-1.5 sm:py-2 rounded-lg font-medium text-xs ml-2 transition-colors duration-200 border-[1px] text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:bg-green-50/70 dark:hover:bg-green-950/40 bg-green-50/70 dark:bg-green-950/40 border-green-800/20 dark:border-green-300/20"
               >
                 <svg
                   className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:scale-110"
@@ -1528,9 +1342,7 @@ export default function ShowRoutine({
 
           {/* Date capsules */}
           <div
-            className={`w-full py-2 ${isMobile ? (!isSidebarOpen ? "border-b" : "ml-[10px]") : "border-b"} flex items-center justify-between gap-1.5 sm:gap-2.5 ${
-              theme ? "border-gray-300" : "border-gray-800"
-            }`}
+            className={`w-full py-2 ${isMobile ? (!isSidebarOpen ? "border-b" : "ml-[10px]") : "border-b"} flex items-center justify-between gap-1.5 sm:gap-2.5 border-gray-300 dark:border-gray-800`}
           >
             {weekRealDates.map((d, idx) => {
               const isSelected = selectedDateIndex === idx;
@@ -1548,16 +1360,10 @@ export default function ShowRoutine({
                   }}
                   className={`flex-1 max-w-[72px] sm:max-w-[88px] h-[30px] rounded-md sm:rounded-lg flex items-center justify-center text-[11px] sm:text-xs font-medium transition-all border shadow-sm ${
                     isSelected
-                      ? theme
-                        ? "bg-blue-600 border-blue-500 text-white"
-                        : "bg-blue-700 border-blue-500 text-white"
+                      ? "bg-blue-600 dark:bg-blue-700 border-blue-500 text-white"
                       : isTodayDate
-                        ? theme
-                          ? "bg-blue-50 border-blue-300 text-blue-800"
-                          : "bg-blue-950/60 border-blue-600 text-blue-300"
-                        : theme
-                          ? "border-gray-300 text-gray-700 hover:bg-gray-100 active:bg-gray-200"
-                          : "border-gray-700 text-gray-300 hover:bg-gray-800/60 active:bg-gray-700/80"
+                        ? "bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-600 text-blue-800 dark:text-blue-300"
+                        : "border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/60 active:bg-gray-200 dark:active:bg-gray-700/80"
                   }`}
                 >
                   <div className="font-semibold tracking-tight">
@@ -1586,9 +1392,7 @@ export default function ShowRoutine({
 
               return (
                 <div
-                  className={`${isMobile && isSidebarOpen ? "pt-1" : "border-l pt-5"} border-b col-span-1 ${
-                    theme ? "border-gray-300" : "border-gray-800"
-                  }`}
+                  className={`${isMobile && isSidebarOpen ? "pt-1" : "border-l pt-5"} border-b col-span-1 border-gray-300 dark:border-gray-800`}
                   onDragOver={(e) => {
                     e.preventDefault();
                     if (!dragState || dragState.dayKey !== dayKey) return;
@@ -1702,16 +1506,10 @@ export default function ShowRoutine({
                         return (
                           <div
                             key={g.id}
-                            className={`absolute left-0 right-0 z-10 group border-t-2 border-dashed cursor-pointer ${
-                              theme ? "border-orange-400" : "border-orange-500"
-                            }`}
+                            className="absolute left-0 right-0 z-10 group border-t-2 border-dashed cursor-pointer border-orange-400 dark:border-orange-500"
                             style={{ top: `${topPx}px` }}
                           >
-                            <div className={`hidden group-hover:inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-semibold rounded-br-md ${
-                              theme
-                                ? "bg-orange-100 text-orange-700 border border-orange-300"
-                                : "bg-orange-950/80 text-orange-300 border border-orange-700"
-                            }`}>
+                            <div className="hidden group-hover:inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-semibold rounded-br-md bg-orange-100 dark:bg-orange-950/80 text-orange-700 dark:text-orange-300 border border-orange-300 dark:border-orange-700">
                               <span>🎯 {g.name}</span>
                               <span className="opacity-60">· Todo</span>
                               <span className="opacity-60">· {g.time}</span>
@@ -1731,22 +1529,14 @@ export default function ShowRoutine({
                       dragState.dayKey === dayKey &&
                       dragState.previewStartMinutes !== null && (
                         <div
-                          className={`absolute left-0 right-0 pointer-events-none z-20 border-2 border-dashed rounded ${
-                            theme
-                              ? "bg-blue-400/20 border-blue-500"
-                              : "bg-blue-500/20 border-blue-400"
-                          }`}
+                          className="absolute left-0 right-0 pointer-events-none z-20 border-2 border-dashed rounded bg-blue-400/20 dark:bg-blue-500/20 border-blue-500 dark:border-blue-400"
                           style={{
                             top: `${dragState.previewStartMinutes * pxPerMinute}px`,
                             height: `${dragState.taskDuration * pxPerMinute}px`,
                           }}
                         >
                           <div
-                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-sm mt-1 ml-1 inline-block ${
-                              theme
-                                ? "bg-blue-500 text-white"
-                                : "bg-blue-400 text-gray-900"
-                            }`}
+                            className="text-[10px] font-semibold px-2 py-0.5 rounded-sm mt-1 ml-1 inline-block bg-blue-500 dark:bg-blue-400 text-white dark:text-gray-900"
                           >
                             {minutesToTimeStr(dragState.previewStartMinutes)} →{" "}
                             {minutesToTimeStr(
@@ -1765,17 +1555,11 @@ export default function ShowRoutine({
           {!(isMobile && isSidebarOpen) && (
             <>
               <div
-                className={`absolute left-[${isMobile ? "35" : "35"}%] right-0 h-[2px] border-t-2 z-20 ${
-                  theme ? "border-green-600" : "border-green-500"
-                }`}
+                className={`absolute left-[${isMobile ? "35" : "35"}%] right-0 h-[2px] border-t-2 z-20 border-green-600 dark:border-green-500`}
                 style={{ top: `${nowHeight - 1}px` }}
               />
               <div
-                className={`absolute text-xs font-bold px-2.5 py-1 rounded-md left-[${isMobile ? "27" : "32"}%] z-20 shadow-sm border ${
-                  theme
-                    ? "bg-green-600 text-white border-green-700"
-                    : "bg-green-700 text-white border-green-600"
-                }`}
+                className={`absolute text-xs font-bold px-2.5 py-1 rounded-md left-[${isMobile ? "27" : "32"}%] z-20 shadow-sm border bg-green-600 dark:bg-green-700 text-white border-green-700 dark:border-green-600`}
                 style={{ top: `${nowHeight - 13}px` }}
               >
                 Now

@@ -8,7 +8,6 @@ import {
 } from "@/app/actions";
 import colors from "@/app/color/color";
 import { useAuth } from "@/app/hooks/useAuth";
-import { useTheme } from "@/app/hooks/useTheme";
 import { CleanUser, IGoal } from "@/store/features/auth/authSlice";
 import { signIn, useSession } from "next-auth/react";
 import Image from "next/image";
@@ -21,7 +20,6 @@ const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { data: session } = useSession();
   const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
-  const { theme } = useTheme();
   const { user: auth, setAuth } = useAuth();
   const router = useRouter();
 
@@ -214,14 +212,10 @@ const LoginForm = () => {
       onKeyDown={(event) => {
         if (event.key === "Enter") submitForm();
       }}
-      className={`min-h-screen w-full flex items-center justify-center sm:px-0 px-6 pt-[80px] md:pt-[100px] ${
-        theme ? `bg-white ${colors.bgLight}` : `bg-black ${colors.bgDark}`
-      }`}
+      className={`min-h-screen w-full flex items-center justify-center sm:px-0 px-6 pt-[80px] md:pt-[100px] bg-white dark:bg-black ${colors.bgLight} dark:${colors.bgDark}`}
     >
       <div
-        className={`w-full sm:w-[440px] lg:w-[460px] xl:w-[480px] rounded-xl p-8 sm:p-10 ${
-          theme ? colors.cardLight : colors.cardDark
-        }`}
+        className={`w-full sm:w-[440px] lg:w-[460px] xl:w-[480px] rounded-xl p-8 sm:p-10 ${colors.cardLight} dark:${colors.cardDark}`}
       >
         {/* Header */}
         <div className="text-center mb-8">
@@ -229,9 +223,7 @@ const LoginForm = () => {
             Welcome back
           </h1>
           <p
-            className={`mt-2 text-sm ${
-              theme ? "text-gray-500" : "text-gray-400"
-            }`}
+            className={`mt-2 text-sm text-gray-500 dark:text-gray-400`}
           >
             Sign in to your account to continue
           </p>
@@ -291,11 +283,7 @@ const LoginForm = () => {
         {/* Main error */}
         {mainError.isError && (
           <div
-            className={`mt-3 flex items-start gap-2 text-sm rounded-lg px-3 py-2.5 ${
-              theme
-                ? "bg-red-50 text-red-700 border border-red-200"
-                : "bg-red-900/20 text-red-400 border border-red-800/40"
-            }`}
+            className={`mt-3 flex items-start gap-2 text-sm rounded-lg px-3 py-2.5 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/40`}
           >
             <svg
               className="w-4 h-4 mt-0.5 shrink-0"
@@ -324,105 +312,66 @@ const LoginForm = () => {
           </Link>
         </div>
 
-        {/* Login button */}
+        {/* Sign In Button */}
         <button
           onClick={submitForm}
-          disabled={!isFormValid || isLoading}
-          className={`
-            w-full mt-5 py-2.5 rounded-lg font-semibold text-sm lg:text-base
-            transition-all duration-200 active:scale-[0.98]
-            ${
-              isFormValid && !isLoading
-                ? theme
-                  ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer shadow-sm hover:shadow-md"
-                  : "bg-green-700 hover:bg-green-600 text-white cursor-pointer shadow-sm hover:shadow-md"
-                : theme
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : "bg-gray-800 text-gray-500 cursor-not-allowed"
-            }
-          `}
+          disabled={emailError.iserror || passwordError.iserror || isLoading}
+          className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed ${
+            isFormValid && !isLoading
+              ? "bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600 text-white cursor-pointer shadow-sm hover:shadow-md"
+              : "bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+          }`}
         >
-          {isLoading ? (
-            <span className="flex items-center justify-center gap-2">
-              {renderSpinner()}
-              Signing in...
-            </span>
-          ) : (
-            "Sign in"
-          )}
+          {isLoading ? "Signing in..." : "Sign in"}
         </button>
 
         {/* Divider */}
-        <div className="relative my-6">
-          <div
-            className={`absolute inset-0 flex items-center`}
-            aria-hidden="true"
-          >
+        <div className="my-6">
+          <div className="relative">
             <div
-              className={`w-full border-t ${
-                theme ? "border-gray-200" : "border-gray-700"
-              }`}
-            />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span
-              className={`px-3 font-medium tracking-wider ${
-                theme
-                  ? "bg-white text-gray-400"
-                  : "bg-gray-900 text-gray-500"
-              }`}
+              className={`absolute inset-0 flex items-center`}
             >
-              or continue with
-            </span>
+              <div className="w-full border-t border-gray-200 dark:border-gray-700" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className={`px-3 font-medium tracking-wider bg-white dark:bg-gray-900 text-gray-400 dark:text-gray-500`}>
+                OR
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Google button */}
-        <div className="flex flex-col items-center gap-2">
-          <button
-            onClick={handleGoogleSignIn}
-            disabled={isLoadingGoogle}
-            className={`
-              w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-lg
-              border font-medium text-sm lg:text-base
-              transition-all duration-200 active:scale-[0.98]
-              disabled:opacity-60 disabled:cursor-not-allowed
-              ${
-                theme
-                  ? "border-gray-200 bg-white hover:bg-gray-50 text-gray-700 shadow-sm"
-                  : "border-gray-700 bg-gray-800/50 hover:bg-gray-800 text-gray-200"
-              }
-            `}
-          >
-            <div className="w-5 h-5 relative shrink-0">
-              <Image
-                priority
-                src="/googleIcon.png"
-                alt="Google"
-                fill
-                sizes="20px"
-                className="object-contain"
-              />
-            </div>
-            {isLoadingGoogle ? (
-              <span className="flex items-center gap-2">
-                {renderSpinner()}
-                Signing in...
-              </span>
-            ) : session?.user?.email ? (
-              session.user.email
-            ) : (
-              "Continue with Google"
-            )}
-          </button>
+        {/* Google Sign In */}
+        <button
+          onClick={handleGoogleSignIn}
+          disabled={isLoadingGoogle}
+          className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-medium transition-all duration-200 border disabled:opacity-60 disabled:cursor-not-allowed border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200`}
+        >
+          <div className="w-5 h-5 relative">
+            <Image
+              src="/googleIcon.png"
+              alt="Google"
+              fill
+              sizes="20px"
+              className="object-contain"
+            />
+          </div>
+          {isLoadingGoogle ? (
+            <span className="flex items-center gap-2">
+              {renderSpinner()}
+              Signing in...
+            </span>
+          ) : session?.user?.email ? (
+            session.user.email
+          ) : (
+            "Continue with Google"
+          )}
+        </button>
 
-          {googleError.isError && (
+        {/* Google Error */}
+        {googleError.isError && (
             <div
-              className={`w-full flex items-start gap-2 text-xs rounded-lg px-3 py-2 ${
-                theme
-                  ? "bg-red-50 text-red-700 border border-red-200"
-                  : "bg-red-900/20 text-red-400 border border-red-800/40"
-              }`}
+              className={`w-full flex items-start gap-2 text-xs rounded-lg px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/40`}
             >
               <svg
                 className="w-3.5 h-3.5 mt-0.5 shrink-0"
@@ -440,13 +389,10 @@ const LoginForm = () => {
               {googleError.error}
             </div>
           )}
-        </div>
 
         {/* Register link */}
         <p
-          className={`mt-8 text-center text-sm ${
-            theme ? "text-gray-500" : "text-gray-400"
-          }`}
+          className={`mt-8 text-center text-sm text-gray-500 dark:text-gray-400`}
         >
           Don&apos;t have an account?{" "}
           <Link

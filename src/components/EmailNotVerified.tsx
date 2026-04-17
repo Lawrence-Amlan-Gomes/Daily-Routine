@@ -4,19 +4,17 @@ import {
   resendVerificationEmail,
 } from "@/app/actions";
 import { useAuth } from "@/app/hooks/useAuth";
-import { useTheme } from "@/app/hooks/useTheme";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function EmailNotVerified() {
-  const { theme } = useTheme();
   const { user: auth, setAuth } = useAuth();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const router = useRouter();
 
   useEffect(() => {
-    if(!auth){
+    if (!auth) {
       router.push("/login");
     }
   }, [auth, router]);
@@ -44,7 +42,7 @@ export default function EmailNotVerified() {
     const interval = setInterval(checkVerification, 5000);
 
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth?.email]);
 
   async function reSend() {
@@ -61,7 +59,7 @@ export default function EmailNotVerified() {
       } else {
         setMessage(result.error || "Failed to send email");
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       setMessage("An error occurred. Please try again.");
     } finally {
@@ -79,7 +77,11 @@ export default function EmailNotVerified() {
         stroke="currentColor"
         strokeWidth="4"
       />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8v8z"
+      />
     </svg>
   );
 
@@ -91,11 +93,7 @@ export default function EmailNotVerified() {
         <div className="text-red-600 rounded-lg">
           Please verify your email to use Daily Routine!
         </div>
-        <div
-          className={`${
-            theme ? "text-[#222222]" : "text-[#dddddd]"
-          } text-center mt-3`}
-        >
+        <div className="text-[#222222] dark:text-[#dddddd] text-center mt-3">
           Haven&apos;t received verification email yet?
         </div>
 
@@ -113,11 +111,7 @@ export default function EmailNotVerified() {
           <button
             onClick={reSend}
             disabled={loading}
-            className={`${
-              theme
-                ? "text-white bg-black hover:bg-white hover:text-black border-black"
-                : "text-black bg-white hover:bg-black hover:text-white border-white"
-            } px-3 py-2 rounded-md text-center border-[1px] disabled:opacity-50 disabled:cursor-not-allowed transition-all`}
+            className="text-white dark:text-black bg-black dark:bg-white hover:bg-white dark:hover:bg-black hover:text-black dark:hover:text-white border-black dark:border-white px-3 py-2 rounded-md text-center border-[1px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -130,11 +124,7 @@ export default function EmailNotVerified() {
           </button>
         </div>
 
-        <div
-          className={`text-xs text-center mt-4 ${
-            theme ? "text-gray-600" : "text-gray-400"
-          }`}
-        >
+        <div className="text-xs text-center mt-4 text-gray-600 dark:text-gray-400">
           Checking verification status automatically...
         </div>
       </div>
