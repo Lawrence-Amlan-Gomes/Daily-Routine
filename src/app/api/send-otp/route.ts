@@ -43,7 +43,11 @@ export async function POST(req: NextRequest) {
       { upsert: true, new: true },
     );
 
-    await sendOtpEmail(normalizedEmail, name, code);
+    const emailResult = await sendOtpEmail(normalizedEmail, name, code);
+    if (!emailResult.success) {
+      await OtpCode.deleteOne({ email: normalizedEmail });
+      return NextResponse.json({ success: false, error: "Failed to send email. Please try again." }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

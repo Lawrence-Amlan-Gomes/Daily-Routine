@@ -43,7 +43,10 @@ export default function CancellationPolicy() {
             <h2 className="text-xl font-semibold mb-2">4. Support</h2>
             <p>
               For cancellation help, email{" "}
-              <span className="font-medium">amlan100ai@gmail.com</span>.
+              <span className="font-medium">
+                mydailyroutinecontact@gmail.com
+              </span>
+              .
             </p>
           </section>
         </div>

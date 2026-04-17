@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 const SECTIONS = [
   { id: "acceptance", title: "Acceptance of Terms" },
   { id: "accounts", title: "Accounts" },
-  { id: "subscriptions", title: "Subscriptions & Billing" },
+  { id: "subscriptions", title: "Plans & Billing" },
   { id: "no-refund", title: "No Refund Policy" },
   { id: "acceptable-use", title: "Acceptable Use" },
   { id: "intellectual-property", title: "Intellectual Property" },
@@ -44,7 +44,10 @@ export default function TermsAndConditions() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const scrollTo = (id: string) => {
-    sectionRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    sectionRefs.current[id]?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
   const setRef = (id: string) => (el: HTMLElement | null) => {
@@ -104,7 +107,11 @@ export default function TermsAndConditions() {
           </p>
 
           {/* Section 1 */}
-          <section ref={setRef("acceptance")} id="acceptance" className="scroll-mt-24">
+          <section
+            ref={setRef("acceptance")}
+            id="acceptance"
+            className="scroll-mt-24"
+          >
             <h2 className="text-xl font-bold mb-3">1. Acceptance of Terms</h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               By using My Daily Routine, you confirm that you have read,
@@ -114,7 +121,11 @@ export default function TermsAndConditions() {
           </section>
 
           {/* Section 2 */}
-          <section ref={setRef("accounts")} id="accounts" className="scroll-mt-24">
+          <section
+            ref={setRef("accounts")}
+            id="accounts"
+            className="scroll-mt-24"
+          >
             <h2 className="text-xl font-bold mb-3">2. Accounts</h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               You are solely responsible for maintaining the security of your
@@ -125,24 +136,34 @@ export default function TermsAndConditions() {
           </section>
 
           {/* Section 3 */}
-          <section ref={setRef("subscriptions")} id="subscriptions" className="scroll-mt-24">
-            <h2 className="text-xl font-bold mb-3">3. Subscriptions &amp; Billing</h2>
+          <section
+            ref={setRef("subscriptions")}
+            id="subscriptions"
+            className="scroll-mt-24"
+          >
+            <h2 className="text-xl font-bold mb-3">
+              3. Plans &amp; Billing
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-              My Daily Routine offers Standard and Premium subscription tiers.
-              Upon completing a purchase, your account is immediately upgraded
-              to the selected plan. All payments are processed securely through
-              our third-party payment providers.
+              My Daily Routine offers Standard and Premium plans as one-time
+              purchases. Upon completing a purchase, your account is immediately
+              upgraded to the selected plan. All payments are processed securely
+              through our third-party payment providers.
             </p>
             <p className="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed">
-              Subscriptions renew automatically at the end of each billing cycle
-              unless you cancel before the renewal date. Pricing, billing
-              frequency, and plan features are clearly displayed in the app
-              before purchase.
+              There are no recurring charges, no automatic renewals, and no
+              cancellation required. You pay once and retain access to the
+              features of your plan. Pricing and plan features are clearly
+              displayed before purchase.
             </p>
           </section>
 
           {/* Section 4 — highlighted */}
-          <section ref={setRef("no-refund")} id="no-refund" className="scroll-mt-24">
+          <section
+            ref={setRef("no-refund")}
+            id="no-refund"
+            className="scroll-mt-24"
+          >
             <h2 className="text-xl font-bold mb-3">4. No Refund Policy</h2>
             <div className="flex gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 mb-4">
               <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
@@ -153,16 +174,19 @@ export default function TermsAndConditions() {
               </p>
             </div>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-              This policy applies to all paid tiers — Standard and Premium. We
-              offer a 30-day free trial to let you fully evaluate the service
-              before committing to a paid plan. We strongly encourage you to
-              take advantage of the trial and review all features before
-              purchasing.
+              This policy applies to all paid plans — Standard and Premium. We
+              offer a free plan so you can fully evaluate the service before
+              committing to a paid plan. We strongly encourage you to use the
+              free plan and review all features before purchasing.
             </p>
           </section>
 
           {/* Section 5 */}
-          <section ref={setRef("acceptable-use")} id="acceptable-use" className="scroll-mt-24">
+          <section
+            ref={setRef("acceptable-use")}
+            id="acceptable-use"
+            className="scroll-mt-24"
+          >
             <h2 className="text-xl font-bold mb-3">5. Acceptable Use</h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               You agree not to misuse the service. Prohibited actions include
@@ -173,19 +197,26 @@ export default function TermsAndConditions() {
           </section>
 
           {/* Section 6 */}
-          <section ref={setRef("intellectual-property")} id="intellectual-property" className="scroll-mt-24">
+          <section
+            ref={setRef("intellectual-property")}
+            id="intellectual-property"
+            className="scroll-mt-24"
+          >
             <h2 className="text-xl font-bold mb-3">6. Intellectual Property</h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               The product, branding, design, and software are the exclusive
-              property of My Daily Routine. Subject to these Terms, we grant
-              you a limited, non-exclusive, non-transferable, revocable license
-              to access and use the service for personal, non-commercial
-              purposes.
+              property of My Daily Routine. Subject to these Terms, we grant you
+              a limited, non-exclusive, non-transferable, revocable license to
+              access and use the service for personal, non-commercial purposes.
             </p>
           </section>
 
           {/* Section 7 */}
-          <section ref={setRef("availability")} id="availability" className="scroll-mt-24">
+          <section
+            ref={setRef("availability")}
+            id="availability"
+            className="scroll-mt-24"
+          >
             <h2 className="text-xl font-bold mb-3">7. Service Availability</h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               We aim to maintain high availability, but we may modify, suspend,
@@ -196,8 +227,14 @@ export default function TermsAndConditions() {
           </section>
 
           {/* Section 8 */}
-          <section ref={setRef("liability")} id="liability" className="scroll-mt-24">
-            <h2 className="text-xl font-bold mb-3">8. Limitation of Liability</h2>
+          <section
+            ref={setRef("liability")}
+            id="liability"
+            className="scroll-mt-24"
+          >
+            <h2 className="text-xl font-bold mb-3">
+              8. Limitation of Liability
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               To the maximum extent permitted by applicable law, the service is
               provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo;
@@ -209,29 +246,36 @@ export default function TermsAndConditions() {
           </section>
 
           {/* Section 9 */}
-          <section ref={setRef("termination")} id="termination" className="scroll-mt-24">
+          <section
+            ref={setRef("termination")}
+            id="termination"
+            className="scroll-mt-24"
+          >
             <h2 className="text-xl font-bold mb-3">9. Termination</h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               We reserve the right to suspend or terminate your account at our
               discretion if you violate these Terms, engage in fraudulent
-              activity, or abuse the platform. You may stop using the service
-              at any time by canceling your subscription from your account
-              settings.
+              activity, or abuse the platform. You may stop using the service at
+              any time.
             </p>
           </section>
 
           {/* Section 10 */}
-          <section ref={setRef("contact")} id="contact" className="scroll-mt-24">
+          <section
+            ref={setRef("contact")}
+            id="contact"
+            className="scroll-mt-24"
+          >
             <h2 className="text-xl font-bold mb-3">10. Contact</h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               If you have questions or concerns about these Terms, please reach
               out to us:
             </p>
             <a
-              href="mailto:amlan100ai@gmail.com"
+              href="mailto:mydailyroutinecontact@gmail.com"
               className="inline-flex items-center gap-2 mt-3 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
             >
-              amlan100ai@gmail.com
+              mydailyroutinecontact@gmail.com
             </a>
           </section>
 

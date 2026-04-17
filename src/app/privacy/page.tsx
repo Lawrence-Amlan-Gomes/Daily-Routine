@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description:
     "Read the privacy policy for My Daily Routine and how user data is handled.",
   alternates: {
-    canonical: "/privacy-policy",
+    canonical: "/privacy",
   },
 };
 

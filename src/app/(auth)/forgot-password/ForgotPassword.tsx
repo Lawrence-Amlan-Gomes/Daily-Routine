@@ -171,8 +171,15 @@ const ForgotPassword = () => {
     try {
       await resetPassword(email, newPassword);
       setStep("success");
-    } catch {
-      setResetError("Failed to reset password. Please try again.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      if (msg === "RESET_NOT_VERIFIED") {
+        setResetError("Verification session expired. Please start over.");
+      } else if (msg === "USER_NOT_FOUND") {
+        setResetError("No account found with this email.");
+      } else {
+        setResetError("Failed to reset password. Please try again.");
+      }
     } finally {
       setIsResetting(false);
     }

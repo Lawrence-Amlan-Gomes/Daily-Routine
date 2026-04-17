@@ -70,7 +70,7 @@ export async function sendOtpEmail(email: string, name: string, code: string) {
               <tr>
                 <td align="center">
                   <span style="display:inline-flex;align-items:center;gap:6px;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:8px 16px;font-size:13px;color:#92400e;font-weight:500;">
-                    ⏱ This code expires in <strong>1 minute</strong>
+                    ⏱ This code expires in <strong>5 minutes</strong>
                   </span>
                 </td>
               </tr>

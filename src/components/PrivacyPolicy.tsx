@@ -11,7 +11,7 @@ const SECTIONS = [
   { id: "security", title: "Security" },
   { id: "your-rights", title: "Your Rights" },
   { id: "childrens-privacy", title: "Children's Privacy" },
-  { id: "billing-terms", title: "Billing & Subscription" },
+  { id: "billing-terms", title: "Billing & Plans" },
   { id: "contact", title: "Contact" },
 ];
 
@@ -43,7 +43,10 @@ export default function PrivacyPolicy() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const scrollTo = (id: string) => {
-    sectionRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    sectionRefs.current[id]?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
   const setRef = (id: string) => (el: HTMLElement | null) => {
@@ -103,21 +106,31 @@ export default function PrivacyPolicy() {
           </p>
 
           {/* Section 1 */}
-          <section ref={setRef("information-collected")} id="information-collected" className="scroll-mt-24">
-            <h2 className="text-xl font-bold mb-3">1. Information We Collect</h2>
+          <section
+            ref={setRef("information-collected")}
+            id="information-collected"
+            className="scroll-mt-24"
+          >
+            <h2 className="text-xl font-bold mb-3">
+              1. Information We Collect
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               We collect information you provide directly — such as your name,
               email address, and profile details — as well as data generated
               through your use of the service, including routines and goals you
               create, usage activity, and limited technical data such as IP
               address, browser type, and device information. Billing metadata
-              (e.g. subscription tier, transaction IDs) is provided to us by
-              our payment processors.
+              (e.g. subscription tier, transaction IDs) is provided to us by our
+              payment processors.
             </p>
           </section>
 
           {/* Section 2 */}
-          <section ref={setRef("how-we-use")} id="how-we-use" className="scroll-mt-24">
+          <section
+            ref={setRef("how-we-use")}
+            id="how-we-use"
+            className="scroll-mt-24"
+          >
             <h2 className="text-xl font-bold mb-3">2. How We Use Data</h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               We use your data to operate, maintain, and improve the service;
@@ -129,7 +142,11 @@ export default function PrivacyPolicy() {
           </section>
 
           {/* Section 3 */}
-          <section ref={setRef("third-party")} id="third-party" className="scroll-mt-24">
+          <section
+            ref={setRef("third-party")}
+            id="third-party"
+            className="scroll-mt-24"
+          >
             <h2 className="text-xl font-bold mb-3">3. Third-Party Services</h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               We integrate with trusted third-party providers for payment
@@ -142,7 +159,11 @@ export default function PrivacyPolicy() {
           </section>
 
           {/* Section 4 */}
-          <section ref={setRef("data-sharing")} id="data-sharing" className="scroll-mt-24">
+          <section
+            ref={setRef("data-sharing")}
+            id="data-sharing"
+            className="scroll-mt-24"
+          >
             <h2 className="text-xl font-bold mb-3">4. Data Sharing</h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               We do not sell, rent, or trade your personal data. We share
@@ -154,7 +175,11 @@ export default function PrivacyPolicy() {
           </section>
 
           {/* Section 5 */}
-          <section ref={setRef("data-retention")} id="data-retention" className="scroll-mt-24">
+          <section
+            ref={setRef("data-retention")}
+            id="data-retention"
+            className="scroll-mt-24"
+          >
             <h2 className="text-xl font-bold mb-3">5. Data Retention</h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               We retain your account and usage data for as long as your account
@@ -166,7 +191,11 @@ export default function PrivacyPolicy() {
           </section>
 
           {/* Section 6 */}
-          <section ref={setRef("security")} id="security" className="scroll-mt-24">
+          <section
+            ref={setRef("security")}
+            id="security"
+            className="scroll-mt-24"
+          >
             <h2 className="text-xl font-bold mb-3">6. Security</h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               We implement reasonable administrative, technical, and physical
@@ -178,7 +207,11 @@ export default function PrivacyPolicy() {
           </section>
 
           {/* Section 7 */}
-          <section ref={setRef("your-rights")} id="your-rights" className="scroll-mt-24">
+          <section
+            ref={setRef("your-rights")}
+            id="your-rights"
+            className="scroll-mt-24"
+          >
             <h2 className="text-xl font-bold mb-3">7. Your Rights</h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               Depending on your jurisdiction (including GDPR and CCPA
@@ -190,48 +223,65 @@ export default function PrivacyPolicy() {
           </section>
 
           {/* Section 8 */}
-          <section ref={setRef("childrens-privacy")} id="childrens-privacy" className="scroll-mt-24">
-            <h2 className="text-xl font-bold mb-3">8. Children&apos;s Privacy</h2>
+          <section
+            ref={setRef("childrens-privacy")}
+            id="childrens-privacy"
+            className="scroll-mt-24"
+          >
+            <h2 className="text-xl font-bold mb-3">
+              8. Children&apos;s Privacy
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               Our service is not directed at children under the age of 13 (or a
               higher age where required by local law). We do not knowingly
               collect personal data from children. If we become aware that we
-              have inadvertently collected such data, we will promptly delete it.
+              have inadvertently collected such data, we will promptly delete
+              it.
             </p>
           </section>
 
           {/* Section 9 — highlighted */}
-          <section ref={setRef("billing-terms")} id="billing-terms" className="scroll-mt-24">
-            <h2 className="text-xl font-bold mb-3">9. Billing &amp; Subscription</h2>
+          <section
+            ref={setRef("billing-terms")}
+            id="billing-terms"
+            className="scroll-mt-24"
+          >
+            <h2 className="text-xl font-bold mb-3">
+              9. Billing &amp; Plans
+            </h2>
             <div className="flex gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 mb-4">
               <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-amber-800 dark:text-amber-200 leading-relaxed">
-                <strong>No Refund Policy:</strong> All subscription payments are
-                final and non-refundable. By subscribing, you acknowledge and
-                agree to this policy.
+                <strong>No Refund Policy:</strong> All purchases are one-time
+                payments and are final and non-refundable. By completing a
+                purchase, you acknowledge and agree to this policy.
               </p>
             </div>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-              My Daily Routine offers Standard and Premium subscription plans.
-              Subscriptions renew automatically unless canceled before the
-              renewal date. You are responsible for managing your subscription
-              in your account settings. Billing data is handled by our payment
+              My Daily Routine offers Standard and Premium plans as one-time
+              purchases — there are no recurring charges, no automatic renewals,
+              and no cancellation required. Upon purchase, your account is
+              immediately upgraded. Billing data is handled by our payment
               processor and is not stored on our servers.
             </p>
           </section>
 
           {/* Section 10 */}
-          <section ref={setRef("contact")} id="contact" className="scroll-mt-24">
+          <section
+            ref={setRef("contact")}
+            id="contact"
+            className="scroll-mt-24"
+          >
             <h2 className="text-xl font-bold mb-3">10. Contact</h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
               For privacy questions, data requests, or to exercise your rights,
               please contact us:
             </p>
             <a
-              href="mailto:amlan100ai@gmail.com"
+              href="mailto:mydailyroutinecontact@gmail.com"
               className="inline-flex items-center gap-2 mt-3 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
             >
-              amlan100ai@gmail.com
+              mydailyroutinecontact@gmail.com
             </a>
           </section>
 
