@@ -11,8 +11,6 @@ const PRODUCT_LINKS = [
 const LEGAL_LINKS = [
   { label: "Privacy Policy", href: "/privacy-policy" },
   { label: "Terms & Conditions", href: "/terms-and-conditions" },
-  { label: "Refund Policy", href: "/refund-policy" },
-  { label: "Cancellation Policy", href: "/cancellation-policy" },
 ];
 
 function Footer() {
@@ -42,11 +40,11 @@ function Footer() {
               routines, track progress, and stay consistent — every single day.
             </p>
             <a
-              href="mailto:amlan100ai@gmail.com"
+              href="mailto:mydailyroutinecontact@gmail.com"
               className="inline-flex items-center gap-2 mt-5 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
               <Mail className="w-4 h-4" />
-              amlan100ai@gmail.com
+              mydailyroutinecontact@gmail.com
             </a>
           </div>
 
@@ -92,7 +90,8 @@ function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 pt-6 border-t border-gray-100 dark:border-gray-900 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-gray-400 dark:text-gray-600">
-            &copy; {new Date().getFullYear()} My Daily Routine. All rights reserved.
+            &copy; {new Date().getFullYear()} My Daily Routine. All rights
+            reserved.
           </p>
           <p className="text-xs text-gray-400 dark:text-gray-600">
             Built to help you stay consistent.
