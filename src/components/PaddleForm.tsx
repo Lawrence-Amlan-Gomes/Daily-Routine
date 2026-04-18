@@ -77,11 +77,21 @@ export default function PaddleForm() {
 
     let paddleInstance: Paddle | undefined;
 
+    const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
+    const paddleEnv = process.env.NEXT_PUBLIC_PADDLE_ENV;
+
+    console.log("🏗️ [Paddle Init] token present:", !!clientToken, "| first 8 chars:", clientToken?.slice(0, 8), "| env var NEXT_PUBLIC_PADDLE_ENV:", paddleEnv);
+
     initializePaddle({
       environment: "production",
-      token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
+      token: clientToken!,
       eventCallback: (data) => {
-        console.log("🎯 Paddle event received:", data.name, data);
+        if (!data.name) {
+          console.log("🎯 [Paddle] Unnamed event (init/state):", JSON.stringify(data));
+          return;
+        }
+
+        console.log("🎯 [Paddle] Event:", data.name, JSON.stringify(data));
 
         if (data.name === "checkout.loaded") {
           console.log("📦 Checkout loaded");
@@ -94,7 +104,16 @@ export default function PaddleForm() {
         } else if (data.name === "checkout.closed") {
           console.log("❌ Checkout closed");
         } else if (data.name === "checkout.error") {
-          console.error("❌ Checkout error:", data);
+          console.error("❌ [Paddle] Checkout error full data:", JSON.stringify(data, null, 2));
+          // Log nested error details Paddle sometimes buries
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const anyData = data as any;
+          if (anyData?.data?.error) {
+            console.error("❌ [Paddle] error.code:", anyData.data.error.code, "| error.detail:", anyData.data.error.detail);
+          }
+          if (anyData?.error) {
+            console.error("❌ [Paddle] top-level error:", JSON.stringify(anyData.error));
+          }
           setIsLoading(false);
           alert("Payment error – please try again.");
         } else if (data.name === "checkout.payment.initiated") {
@@ -105,7 +124,7 @@ export default function PaddleForm() {
       },
     }).then((instance) => {
       if (!instance) {
-        console.error("Paddle initialization failed.");
+        console.error("Paddle initialization failed — instance is null. Check client token.");
         setIsLoading(false);
         return;
       }
@@ -139,8 +158,10 @@ export default function PaddleForm() {
 
       const priceId = priceIdMap[key];
 
+      console.log("🛒 [Paddle] Checkout open params — key:", key, "| priceId:", priceId, "| customerEmail:", auth?.email);
+
       if (!priceId) {
-        console.error("Invalid price ID mapping for:", key);
+        console.error("❌ [Paddle] No priceId for key:", key, "| Available keys:", Object.keys(priceIdMap));
         alert("Selected plan not available. Please choose again.");
         router.push("/pricing");
         return;
