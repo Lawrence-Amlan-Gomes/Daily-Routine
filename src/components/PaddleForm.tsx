@@ -78,7 +78,7 @@ export default function PaddleForm() {
     let paddleInstance: Paddle | undefined;
 
     initializePaddle({
-      environment: "sandbox",
+      environment: "production",
       token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
       eventCallback: (data) => {
         console.log("🎯 Paddle event received:", data.name, data);
@@ -130,11 +130,11 @@ export default function PaddleForm() {
       const key = `${type} ${duration}`;
 
       const priceIdMap: Record<string, string> = {
-        "Standard monthly": "pri_01kdjmbr45nfd1xhdde31v3c30",
-        "Standard annual": "pri_01kdjma54e1vmzkgzv92qjejs9",
-        "Premium monthly": "pri_01kdjm8f8qqe5cmaa34769mhyc",
-        "Premium annual": "pri_01kdjm6drxvy46rs9gp0v2qsvg",
-        "Test monthly": "pri_01kn9tb18t1hgh5n59p85xakkm",
+        "Standard monthly": "pri_01kpf5zbeyrp5nygyc1hma68ed",
+        "Standard annual": "pri_01kpf65jm2m5cg2y7z0sqrajjg",
+        "Premium monthly": "pri_01kpf635sdhtbak3tecz31cjkr",
+        "Premium annual": "pri_01kpf66wsrnfnzd9ptnvrxdaxy",
+        "Test monthly": "pri_01kpf68pfc9pfne9a9y9n88wt0",
       };
 
       const priceId = priceIdMap[key];

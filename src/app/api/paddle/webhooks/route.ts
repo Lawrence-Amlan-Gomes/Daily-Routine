@@ -46,11 +46,11 @@ const PRICE_ID_TO_PLAN: Record<
   string,
   { type: string; duration: "monthly" | "annual" }
 > = {
-  pri_01kdjmbr45nfd1xhdde31v3c30: { type: "Standard", duration: "monthly" },
-  pri_01kdjma54e1vmzkgzv92qjejs9: { type: "Standard", duration: "annual" },
-  pri_01kdjm8f8qqe5cmaa34769mhyc: { type: "Premium", duration: "monthly" },
-  pri_01kdjm6drxvy46rs9gp0v2qsvg: { type: "Premium", duration: "annual" },
-  pri_01kn9tb18t1hgh5n59p85xakkm: { type: "Test", duration: "monthly" },
+  pri_01kpf5zbeyrp5nygyc1hma68ed: { type: "Standard", duration: "monthly" },
+  pri_01kpf65jm2m5cg2y7z0sqrajjg: { type: "Standard", duration: "annual" },
+  pri_01kpf635sdhtbak3tecz31cjkr: { type: "Premium", duration: "monthly" },
+  pri_01kpf66wsrnfnzd9ptnvrxdaxy: { type: "Premium", duration: "annual" },
+  pri_01kpf68pfc9pfne9a9y9n88wt0: { type: "Test", duration: "monthly" },
 };
 
 export async function POST(req: NextRequest) {
