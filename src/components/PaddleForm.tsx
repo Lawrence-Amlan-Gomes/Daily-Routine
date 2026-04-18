@@ -169,6 +169,7 @@ export default function PaddleForm() {
 
       instance.Checkout.open({
         items: [{ priceId, quantity: 1 }],
+        ...(type === "Test" && { discountId: "dsc_01kpf6cwet24b7az70na8jd732" }),
         customer: { email: auth.email },
         customData: { userEmail: auth.email },
         settings: {
