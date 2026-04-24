@@ -1,0 +1,6 @@
+Check npm run build
+If error-> fix the errors
+after fixing errors do:
+git add .
+git commit -m "professinal commit message about letest changes"
+git push origin main

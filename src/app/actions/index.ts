@@ -15,6 +15,7 @@ import bcrypt from "bcrypt";
 import { unstable_noStore as noStore, revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
 type LeanFeedback = {
   _id: { toString: () => string };
@@ -85,6 +86,11 @@ async function assertActorCanAccessEmail(targetEmail: string) {
 
 // ==================== AUTH ACTIONS ====================
 
+const loginSchema = z.object({
+  email: z.string().trim().toLowerCase().email(),
+  password: z.string().min(8).max(128),
+});
+
 export async function performLogin({
   email,
   password,
@@ -92,13 +98,18 @@ export async function performLogin({
   email: string;
   password: string;
 }) {
+  const parsed = loginSchema.safeParse({ email, password });
+  if (!parsed.success) return null;
+
+  const { email: safeEmail, password: safePassword } = parsed.data;
+
   await dbConnect();
 
-  const user = await User.findOne({ email }).select("+password");
+  const user = await User.findOne({ email: safeEmail }).select("+password");
   if (!user) return null;
   if (!user.isEmailVerified) throw new Error("EMAIL_NOT_VERIFIED");
 
-  const match = await bcrypt.compare(password, user.password!);
+  const match = await bcrypt.compare(safePassword, user.password!);
   if (!match) return null;
 
   const expiredAt = new Date();
@@ -526,12 +537,48 @@ export async function verifyAndChangePassword(
   revalidatePath("/profile");
 }
 
+const taskSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  time: z.string().regex(/^\d{2}:\d{2}$/),
+  category: z.string().max(50).optional(),
+});
+
+const weekdays = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+] as const;
+
+const routineSchema = z.object(
+  Object.fromEntries(
+    weekdays.map((day) => [day, z.array(taskSchema).max(100)]),
+  ),
+);
+
 export async function updateRoutine(email: string, routine: IRoutine) {
+  const parsed = routineSchema.safeParse(routine);
+  if (!parsed.success) return { error: "Invalid routine data" };
+
   await assertActorCanAccessEmail(email);
   await dbConnect();
-  await User.updateOne({ email }, { routine });
+  await User.updateOne({ email }, { routine: parsed.data });
   revalidatePath("/dashBoard");
 }
+
+const statsSchema = z
+  .array(
+    z.object({
+      date: z.string().max(32),
+      day: z.string().max(16),
+      totalTasks: z.number().int().min(0).max(1000),
+      completedTasks: z.array(z.string().max(200)).max(1000),
+    }),
+  )
+  .max(2000);
 
 export async function updateStats(
   email: string,
@@ -542,11 +589,41 @@ export async function updateStats(
     completedTasks: string[];
   }[],
 ) {
+  const parsed = statsSchema.safeParse(stats);
+  if (!parsed.success) return { error: "Invalid stats data" };
+
   await assertActorCanAccessEmail(email);
   await dbConnect();
-  await User.updateOne({ email }, { stats });
+  await User.updateOne({ email }, { stats: parsed.data });
   revalidatePath("/dashBoard");
 }
+
+const subtaskSchema = z.object({
+  id: z.string().max(64),
+  name: z.string().trim().min(1).max(200),
+  isDone: z.boolean(),
+});
+
+const goalSchema = z.object({
+  id: z.string().max(64),
+  name: z.string().trim().min(1).max(200),
+  description: z.string().max(2000),
+  priority: z.string().max(32),
+  status: z.string().max(32),
+  category: z.string().max(64),
+  dueDate: z.string().max(64),
+  time: z.string().max(32),
+  reminderAt: z.string().max(64),
+  repeat: z.string().max(32),
+  tags: z.array(z.string().max(64)).max(50),
+  subtasks: z.array(subtaskSchema).max(100),
+  createdAt: z.string().max(64),
+  finishedAt: z.string().max(64),
+  pinned: z.boolean(),
+  color: z.string().max(32),
+});
+
+const goalsSchema = z.array(goalSchema).max(500);
 
 export async function updateGoals(
   email: string,
@@ -569,9 +646,12 @@ export async function updateGoals(
     color: string;
   }[],
 ) {
+  const parsed = goalsSchema.safeParse(goals);
+  if (!parsed.success) return { error: "Invalid goals data" };
+
   await assertActorCanAccessEmail(email);
   await dbConnect();
-  await User.updateOne({ email }, { goals });
+  await User.updateOne({ email }, { goals: parsed.data });
   revalidatePath("/goals");
 }
 
