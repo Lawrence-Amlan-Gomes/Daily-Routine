@@ -22,6 +22,7 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: 10 * 1024 * 1024, // 10MB for photo uploads
+      allowedOrigins: ["mydailyroutine.app", "mydailyroutine.app:443"],
     },
   },
   async headers() {
