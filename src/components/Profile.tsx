@@ -103,25 +103,41 @@ const Profile = () => {
   };
 
   const handleCancelSubscription = async () => {
-    if (!auth?.email) return;
+    console.log("[Profile] handleCancelSubscription called");
+    console.log("[Profile] auth.email:", auth?.email);
+
+    if (!auth?.email) {
+      console.error("[Profile] No auth email found");
+      return;
+    }
+
     if (
       !confirm(
         "Are you sure you want to cancel your subscription? You will lose access to premium features.",
       )
     ) {
+      console.log("[Profile] User cancelled the confirmation dialog");
       return;
     }
 
+    console.log("[Profile] User confirmed cancellation, calling cancelSubscription action...");
     setIsCanceling(true);
     setCancelError(null);
+
     try {
-      await cancelSubscription(auth.email);
+      console.log("[Profile] Calling cancelSubscription with email:", auth.email);
+      const result = await cancelSubscription(auth.email);
+      console.log("[Profile] cancelSubscription result:", result);
+
       alert("Subscription canceled successfully.");
+      console.log("[Profile] Reloading page...");
       window.location.reload();
     } catch (error) {
-      setCancelError(
-        error instanceof Error ? error.message : "Failed to cancel subscription",
-      );
+      console.error("[Profile] Error in handleCancelSubscription:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to cancel subscription";
+      console.error("[Profile] Error message:", errorMessage);
+      setCancelError(errorMessage);
       setIsCanceling(false);
     }
   };

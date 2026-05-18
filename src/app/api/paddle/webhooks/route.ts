@@ -177,13 +177,20 @@ async function handleTransactionCompleted(transaction: PaddleTransaction) {
 }
 
 async function handleSubscriptionActivated(subscription: PaddleTransaction) {
+  console.log("[handleSubscriptionActivated] Processing subscription activation");
+  console.log("[handleSubscriptionActivated] Full subscription data:", JSON.stringify(subscription, null, 2));
+
   const priceId = subscription.items?.[0]?.price?.id;
+  console.log("[handleSubscriptionActivated] Price ID found:", priceId);
+
   if (!priceId) {
     console.warn("Paddle: missing price ID in subscription.activated payload");
     return;
   }
 
   const plan = PRICE_ID_TO_PLAN[priceId];
+  console.log("[handleSubscriptionActivated] Plan found:", plan);
+
   if (!plan) {
     console.warn(`Paddle: unknown subscription price ID ${priceId}`);
     return;
@@ -191,12 +198,18 @@ async function handleSubscriptionActivated(subscription: PaddleTransaction) {
 
   const email =
     subscription.custom_data?.userEmail || subscription.customer?.email;
+  console.log("[handleSubscriptionActivated] Email found:", email);
+
   if (!email) {
     console.warn("Paddle: no email in subscription.activated payload");
     return;
   }
 
   const subscriptionId = subscription.subscription_id || subscription.id;
+  console.log("[handleSubscriptionActivated] Subscription ID found:", subscriptionId);
+  console.log("[handleSubscriptionActivated] subscription.subscription_id:", subscription.subscription_id);
+  console.log("[handleSubscriptionActivated] subscription.id:", subscription.id);
+
   if (!subscriptionId) {
     console.warn("Paddle: no subscription ID in subscription.activated payload");
     return;
@@ -208,7 +221,15 @@ async function handleSubscriptionActivated(subscription: PaddleTransaction) {
   );
 
   const paymentString = `${plan.type} ${plan.duration === "monthly" ? "Monthly" : "Annually"}`;
+  console.log("[handleSubscriptionActivated] Calling updatePaymentType with:", {
+    email,
+    paymentString,
+    expiredAt,
+    subscriptionId,
+  });
+
   await updatePaymentType(email, paymentString, expiredAt, { bypassAuth: true, subscriptionId });
+  console.log("[handleSubscriptionActivated] updatePaymentType completed");
 }
 
 export const dynamic = "force-dynamic";

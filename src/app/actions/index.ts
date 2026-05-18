@@ -302,59 +302,86 @@ export async function updatePaymentType(
 }
 
 export async function cancelSubscription(email: string) {
+  console.log("[cancelSubscription] Starting cancellation for:", email);
+
   const actor = await getActionActor();
+  console.log("[cancelSubscription] Actor:", actor.email, "isAdmin:", actor.isAdmin);
+
   const normalizedTarget = String(email).toLowerCase().trim();
   if (actor.email !== normalizedTarget && !actor.isAdmin) {
+    console.error("[cancelSubscription] FORBIDDEN - actor email doesn't match target");
     throw new Error("FORBIDDEN");
   }
 
   await dbConnect();
+  console.log("[cancelSubscription] Database connected");
+
   const user = await User.findOne({ email });
+  console.log("[cancelSubscription] User found:", !!user);
+  console.log("[cancelSubscription] User paymentType:", user?.paymentType);
+  console.log("[cancelSubscription] User paddleSubscriptionId:", user?.paddleSubscriptionId);
+
   if (!user) {
+    console.error("[cancelSubscription] User not found");
     throw new Error("User not found");
   }
 
   if (!user.paymentType || user.paymentType === "Expired") {
+    console.error("[cancelSubscription] No active subscription");
     throw new Error("No active subscription");
   }
 
   if (!user.paddleSubscriptionId) {
+    console.error("[cancelSubscription] No subscription ID found for user");
     throw new Error("No subscription ID found for user");
   }
 
   const paddleApiKey = process.env.PADDLE_API_KEY;
+  console.log("[cancelSubscription] Paddle API key configured:", !!paddleApiKey);
+
   if (!paddleApiKey) {
+    console.error("[cancelSubscription] Paddle API key not configured");
     throw new Error("Paddle API key not configured");
   }
 
   try {
-    const cancelResponse = await fetch(
-      `https://api.paddle.com/subscriptions/${user.paddleSubscriptionId}`,
-      {
-        method: "PATCH",
-        headers: {
-          "Authorization": `Bearer ${paddleApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: "canceled" }),
+    const subscriptionUrl = `https://api.paddle.com/subscriptions/${user.paddleSubscriptionId}`;
+    console.log("[cancelSubscription] Calling Paddle API:", subscriptionUrl);
+    console.log("[cancelSubscription] Request body:", JSON.stringify({ status: "canceled" }));
+
+    const cancelResponse = await fetch(subscriptionUrl, {
+      method: "PATCH",
+      headers: {
+        "Authorization": `Bearer ${paddleApiKey}`,
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({ status: "canceled" }),
+    });
+
+    console.log("[cancelSubscription] Paddle response status:", cancelResponse.status);
 
     if (!cancelResponse.ok) {
       const errorText = await cancelResponse.text();
-      console.error("Paddle cancel error:", cancelResponse.status, errorText);
-      throw new Error("Failed to cancel subscription in Paddle");
+      console.error("[cancelSubscription] Paddle cancel error:", cancelResponse.status, errorText);
+      throw new Error(`Failed to cancel subscription in Paddle: ${cancelResponse.status} - ${errorText}`);
     }
 
-    await User.updateOne(
+    console.log("[cancelSubscription] Paddle API success, updating user...");
+
+    const updateResult = await User.updateOne(
       { email },
       { paymentType: "Expired", expiredAt: new Date(), paddleSubscriptionId: "" },
     );
-    revalidatePath("/billing");
 
+    console.log("[cancelSubscription] User update result:", updateResult);
+
+    revalidatePath("/billing");
+    console.log("[cancelSubscription] Revalidated /billing path");
+
+    console.log("[cancelSubscription] Cancellation completed successfully");
     return { success: true, message: "Subscription canceled successfully" };
   } catch (error) {
-    console.error("Subscription cancellation error:", error);
+    console.error("[cancelSubscription] Subscription cancellation error:", error);
     throw error;
   }
 }
