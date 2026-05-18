@@ -127,6 +127,16 @@ async function processWebhookEvent(event: PaddleWebhookEvent) {
   try {
     if (event.event_type === "transaction.completed") {
       await handleTransactionCompleted(event.data);
+    } else if (event.event_type === "subscription.activated") {
+      await handleSubscriptionActivated(event.data);
+    } else if (event.event_type === "subscription.canceled") {
+      const email =
+        event.data.custom_data?.userEmail || event.data.customer?.email;
+      if (email) {
+        await updatePaymentType(email, "Expired", new Date(), {
+          bypassAuth: true,
+        });
+      }
     }
   } catch (error) {
     console.error(`Paddle event processing failed [${event.event_type}]:`, error);
@@ -151,6 +161,35 @@ async function handleTransactionCompleted(transaction: PaddleTransaction) {
     transaction.custom_data?.userEmail || transaction.customer?.email;
   if (!email) {
     console.warn("Paddle: no email in transaction.completed payload");
+    return;
+  }
+
+  const expiredAt = new Date();
+  expiredAt.setDate(
+    expiredAt.getDate() + (plan.duration === "monthly" ? 30 : 365),
+  );
+
+  const paymentString = `${plan.type} ${plan.duration === "monthly" ? "Monthly" : "Annually"}`;
+  await updatePaymentType(email, paymentString, expiredAt, { bypassAuth: true });
+}
+
+async function handleSubscriptionActivated(subscription: PaddleTransaction) {
+  const priceId = subscription.items?.[0]?.price?.id;
+  if (!priceId) {
+    console.warn("Paddle: missing price ID in subscription.activated payload");
+    return;
+  }
+
+  const plan = PRICE_ID_TO_PLAN[priceId];
+  if (!plan) {
+    console.warn(`Paddle: unknown subscription price ID ${priceId}`);
+    return;
+  }
+
+  const email =
+    subscription.custom_data?.userEmail || subscription.customer?.email;
+  if (!email) {
+    console.warn("Paddle: no email in subscription.activated payload");
     return;
   }
 

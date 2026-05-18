@@ -297,6 +297,81 @@ export async function updatePaymentType(
   revalidatePath("/");
 }
 
+export async function cancelSubscription(email: string) {
+  const actor = await getActionActor();
+  const normalizedTarget = String(email).toLowerCase().trim();
+  if (actor.email !== normalizedTarget && !actor.isAdmin) {
+    throw new Error("FORBIDDEN");
+  }
+
+  await dbConnect();
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (!user.paymentType || user.paymentType === "Expired") {
+    throw new Error("No active subscription");
+  }
+
+  const paddleApiKey = process.env.PADDLE_API_KEY;
+  if (!paddleApiKey) {
+    throw new Error("Paddle API key not configured");
+  }
+
+  try {
+    const response = await fetch("https://api.paddle.com/subscriptions", {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${paddleApiKey}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch subscriptions from Paddle");
+    }
+
+    const data = (await response.json()) as { data?: Array<{ id: string; customer_id?: string; email?: string }> };
+    const subscriptions = data.data || [];
+    const userSub = subscriptions.find(
+      (sub) =>
+        sub.email === email ||
+        (sub.customer_id && user.email === email),
+    );
+
+    if (!userSub) {
+      throw new Error("Subscription not found in Paddle");
+    }
+
+    const cancelResponse = await fetch(
+      `https://api.paddle.com/subscriptions/${userSub.id}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${paddleApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "canceled" }),
+      },
+    );
+
+    if (!cancelResponse.ok) {
+      throw new Error("Failed to cancel subscription in Paddle");
+    }
+
+    await User.updateOne(
+      { email },
+      { paymentType: "Expired", expiredAt: new Date() },
+    );
+    revalidatePath("/billing");
+
+    return { success: true, message: "Subscription canceled successfully" };
+  } catch (error) {
+    console.error("Subscription cancellation error:", error);
+    throw error;
+  }
+}
+
 export async function incrementThisMonthPremiumCount(
   email: string,
   thisMonthPremiumResponses: string,
