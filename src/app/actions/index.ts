@@ -320,7 +320,7 @@ export async function cancelSubscription(email: string) {
   }
 
   try {
-    const response = await fetch("https://api.paddle.com/subscriptions", {
+    const response = await fetch("https://api.paddle.com/subscriptions?status=active", {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${paddleApiKey}`,
@@ -328,18 +328,21 @@ export async function cancelSubscription(email: string) {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch subscriptions from Paddle");
+      const errorText = await response.text();
+      console.error("Paddle API error:", response.status, errorText);
+      throw new Error(`Paddle API error: ${response.status}`);
     }
 
-    const data = (await response.json()) as { data?: Array<{ id: string; customer_id?: string; email?: string }> };
+    const data = (await response.json()) as { data?: Array<{ id: string; customer_id?: string; customer?: { email?: string } }> };
     const subscriptions = data.data || [];
-    const userSub = subscriptions.find(
-      (sub) =>
-        sub.email === email ||
-        (sub.customer_id && user.email === email),
-    );
+
+    const userSub = subscriptions.find((sub) => {
+      const subEmail = sub.customer?.email || (sub as any).email;
+      return subEmail === email;
+    });
 
     if (!userSub) {
+      console.warn(`Subscription not found for email: ${email}. Available subscriptions:`, subscriptions.length);
       throw new Error("Subscription not found in Paddle");
     }
 
