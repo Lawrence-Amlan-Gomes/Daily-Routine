@@ -137,15 +137,16 @@ export default function Pricing() {
           {
             id: "test",
             title: "Test",
-            description: "Admin test pricing card",
+            displayTitle: "Test Annually",
+            description: "Admin test for subscription flow",
             priceMonthly: 1,
             priceAnnual: 1,
             features: [
               { name: "admin", value: "Admin only test plan" },
-              { name: "monthly", value: "Test Monthly (one-time)" },
               { name: "annual", value: "Test Annually (subscription)" },
               { name: "debug", value: "Debug payment & subscription flow" },
               { name: "billing", value: "Test billing & cancellation" },
+              { name: "discount", value: "100% lifetime discount applied" },
             ],
             cta: "Test Purchase",
             isMostPopular: false,
@@ -267,7 +268,7 @@ export default function Pricing() {
                     <h3
                       className={`text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100`}
                     >
-                      {plan.title}
+                      {(plan as any).displayTitle || plan.title}
                     </h3>
                     {(plan.isMostPopular || plan.badge) && (
                       <span

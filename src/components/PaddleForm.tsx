@@ -25,10 +25,10 @@ export default function PaddleForm() {
       console.log("🔄 Calculating payment details...");
 
       const type = wantToPaymentType?.trim();
-      // Test plan always uses monthly duration regardless of billing period selection
+      // Test plan always uses annual duration for subscription testing
       const duration =
         type === "Test"
-          ? "monthly"
+          ? "annual"
           : wantToPaymentDuration === "monthly"
             ? "monthly"
             : "annual";
@@ -132,10 +132,10 @@ export default function PaddleForm() {
       paddleInstance = instance;
 
       const type = wantToPaymentType?.trim();
-      // Test plan always uses monthly duration regardless of billing period selection
+      // Test plan always uses annual duration for subscription testing
       const duration =
         type === "Test"
-          ? "monthly"
+          ? "annual"
           : wantToPaymentDuration === "monthly"
             ? "monthly"
             : "annual";
