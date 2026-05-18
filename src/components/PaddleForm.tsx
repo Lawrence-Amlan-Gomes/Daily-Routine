@@ -168,9 +168,16 @@ export default function PaddleForm() {
         return;
       }
 
+      const discountId =
+        type === "Test" && duration === "annual"
+          ? "dsc_01krwxp338pq4avppr6ybmjtfq"
+          : type === "Test" && duration === "monthly"
+            ? "dsc_01kpf6cwet24b7az70na8jd732"
+            : undefined;
+
       instance.Checkout.open({
         items: [{ priceId, quantity: 1 }],
-        ...(type === "Test" && { discountId: "dsc_01kpf6cwet24b7az70na8jd732" }),
+        ...(discountId && { discountId }),
         customer: { email: auth.email },
         customData: { userEmail: auth.email },
         settings: {
