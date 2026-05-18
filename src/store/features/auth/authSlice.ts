@@ -61,6 +61,7 @@ export interface CleanUser {
   createdAt: string;
   expiredAt: string;
   paymentType: string;
+  paddleSubscriptionId?: string;
   routine: IRoutine;
   thisMonthPremiumResponses: string;
   stats: IStatEntry[];

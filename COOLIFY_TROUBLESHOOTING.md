@@ -11,23 +11,25 @@ This means the VPS disk is full (usually 95%+) and Docker cannot write during `n
 
 ## Solution (Step by Step)
 
+**👉 GUIDED MODE: Send the command output after each step and I'll give you the next one.**
+
 ### Step 1: SSH into VPS
 ```bash
 ssh root@185.201.8.71
-# Or your VPS IP
 ```
+Run this and let me know when you're connected.
 
 ### Step 2: Check disk usage
 ```bash
 df -h /
 ```
-If `Use%` is 90%+, proceed to cleanup.
+Run this and paste the output. If `Use%` is 90%+, we proceed to cleanup.
 
 ### Step 3: Check Docker disk usage
 ```bash
 docker system df
 ```
-Note how much space is in Images (reclaimable) and Build Cache.
+Run this and paste the output. Note how much space is in Images (reclaimable) and Build Cache.
 
 ### Step 4: Clear Docker build cache (SAFE)
 ```bash
@@ -35,6 +37,7 @@ docker builder prune -a -f
 ```
 This frees build cache without affecting running containers.
 - **Expected result:** 4-20GB freed
+- Run and paste the output showing total reclaimable space.
 
 ### Step 5: Clear unused Docker images (SAFE)
 ```bash
@@ -43,12 +46,13 @@ docker image prune -a -f
 This removes images not used by any running container. They will be re-pulled if needed.
 - **Expected result:** 20-30GB freed
 - **Warning:** First build after this may take longer as images are re-downloaded
+- Run and paste the output showing total reclaimed space.
 
 ### Step 6: Verify space freed
 ```bash
 df -h /
 ```
-Target: at least 20% free space (ideal: 30-40%)
+Run this and paste the output. Target: at least 20% free space (ideal: 30-40%).
 
 ### Step 7: Clean apt cache (OPTIONAL, minor gain)
 ```bash
@@ -58,6 +62,7 @@ Frees ~100-200MB of package cache.
 
 ### Step 8: Redeploy from Coolify
 Go to Coolify dashboard → your application → trigger a new deployment.
+Paste the deployment link or let me know when it's done.
 
 ## Quick Reference
 - **VPS IP:** `185.201.8.71`
