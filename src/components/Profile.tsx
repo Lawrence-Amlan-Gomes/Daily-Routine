@@ -432,7 +432,7 @@ const Profile = () => {
         </div>
 
         {/* ── Subscription card (if active) ── */}
-        {auth.paymentType && auth.paymentType !== "Expired" && !auth.paymentType.includes("Test") && auth.paddleSubscriptionId && (
+        {auth.paymentType && auth.paymentType !== "Expired" && !auth.paymentType.includes("Test") && (
           <div className="w-full p-6 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-2xl">
             <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Your Subscription</h2>
             <div className="space-y-2 mb-6">
@@ -447,11 +447,11 @@ const Profile = () => {
               <p className="text-red-600 dark:text-red-400 mb-4">{cancelError}</p>
             )}
             <button
-              onClick={handleCancelSubscription}
-              disabled={isCanceling}
+              onClick={auth.paddleSubscriptionId ? handleCancelSubscription : undefined}
+              disabled={isCanceling || !auth.paddleSubscriptionId}
               className="px-6 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-lg transition-colors font-semibold"
             >
-              {isCanceling ? "Canceling..." : "Cancel Subscription"}
+              {isCanceling ? "Canceling..." : auth.paddleSubscriptionId ? "Cancel Subscription" : "Already Cancelled"}
             </button>
           </div>
         )}
