@@ -331,11 +331,6 @@ export async function cancelSubscription(email: string) {
     throw new Error("No active subscription");
   }
 
-  if (!user.paddleSubscriptionId) {
-    console.error("[cancelSubscription] No subscription ID found for user");
-    throw new Error("No subscription ID found for user");
-  }
-
   const paddleApiKey = process.env.PADDLE_API_KEY;
   console.log("[cancelSubscription] Paddle API key configured:", !!paddleApiKey);
 
@@ -344,8 +339,51 @@ export async function cancelSubscription(email: string) {
     throw new Error("Paddle API key not configured");
   }
 
+  let subscriptionId = user.paddleSubscriptionId;
+
+  // Fallback: if no subscription ID stored, fetch from Paddle API
+  if (!subscriptionId) {
+    console.log("[cancelSubscription] No stored subscription ID, fetching from Paddle API...");
+
+    try {
+      const response = await fetch("https://api.paddle.com/subscriptions?status=active", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${paddleApiKey}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("[cancelSubscription] Paddle fetch error:", response.status, errorText);
+        throw new Error(`Failed to fetch subscriptions from Paddle: ${response.status}`);
+      }
+
+      const data = (await response.json()) as { data?: Array<{ id: string; customer?: { email?: string } }> };
+      const subscriptions = data.data || [];
+      console.log("[cancelSubscription] Found", subscriptions.length, "active subscriptions");
+
+      const userSub = subscriptions.find((sub) => {
+        const subEmail = sub.customer?.email;
+        console.log("[cancelSubscription] Checking subscription with email:", subEmail, "against:", email);
+        return subEmail?.toLowerCase() === email.toLowerCase();
+      });
+
+      if (!userSub) {
+        console.error("[cancelSubscription] Subscription not found in Paddle for email:", email);
+        throw new Error("Subscription not found in Paddle");
+      }
+
+      subscriptionId = userSub.id;
+      console.log("[cancelSubscription] Found subscription ID from Paddle:", subscriptionId);
+    } catch (error) {
+      console.error("[cancelSubscription] Error fetching subscription from Paddle:", error);
+      throw error;
+    }
+  }
+
   try {
-    const subscriptionUrl = `https://api.paddle.com/subscriptions/${user.paddleSubscriptionId}`;
+    const subscriptionUrl = `https://api.paddle.com/subscriptions/${subscriptionId}`;
     console.log("[cancelSubscription] Calling Paddle API:", subscriptionUrl);
     console.log("[cancelSubscription] Request body:", JSON.stringify({ status: "canceled" }));
 
@@ -370,7 +408,7 @@ export async function cancelSubscription(email: string) {
 
     const updateResult = await User.updateOne(
       { email },
-      { paymentType: "Expired", expiredAt: new Date(), paddleSubscriptionId: "" },
+      { paymentType: "Expired", expiredAt: new Date(), paddleSubscriptionId: subscriptionId },
     );
 
     console.log("[cancelSubscription] User update result:", updateResult);
