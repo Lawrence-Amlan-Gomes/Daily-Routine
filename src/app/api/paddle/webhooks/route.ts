@@ -138,6 +138,7 @@ async function processWebhookEvent(event: PaddleWebhookEvent) {
       if (email) {
         await updatePaymentType(email, "Expired", new Date(), {
           bypassAuth: true,
+          clearSubscriptionId: true,
         });
       }
     }
@@ -180,7 +181,7 @@ async function handleSubscriptionActivated(subscription: PaddleTransaction) {
   console.log("[handleSubscriptionActivated] Processing subscription activation");
   console.log("[handleSubscriptionActivated] Full subscription data:", JSON.stringify(subscription, null, 2));
 
-  const priceId = subscription.items?.[0]?.price?.id;
+  const priceId = subscription.items?.[0]?.price_id ?? subscription.items?.[0]?.price?.id;
   console.log("[handleSubscriptionActivated] Price ID found:", priceId);
 
   if (!priceId) {

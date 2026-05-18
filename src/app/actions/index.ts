@@ -282,7 +282,7 @@ export async function updatePaymentType(
   email: string,
   paymentType: string,
   expiredAt: Date,
-  options?: { bypassAuth?: boolean; subscriptionId?: string },
+  options?: { bypassAuth?: boolean; subscriptionId?: string; clearSubscriptionId?: boolean },
 ) {
   if (!options?.bypassAuth) {
     const actor = await getActionActor();
@@ -296,6 +296,9 @@ export async function updatePaymentType(
   const updateData: any = { paymentType, expiredAt };
   if (options?.subscriptionId) {
     updateData.paddleSubscriptionId = options.subscriptionId;
+  }
+  if (options?.clearSubscriptionId) {
+    updateData.paddleSubscriptionId = "";
   }
   await User.updateOne({ email }, updateData);
   revalidatePath("/");
@@ -402,20 +405,15 @@ export async function cancelSubscription(email: string) {
       throw new Error(`Failed to cancel subscription in Paddle: ${cancelResponse.status} - ${errorText}`);
     }
 
-    console.log("[cancelSubscription] Paddle API success, updating user...");
+    console.log("[cancelSubscription] Paddle API success, webhook will handle DB update");
+    console.log("[cancelSubscription] User will keep access until end of billing period");
+    console.log("[cancelSubscription] Revalidating /profile path");
 
-    const updateResult = await User.updateOne(
-      { email },
-      { paymentType: "Expired", expiredAt: new Date(), paddleSubscriptionId: subscriptionId },
-    );
-
-    console.log("[cancelSubscription] User update result:", updateResult);
-
+    revalidatePath("/profile");
     revalidatePath("/billing");
-    console.log("[cancelSubscription] Revalidated /billing path");
 
     console.log("[cancelSubscription] Cancellation completed successfully");
-    return { success: true, message: "Subscription canceled successfully" };
+    return { success: true, message: "Subscription canceled. You will have access until the end of your billing period." };
   } catch (error) {
     console.error("[cancelSubscription] Subscription cancellation error:", error);
     throw error;
