@@ -367,6 +367,7 @@ export async function cancelSubscription(email: string) {
       { paymentType: "Expired", expiredAt: new Date() },
     );
     revalidatePath("/billing");
+    revalidatePath("/profile");
 
     return { success: true, message: "Subscription canceled successfully" };
   } catch (error) {

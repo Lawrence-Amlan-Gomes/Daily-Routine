@@ -116,7 +116,7 @@ const Profile = () => {
     setCancelError(null);
     try {
       await cancelSubscription(auth.email);
-      router.refresh();
+      setAuth({ ...auth, paymentType: "Expired", expiredAt: new Date().toISOString() });
       alert("Subscription canceled successfully.");
     } catch (error) {
       setCancelError(
