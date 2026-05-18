@@ -135,22 +135,36 @@ export default function Pricing() {
     ...(auth?.isAdmin
       ? [
           {
-            id: "test",
-            title: "Test",
-            displayTitle: "Test Annually",
-            description: "Admin test for subscription flow",
+            id: "admin-monthly",
+            title: "Admin",
+            description: "Admin monthly subscription",
             priceMonthly: 1,
             priceAnnual: 1,
             features: [
-              { name: "admin", value: "Admin only test plan" },
-              { name: "annual", value: "Test Annually (subscription)" },
-              { name: "debug", value: "Debug payment & subscription flow" },
-              { name: "billing", value: "Test billing & cancellation" },
-              { name: "discount", value: "100% lifetime discount applied" },
+              { name: "admin", value: "Admin only plan" },
+              { name: "monthly", value: "Monthly billing" },
+              { name: "cancel", value: "Cancel anytime" },
             ],
-            cta: "Test Purchase",
+            cta: "Admin Purchase",
             isMostPopular: false,
             badge: "Admin Only",
+            billingPeriod: "monthly",
+          },
+          {
+            id: "admin-annual",
+            title: "Admin",
+            description: "Admin annual subscription",
+            priceMonthly: 1,
+            priceAnnual: 1,
+            features: [
+              { name: "admin", value: "Admin only plan" },
+              { name: "annual", value: "Annual billing" },
+              { name: "cancel", value: "Cancel anytime" },
+            ],
+            cta: "Admin Purchase",
+            isMostPopular: false,
+            badge: "Admin Only",
+            billingPeriod: "annual",
           },
         ]
       : []),
@@ -235,7 +249,12 @@ export default function Pricing() {
             plans.length === 4 ? "md:grid-cols-4" : "md:grid-cols-3"
           } gap-4 sm:gap-5 items-start`}
         >
-          {plans.map((plan) => {
+          {plans.filter((plan) => {
+            // Show admin plans only on their matching billing period
+            if ((plan as any).billingPeriod === "monthly" && billingPeriod !== "monthly") return false;
+            if ((plan as any).billingPeriod === "annual" && billingPeriod !== "annual") return false;
+            return true;
+          }).map((plan) => {
             const price = getPrice(plan.id);
             const monthlyEquiv = getMonthlyEquivalent(plan.id);
             const isSelected = selectedPlan === plan.id;

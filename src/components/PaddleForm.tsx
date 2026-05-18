@@ -153,8 +153,8 @@ export default function PaddleForm() {
         "Standard annual": "pri_01kpf65jm2m5cg2y7z0sqrajjg",
         "Premium monthly": "pri_01kpf635sdhtbak3tecz31cjkr",
         "Premium annual": "pri_01kpf66wsrnfnzd9ptnvrxdaxy",
-        "Test monthly": "pri_01kpf68pfc9pfne9a9y9n88wt0",
-        "Test annual": "pri_01krwxa4eq4mfft1gq5efr1qs8",
+        "Admin monthly": "pri_01krx4s2cbrsawpppxybw9rggg",
+        "Admin annual": "pri_01krx4nkm89ftvjk6jba3drgd2",
       };
 
       const priceId = priceIdMap[key];
