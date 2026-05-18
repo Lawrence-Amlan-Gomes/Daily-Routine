@@ -12,7 +12,7 @@
 - **Auth:** NextAuth v5 beta (Google provider) + custom JWT via `jose` (email/password users); cookie name `authToken`; `bcrypt` for password hashing
 - **Database:** MongoDB via Mongoose 8 (global connection cache on `globalThis._mongoosePromise`)
 - **Storage:** S3-compatible (MinIO) via `@aws-sdk/client-s3`; `sharp` resizes profile photos to 256×256 webp
-- **Payments:** Paddle (`@paddle/paddle-js`) — one-time purchase model, HMAC-SHA256 webhook signature verification
+- **Payments:** Paddle (`@paddle/paddle-js`) — subscription model with recurring billing (monthly/annual), HMAC-SHA256 webhook signature verification
 - **AI:** `@google/genai` (Gemini) for the AI routine builder
 - **Email:** `nodemailer` over Brevo SMTP (OTP, welcome, password reset)
 - **Charts:** Recharts 3
@@ -109,9 +109,15 @@ Single `users` collection holds routine (per-weekday array of `{name, time, cate
 - Separate `AIRoutine` collection per user holds conversation history + AI-generated routine.
 - `src/app/server.ts#aiRoutineResponse` wraps Gemini with a system prompt that references the user's real routine and the current AI routine; returns text + optional `updatedRoutine`.
 
-### Payments (Paddle, one-time)
-- Frontend opens Paddle checkout via `@paddle/paddle-js`. 100% discount applied for test plan (per recent commit `9d74a81`).
-- `POST /api/paddle/webhooks` validates `Paddle-Signature` (format: `ts=...;h1=...`), HMAC-SHA256 of `ts:rawBody`, timing-safe compare. Dedupes via `PaddleWebhookEvent` collection. On success calls `updatePaymentType` server action which extends `expiredAt`.
+### Payments (Paddle, subscription model)
+- **Pricing tiers:** 6 price IDs mapped in webhooks handler (Standard/Premium/Admin, each monthly & annual).
+- **Checkout flow:** Frontend opens Paddle checkout via `@paddle/paddle-js`. User email passed as `custom_data.userEmail` for webhook matching.
+- **Webhook events:** `POST /api/paddle/webhooks` handles `transaction.completed`, `subscription.activated`, `subscription.canceled`. Each event is HMAC-SHA256 verified (`ts:rawBody`), deduped via `PaddleWebhookEvent` collection.
+  - `transaction.completed` → updates user with plan + `expiredAt` (30d for monthly, 365d for annual)
+  - `subscription.activated` → stores `paddleSubscriptionId` for future cancellation; overwrites plan/expiredAt
+  - `subscription.canceled` → sets `paymentType: "Expired"`, clears `paddleSubscriptionId`
+- **Cancellation:** `cancelSubscription` action calls `POST /subscriptions/{id}/cancel` in Paddle API (defaults to end-of-period cancellation). User keeps access until period ends; webhook finalizes when Paddle sends `subscription.canceled` event.
+- **Fallback:** If `paddleSubscriptionId` not stored, cancellation fetches active subscriptions from Paddle API and filters by customer email.
 
 ### Photos
 - Server action `uploadPhoto(email, FormData)` → `uploadToS3` → `sharp` 256×256 webp → stored under `profiles/<userId>/<uuid>.webp` with `ACL: public-read`. Replaces prior `photoKey`.
@@ -173,7 +179,7 @@ No test framework, no test directory, no test script. Verification is manual: `n
 - **Route path casing is inconsistent** (`/dashBoard`, `/changePassword` vs `/ai-routine`). Do not "normalize" existing paths; middleware matcher and all links depend on exact casing.
 - **React Compiler is enabled** (`reactCompiler: true`). Avoid unnecessary `useMemo`/`useCallback` — compiler handles memoization. But do not remove existing memoization in a sweep; do it only when touching the component.
 - **CSP is strict.** New third-party scripts/frames require editing `next.config.ts#headers`. Paddle domains already allowlisted.
-- **Paddle is on one-time purchase** (not subscription). Webhook extends `expiredAt`; `paymentType` is set accordingly. 100% discount path exists for the Test plan.
+- **Paddle subscriptions** (monthly & annual plans). Webhook events fire on `transaction.completed`, `subscription.activated`, and `subscription.canceled`. On cancellation, user keeps access until end of billing period; webhook finalizes expiry. `paddleSubscriptionId` stored on `subscription.activated` for fast cancellation via `POST /subscriptions/{id}/cancel`.
 - **`src/app/actions/index.ts` is ~970 lines.** When adding an action, append to the relevant `====` banner section; resist extracting into new files unless the user asks (existing convention is one fat actions file).
 - **Dark mode is class-based** (`darkMode: "class"`, `ThemeProvider` sets it). Use `dark:` Tailwind variants; do not use media-query approach.
 - **Server action bodies up to 10 MB** (for photo upload). Do not reduce without checking photo flow.
