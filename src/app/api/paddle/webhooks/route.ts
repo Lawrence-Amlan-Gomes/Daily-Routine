@@ -106,6 +106,8 @@ export async function POST(req: NextRequest) {
 }
 
 interface PaddleTransaction {
+  id?: string;
+  subscription_id?: string;
   items?: Array<{
     price?: { id?: string };
     price_id?: string;
@@ -194,13 +196,19 @@ async function handleSubscriptionActivated(subscription: PaddleTransaction) {
     return;
   }
 
+  const subscriptionId = subscription.subscription_id || subscription.id;
+  if (!subscriptionId) {
+    console.warn("Paddle: no subscription ID in subscription.activated payload");
+    return;
+  }
+
   const expiredAt = new Date();
   expiredAt.setDate(
     expiredAt.getDate() + (plan.duration === "monthly" ? 30 : 365),
   );
 
   const paymentString = `${plan.type} ${plan.duration === "monthly" ? "Monthly" : "Annually"}`;
-  await updatePaymentType(email, paymentString, expiredAt, { bypassAuth: true });
+  await updatePaymentType(email, paymentString, expiredAt, { bypassAuth: true, subscriptionId });
 }
 
 export const dynamic = "force-dynamic";

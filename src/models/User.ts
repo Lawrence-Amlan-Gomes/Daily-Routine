@@ -61,6 +61,7 @@ export interface IUser extends Document {
   expiredAt?: Date;
   isAdmin: boolean;
   paymentType: string;
+  paddleSubscriptionId?: string;
   routine: IRoutine;
   thisMonthPremiumResponses: string;
   isEmailVerified: boolean;
@@ -86,6 +87,7 @@ const UserSchema = new mongoose.Schema<IUser>(
     expiredAt: { type: Date },
     isAdmin: { type: Boolean, default: false },
     paymentType: { type: String, default: "Free One Month" },
+    paddleSubscriptionId: { type: String, default: "" },
     routine: {
       type: {
         saturday: {

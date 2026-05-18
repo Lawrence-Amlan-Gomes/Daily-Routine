@@ -282,7 +282,7 @@ export async function updatePaymentType(
   email: string,
   paymentType: string,
   expiredAt: Date,
-  options?: { bypassAuth?: boolean },
+  options?: { bypassAuth?: boolean; subscriptionId?: string },
 ) {
   if (!options?.bypassAuth) {
     const actor = await getActionActor();
@@ -293,7 +293,11 @@ export async function updatePaymentType(
     }
   }
   await dbConnect();
-  await User.updateOne({ email }, { paymentType, expiredAt });
+  const updateData: any = { paymentType, expiredAt };
+  if (options?.subscriptionId) {
+    updateData.paddleSubscriptionId = options.subscriptionId;
+  }
+  await User.updateOne({ email }, updateData);
   revalidatePath("/");
 }
 
@@ -314,40 +318,18 @@ export async function cancelSubscription(email: string) {
     throw new Error("No active subscription");
   }
 
+  if (!user.paddleSubscriptionId) {
+    throw new Error("No subscription ID found for user");
+  }
+
   const paddleApiKey = process.env.PADDLE_API_KEY;
   if (!paddleApiKey) {
     throw new Error("Paddle API key not configured");
   }
 
   try {
-    const response = await fetch("https://api.paddle.com/subscriptions?status=active", {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${paddleApiKey}`,
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Paddle API error:", response.status, errorText);
-      throw new Error(`Paddle API error: ${response.status}`);
-    }
-
-    const data = (await response.json()) as { data?: Array<{ id: string; customer_id?: string; customer?: { email?: string } }> };
-    const subscriptions = data.data || [];
-
-    const userSub = subscriptions.find((sub) => {
-      const subEmail = sub.customer?.email || (sub as any).email;
-      return subEmail === email;
-    });
-
-    if (!userSub) {
-      console.warn(`Subscription not found for email: ${email}. Available subscriptions:`, subscriptions.length);
-      throw new Error("Subscription not found in Paddle");
-    }
-
     const cancelResponse = await fetch(
-      `https://api.paddle.com/subscriptions/${userSub.id}`,
+      `https://api.paddle.com/subscriptions/${user.paddleSubscriptionId}`,
       {
         method: "PATCH",
         headers: {
@@ -359,15 +341,16 @@ export async function cancelSubscription(email: string) {
     );
 
     if (!cancelResponse.ok) {
+      const errorText = await cancelResponse.text();
+      console.error("Paddle cancel error:", cancelResponse.status, errorText);
       throw new Error("Failed to cancel subscription in Paddle");
     }
 
     await User.updateOne(
       { email },
-      { paymentType: "Expired", expiredAt: new Date() },
+      { paymentType: "Expired", expiredAt: new Date(), paddleSubscriptionId: "" },
     );
     revalidatePath("/billing");
-    revalidatePath("/profile");
 
     return { success: true, message: "Subscription canceled successfully" };
   } catch (error) {

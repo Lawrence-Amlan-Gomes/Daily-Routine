@@ -116,13 +116,12 @@ const Profile = () => {
     setCancelError(null);
     try {
       await cancelSubscription(auth.email);
-      setAuth({ ...auth, paymentType: "Expired", expiredAt: new Date().toISOString() });
       alert("Subscription canceled successfully.");
+      window.location.reload();
     } catch (error) {
       setCancelError(
         error instanceof Error ? error.message : "Failed to cancel subscription",
       );
-    } finally {
       setIsCanceling(false);
     }
   };
