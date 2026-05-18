@@ -406,10 +406,10 @@ export default function Pricing() {
                     )
                   ) : hasActiveSubscription ? (
                     <div className="mb-5">
-                      <Link href="/billing" className="w-full" onClick={(e) => {
-                        // Don't set a plan when managing subscription - just go to billing
+                      <Link href="/profile" className="w-full" onClick={(e) => {
+                        // Don't set a plan when managing subscription - just go to profile
                         e.preventDefault();
-                        router.push("/billing");
+                        router.push("/profile");
                       }}>
                         <button
                           className={`w-full py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${

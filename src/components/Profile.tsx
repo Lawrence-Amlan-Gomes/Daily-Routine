@@ -1,7 +1,7 @@
 // src/components/Profile.tsx
 "use client";
 
-import { deletePhoto, updateUser, uploadPhoto } from "@/app/actions";
+import { cancelSubscription, deletePhoto, updateUser, uploadPhoto } from "@/app/actions";
 import { useAuth } from "@/app/hooks/useAuth";
 import { logout } from "@/store/features/auth/authSlice";
 import { signOut } from "next-auth/react";
@@ -23,6 +23,8 @@ const Profile = () => {
   const [nameError, setNameError] = useState("");
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const [deletePhotoConfirm, setDeletePhotoConfirm] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -98,6 +100,31 @@ const Profile = () => {
     dispatch(logout());
     await signOut({ redirect: false });
     router.push("/login");
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!auth?.email) return;
+    if (
+      !confirm(
+        "Are you sure you want to cancel your subscription? You will lose access to premium features.",
+      )
+    ) {
+      return;
+    }
+
+    setIsCanceling(true);
+    setCancelError(null);
+    try {
+      await cancelSubscription(auth.email);
+      router.refresh();
+      alert("Subscription canceled successfully.");
+    } catch (error) {
+      setCancelError(
+        error instanceof Error ? error.message : "Failed to cancel subscription",
+      );
+    } finally {
+      setIsCanceling(false);
+    }
   };
 
   const getSubscriptionBadge = (type: string) => {
@@ -388,6 +415,31 @@ const Profile = () => {
             </div>
           </div>
         </div>
+
+        {/* ── Subscription card (if active) ── */}
+        {auth.paymentType && auth.paymentType !== "Expired" && !auth.paymentType.includes("Test") && (
+          <div className="w-full p-6 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-2xl">
+            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Your Subscription</h2>
+            <div className="space-y-2 mb-6">
+              <p className="text-gray-700 dark:text-gray-300">
+                <span className="font-semibold">Plan:</span> {auth.paymentType}
+              </p>
+              <p className="text-gray-700 dark:text-gray-300">
+                <span className="font-semibold">Renews:</span> {auth.expiredAt ? new Date(auth.expiredAt).toLocaleDateString() : "—"}
+              </p>
+            </div>
+            {cancelError && (
+              <p className="text-red-600 dark:text-red-400 mb-4">{cancelError}</p>
+            )}
+            <button
+              onClick={handleCancelSubscription}
+              disabled={isCanceling}
+              className="px-6 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-lg transition-colors font-semibold"
+            >
+              {isCanceling ? "Canceling..." : "Cancel Subscription"}
+            </button>
+          </div>
+        )}
 
         {/* ── Actions card ── */}
         <div
