@@ -240,6 +240,17 @@ export default function Pricing() {
             const monthlyEquiv = getMonthlyEquivalent(plan.id);
             const isSelected = selectedPlan === plan.id;
 
+            // Check if user has active subscription for this plan
+            const userPlanType = auth?.paymentType?.split(" ").slice(0, -1).join(" ") || "";
+            const userDuration = auth?.paymentType?.includes("Monthly") ? "monthly" :
+                                auth?.paymentType?.includes("Annually") ? "annual" : "";
+            const isUserSubscribedToPlan =
+              auth?.paymentType &&
+              auth.paymentType !== "Expired" &&
+              userPlanType.toLowerCase() === plan.title.toLowerCase() &&
+              userDuration === billingPeriod;
+            const hasActiveSubscription = isUserSubscribedToPlan && auth?.expiredAt && new Date(auth.expiredAt) > new Date();
+
             const cardBase = `relative flex flex-col rounded-2xl transition-all duration-200 overflow-hidden`;
             const cardStyle = plan.isMostPopular
               ? `${cardBase} bg-white dark:bg-gray-950 border-2 border-blue-500 shadow-xl shadow-blue-100 dark:shadow-blue-950 ${isSelected ? "scale-[1.01]" : ""}`
@@ -372,6 +383,22 @@ export default function Pricing() {
                         </Link>
                       </div>
                     )
+                  ) : hasActiveSubscription ? (
+                    <div className="mb-5">
+                      <Link href="/billing" className="w-full">
+                        <button
+                          className={`w-full py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                            plan.isMostPopular
+                              ? "bg-green-600 text-white hover:bg-green-700 shadow-sm shadow-green-200"
+                              : plan.badge === "Admin Only"
+                                ? "bg-green-500 text-white hover:bg-green-600"
+                                : "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900 dark:text-green-100 dark:hover:bg-green-800"
+                          }`}
+                        >
+                          ✓ Manage Subscription
+                        </button>
+                      </Link>
+                    </div>
                   ) : auth ? (
                     <div className="mb-5">
                       <Link href="/billing" className="w-full">
