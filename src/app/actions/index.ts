@@ -383,17 +383,15 @@ export async function cancelSubscription(email: string) {
   }
 
   try {
-    const subscriptionUrl = `https://api.paddle.com/subscriptions/${subscriptionId}`;
+    const subscriptionUrl = `https://api.paddle.com/subscriptions/${subscriptionId}/cancel`;
     console.log("[cancelSubscription] Calling Paddle API:", subscriptionUrl);
-    console.log("[cancelSubscription] Request body:", JSON.stringify({ status: "canceled" }));
 
     const cancelResponse = await fetch(subscriptionUrl, {
-      method: "PATCH",
+      method: "POST",
       headers: {
         "Authorization": `Bearer ${paddleApiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ status: "canceled" }),
     });
 
     console.log("[cancelSubscription] Paddle response status:", cancelResponse.status);
