@@ -51,6 +51,7 @@ const PRICE_ID_TO_PLAN: Record<
   pri_01kpf635sdhtbak3tecz31cjkr: { type: "Premium", duration: "monthly" },
   pri_01kpf66wsrnfnzd9ptnvrxdaxy: { type: "Premium", duration: "annual" },
   pri_01kpf68pfc9pfne9a9y9n88wt0: { type: "Test", duration: "monthly" },
+  pri_01krwxa4eq4mfft1gq5efr1qs8: { type: "Test", duration: "annual" },
 };
 
 export async function POST(req: NextRequest) {
