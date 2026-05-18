@@ -142,9 +142,10 @@ export default function Pricing() {
             priceAnnual: 1,
             features: [
               { name: "admin", value: "Admin only test plan" },
-              { name: "test", value: "For testing purposes" },
-              { name: "debug", value: "Debug payment flow" },
-              { name: "billing", value: "Monthly billing only" },
+              { name: "monthly", value: "Test Monthly (one-time)" },
+              { name: "annual", value: "Test Annually (subscription)" },
+              { name: "debug", value: "Debug payment & subscription flow" },
+              { name: "billing", value: "Test billing & cancellation" },
             ],
             cta: "Test Purchase",
             isMostPopular: false,
