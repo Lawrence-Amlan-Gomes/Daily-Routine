@@ -169,11 +169,9 @@ export default function PaddleForm() {
       }
 
       const discountId =
-        type === "Test" && duration === "annual"
+        type === "Admin"
           ? "dsc_01krwxp338pq4avppr6ybmjtfq"
-          : type === "Test" && duration === "monthly"
-            ? "dsc_01kpf6cwet24b7az70na8jd732"
-            : undefined;
+          : undefined;
 
       instance.Checkout.open({
         items: [{ priceId, quantity: 1 }],

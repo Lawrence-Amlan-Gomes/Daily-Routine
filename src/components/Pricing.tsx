@@ -5,10 +5,12 @@ import colors from "@/app/color/color";
 import { useAuth } from "@/app/hooks/useAuth";
 import { usePrice } from "@/app/hooks/usePrice";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function Pricing() {
   const { user: auth } = useAuth();
+  const router = useRouter();
 
   const {
     billingPeriod,
@@ -404,7 +406,11 @@ export default function Pricing() {
                     )
                   ) : hasActiveSubscription ? (
                     <div className="mb-5">
-                      <Link href="/billing" className="w-full">
+                      <Link href="/billing" className="w-full" onClick={(e) => {
+                        // Don't set a plan when managing subscription - just go to billing
+                        e.preventDefault();
+                        router.push("/billing");
+                      }}>
                         <button
                           className={`w-full py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                             plan.isMostPopular
