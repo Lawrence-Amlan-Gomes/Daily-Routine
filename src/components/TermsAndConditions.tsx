@@ -15,7 +15,7 @@ const SECTIONS = [
   { id: "contact", title: "Contact" },
 ];
 
-const EFFECTIVE_DATE = "April 3, 2026";
+const EFFECTIVE_DATE = "May 19, 2026";
 
 export default function TermsAndConditions() {
   const [activeSection, setActiveSection] = useState<string>("");
@@ -145,16 +145,36 @@ export default function TermsAndConditions() {
               3. Plans &amp; Billing
             </h2>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-              My Daily Routine offers Standard and Premium plans as one-time
-              purchases. Upon completing a purchase, your account is immediately
-              upgraded to the selected plan. All payments are processed securely
-              through our third-party payment providers.
+              My Daily Routine offers Standard and Premium plans as recurring subscriptions with the following billing periods:
+              <strong> Monthly (30 days) or Annual (365 days)</strong>. Upon completing a purchase, your account is immediately
+              upgraded to the selected plan for the chosen billing period. All payments are processed securely
+              through our third-party payment provider (Paddle).
             </p>
             <p className="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed">
-              There are no recurring charges, no automatic renewals, and no
-              cancellation required. You pay once and retain access to the
-              features of your plan. Pricing and plan features are clearly
-              displayed before purchase.
+              Your subscription automatically expires at the end of the billing period — there are no automatic renewals.
+              Pricing and plan features are clearly displayed before purchase.
+            </p>
+
+            <h3 className="text-lg font-semibold mt-5 mb-2 text-gray-900 dark:text-gray-100">
+              Subscription Upgrades
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+              If you upgrade to a different plan while your current subscription is active, the following occurs:
+            </p>
+            <ul className="list-disc list-inside mt-2 space-y-1 text-gray-600 dark:text-gray-400 leading-relaxed">
+              <li>Your current subscription is <strong>canceled immediately</strong></li>
+              <li>Any <strong>unused time on your previous plan is forfeited</strong> with no refund or credit</li>
+              <li>Your new subscription <strong>begins instantly</strong> upon payment</li>
+              <li>You will see a confirmation modal before upgrading that clearly displays this behavior</li>
+            </ul>
+
+            <h3 className="text-lg font-semibold mt-5 mb-2 text-gray-900 dark:text-gray-100">
+              Cancellation
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+              You may cancel your subscription at any time from your profile. Cancellation takes effect immediately,
+              but you retain access to all features until the end of your current billing period. No refunds are issued
+              for cancellation itself.
             </p>
           </section>
 

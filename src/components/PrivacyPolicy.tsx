@@ -15,7 +15,7 @@ const SECTIONS = [
   { id: "contact", title: "Contact" },
 ];
 
-const EFFECTIVE_DATE = "April 3, 2026";
+const EFFECTIVE_DATE = "May 19, 2026";
 
 export default function PrivacyPolicy() {
   const [activeSection, setActiveSection] = useState<string>("");
@@ -252,17 +252,21 @@ export default function PrivacyPolicy() {
             <div className="flex gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 mb-4">
               <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-amber-800 dark:text-amber-200 leading-relaxed">
-                <strong>No Refund Policy:</strong> All purchases are one-time
-                payments and are final and non-refundable. By completing a
-                purchase, you acknowledge and agree to this policy.
+                <strong>No Refund Policy:</strong> All subscription purchases are final
+                and non-refundable. Upgrading to a different plan cancels your current subscription immediately,
+                and any unused time is forfeited. By completing a purchase, you acknowledge and agree to this policy.
               </p>
             </div>
             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-              My Daily Routine offers Standard and Premium plans as one-time
-              purchases — there are no recurring charges, no automatic renewals,
-              and no cancellation required. Upon purchase, your account is
-              immediately upgraded. Billing data is handled by our payment
-              processor and is not stored on our servers.
+              My Daily Routine offers Standard and Premium plans as recurring subscriptions (monthly or annual billing).
+              When you purchase a subscription, you authorize recurring charges for the selected billing period.
+              Your subscription automatically expires at the end of the period — there are no automatic renewals.
+            </p>
+            <p className="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed">
+              <strong>Data we store for billing:</strong> We store your subscription tier (plan name), billing period, subscription expiration date,
+              and a unique subscription ID issued by our payment processor (Paddle). We use this data to manage your access rights,
+              process cancellations, and handle subscription upgrades. Payment method information (credit card, etc.) is handled
+              exclusively by Paddle and is not stored on our servers. We comply with PCI standards for payment security.
             </p>
           </section>
 

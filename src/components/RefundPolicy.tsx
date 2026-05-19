@@ -6,7 +6,7 @@ export default function RefundPolicy() {
       <div className="max-w-4xl mx-auto text-left">
         <h1 className="text-3xl sm:text-4xl font-bold mb-4">Refund Policy</h1>
         <p className="text-sm sm:text-base opacity-80 mb-8">
-          Last updated: April 17, 2026
+          Last updated: May 19, 2026
         </p>
 
         <div className="space-y-8 text-sm sm:text-base leading-7">
@@ -17,21 +17,19 @@ export default function RefundPolicy() {
             </h2>
             <p className="text-red-700 dark:text-red-300">
               My Daily Routine does not offer refunds or credits for any
-              purchase. All plans are one-time payments with no recurring
-              billing, no cancellation flow, and no partial refunds. By
-              completing a purchase, you acknowledge and agree to this policy.
+              subscription purchase. All paid plans are recurring subscriptions with billing periods
+              (monthly or annually). By completing a purchase, you acknowledge and agree to this policy.
             </p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-2">
-              1. One-Time Purchase Model
+              1. Subscription Model
             </h2>
             <p className="mb-3">
-              My Daily Routine is not a subscription service. All paid plans are
-              one-time purchases — you pay once and retain access to the
-              features included in your plan. There are no recurring charges, no
-              renewal dates, and no automatic billing of any kind.
+              My Daily Routine offers Standard and Premium plans as recurring subscriptions. When you purchase a plan,
+              you are billed immediately for the selected billing period: 30 days for monthly plans, 365 days for annual plans.
+              Your subscription will automatically expire at the end of the billing period — there are no auto-renewals.
             </p>
             <p>
               Because access is granted instantly and in full at the moment of
@@ -42,38 +40,51 @@ export default function RefundPolicy() {
 
           <section>
             <h2 className="text-xl font-semibold mb-2">
-              2. No Cancellations
+              2. Plan Upgrades &amp; Cancellations
             </h2>
+            <p className="mb-3">
+              <strong>Upgrading to a different plan:</strong> If you upgrade to a different plan while your current subscription is active,
+              your old subscription will be canceled <strong>immediately</strong>. You will lose any unused time on your previous plan, and
+              <strong> no refund or credit will be issued</strong> for the remaining days. The new plan begins instantly upon purchase.
+            </p>
+            <p className="mb-3">
+              Example: If you have "Standard Monthly" with 10 days remaining (costing ~$1.67 at $5/month), and you upgrade to "Premium Annual" on that day,
+              your 10 days of remaining Standard access are forfeited with no refund. You immediately gain access to Premium.
+            </p>
             <p>
-              There is no cancellation mechanism because there is nothing to
-              cancel. Your plan does not renew. You will never be charged again
-              after your initial purchase unless you explicitly choose to
-              upgrade to a higher plan.
+              <strong>Canceling your subscription:</strong> You may cancel your subscription at any time from your profile.
+              Cancellation takes effect immediately, and you retain access until the end of your current billing period.
+              No refunds are issued for the cancellation itself.
             </p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-2">
-              3. Why We Do Not Offer Refunds
+              3. Why We Do Not Offer Refunds or Pro-Rating
             </h2>
             <p>
-              Once a purchase is completed, server costs, AI inference, storage,
+              Once a subscription is activated, server costs, AI inference, storage,
               and infrastructure are consumed immediately. Digital access cannot
-              be revoked and re-issued. Offering refunds would not be
+              be revoked and re-issued. Offering refunds or pro-rated credits for upgrades would not be
               sustainable and would compromise the quality of service for all
-              users. We provide a free plan so you can evaluate the product
-              fully before any purchase decision.
+              users. We provide a free 30-day trial so you can evaluate the product
+              fully before committing to a paid subscription.
+            </p>
+            <p className="mt-3">
+              When you upgrade subscriptions, you are choosing to forgo the remaining time on your old plan
+              in exchange for immediate access to new features. This is a deliberate trade-off you control via our
+              upgrade confirmation modal.
             </p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-2">
-              4. Free Plan
+              4. Free Trial
             </h2>
             <p>
-              My Daily Routine offers a free plan with no payment required. We
-              strongly encourage you to use it to explore the product and
-              confirm it meets your needs before upgrading to a paid plan.
+              My Daily Routine offers a 30-day free trial with full access to core features. No payment is required during this period.
+              We strongly encourage you to explore all features and confirm the product meets your needs before upgrading to a paid subscription.
+              After 30 days, your free trial expires and you must purchase a paid plan to continue using the service.
             </p>
           </section>
 
