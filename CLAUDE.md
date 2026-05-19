@@ -1,12 +1,14 @@
 # CLAUDE.md
 
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 ## Project Overview
 
-**My Daily Routine** (`mydailyroutine.app`) — Next.js productivity web app for planning weekly routines, tracking goals, and recording daily completion stats. Features an AI routine builder (Google Gemini), goal management with subtasks, profile photos, email/password + Google OAuth, email OTP verification, one-time Paddle checkout for premium tier, and admin tooling (users, feedback).
+**My Daily Routine** (`mydailyroutine.app`) — Next.js productivity web app for planning weekly routines, tracking goals, and recording daily completion stats. Features an AI routine builder (Google Gemini), goal management with subtasks, profile photos, email/password + Google OAuth, email OTP verification, Paddle subscription billing (monthly/annual) for premium tiers, and admin tooling (users, feedback).
 
 ## Tech Stack
 
-- **Runtime / framework:** Next.js 16 (App Router, React Compiler enabled), React 19.2, TypeScript 5.9 (`strict: true`)
+- **Runtime / framework:** Next.js 16 (App Router, React Compiler enabled), React 19.2, TypeScript 5.9 (`strict: true`); requires **Node.js 20+**
 - **Styling:** Tailwind CSS 3.4 (`darkMode: "class"`), `tailwind-scrollbar`, `clsx`, Framer Motion 12, Lucide / React Icons
 - **State:** Redux Toolkit 2 + react-redux 9
 - **Auth:** NextAuth v5 beta (Google provider) + custom JWT via `jose` (email/password users); cookie name `authToken`; `bcrypt` for password hashing
@@ -15,6 +17,8 @@
 - **Payments:** Paddle (`@paddle/paddle-js`) — subscription model with recurring billing (monthly/annual), HMAC-SHA256 webhook signature verification
 - **AI:** `@google/genai` (Gemini) for the AI routine builder
 - **Email:** `nodemailer` over Brevo SMTP (OTP, welcome, password reset)
+- **Validation:** `zod` v4 — used in server actions for input validation
+- **Dates:** `date-fns` v4
 - **Charts:** Recharts 3
 - **Toasts:** Sonner 2
 - **Lint:** ESLint 9 + `eslint-config-next` 16 + TypeScript ESLint 8 (note: both `.eslintrc.json` and `eslint.config.mjs` present — flat config is current)
@@ -32,7 +36,7 @@ src/
 │   ├── dashBoard/, goals/, stats/, profile/, billing/, ai-routine/,
 │   ├── admin/, changePassword/, color/    # Protected app pages
 │   ├── pricing/, privacy/, terms-and-conditions/, refund/, testimonials/
-│   ├── actions/index.ts        # ~970 LOC — all server actions (auth, user, goals, routine, feedback, photo, AI routine doc)
+│   ├── actions/index.ts        # ~1180 LOC — all server actions (auth, user, goals, routine, feedback, photo, AI routine doc)
 │   ├── server.ts               # Gemini AI server action (aiRoutineResponse)
 │   ├── hooks/                  # useAuth, usePrice, useResponse
 │   ├── api/
@@ -45,6 +49,7 @@ src/
 ├── auth.ts                     # NextAuth config (Google provider only)
 ├── middleware.ts               # Protects routes; checks NextAuth session or JWT cookie
 ├── components/                 # ~45 feature components (PascalCase .tsx)
+│   └── ThemeProvider.tsx       # Context + hook for class-based dark mode; persists to localStorage
 ├── lib/
 │   ├── mongo.ts                # dbConnect w/ global promise cache
 │   ├── data-util.ts            # cleanUserForClient (Mongoose → plain)
@@ -57,33 +62,12 @@ public/                         # Icons, images, OG assets
 next.config.ts                  # CSP, Paddle frame-src, reactCompiler, 10MB server action body limit
 ```
 
-## Getting Started
-
-1. Install deps:
-   ```bash
-   npm install
-   ```
-2. Create `.env.local` at repo root (see **Environment Variables** below). Required at minimum: `MONGODB_URI`, `JWT_SECRET`, `NEXTAUTH_SECRET`, `AUTH_SECRET`, `NEXTAUTH_URL`, `NEXT_PUBLIC_APP_URL`.
-3. Optional services:
-   - **Google OAuth:** `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
-   - **Gemini AI:** `GEMINI_API_KEY`
-   - **Paddle:** `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `NEXT_PUBLIC_PADDLE_ENV`, `PADDLE_API_KEY`, `PADDLE_WEBHOOK_SECRET`
-   - **SMTP (Brevo):** `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`
-   - **S3 / MinIO:** `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`, `S3_PUBLIC_URL`
-   - **Cron:** `CRON_SECRET` (protects `/api/cron/cleanup-unverified`)
-4. Run dev server:
-   ```bash
-   npm run dev
-   ```
-   Open http://localhost:3000.
-
-MongoDB connection is dialed lazily on first request. No seed script; data accumulates through registration.
-
 ## Development Commands
 
 ```bash
+npm install      # install deps
 npm run dev      # next dev (hot reload, React Compiler on)
-npm run build    # next build
+npm run build    # next build (also runs tsc --noEmit)
 npm run start    # next start (after build)
 npm run lint     # eslint
 ```
@@ -121,28 +105,38 @@ Single `users` collection holds routine (per-weekday array of `{name, time, cate
 
 ### Photos
 - Server action `uploadPhoto(email, FormData)` → `uploadToS3` → `sharp` 256×256 webp → stored under `profiles/<userId>/<uuid>.webp` with `ACL: public-read`. Replaces prior `photoKey`.
+- New image hostnames must be added to `next.config.ts#images.remotePatterns`. Currently allowlisted: `lh3.googleusercontent.com` (Google avatars) and the MinIO hostname.
 
 ### Rate limiting
 MongoDB-backed (`ApiRateLimit` collection) keyed by IP + optional extra parts. Fixed-window counter with `expiresAt` TTL. Use `enforceRateLimit(req, { route, max, windowMs, keyParts })` in `src/lib/server/rate-limit.ts` from any route handler.
 
 ### Security headers (next.config.ts)
-Global CSP with `frame-src` allowlisting Paddle (sandbox + prod), `frame-ancestors 'none'`, strict `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, disabled camera/mic/geolocation. Server Actions body limit bumped to 10 MB for photo uploads.
+Global CSP with `frame-src` allowlisting Paddle (sandbox + prod), `frame-ancestors 'none'`, strict `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, disabled camera/mic/geolocation. Server Actions body limit bumped to 10 MB for photo uploads. `allowedOrigins` for server actions is restricted to `mydailyroutine.app` — this does not affect local `npm run dev` but matters when testing `next start` against a different origin.
 
 ### State
-Redux store has three slices: `auth` (user + routine + goals + stats), `price` (Paddle pricing), `response` (AI conversation). Theme is handled by `ThemeProvider` (class-based dark mode), no theme slice despite folder existing.
+Redux store has three slices: `auth` (user + routine + goals + stats), `price` (Paddle pricing), `response` (AI conversation). Theme is handled by `ThemeProvider` (class-based dark mode), which reads `localStorage` on mount and falls back to `prefers-color-scheme`; no Redux slice despite a theme folder existing.
+
+### Cache invalidation
+All mutations use `revalidatePath(path)` from `next/cache` (imported alongside `unstable_noStore`). `revalidateTag` is not used anywhere. Read-only server actions that must never be cached call `noStore()` at the top (e.g., `getMyFeedback`, `getPublicFeedbacks`). There are no `fetch()` cache options set anywhere in the codebase — the two Paddle API calls in `cancelSubscription` inherit Next.js 15+ default (`no-store`).
 
 ## Code Conventions
 
-- **Path alias:** `@/*` → `./src/*` (used everywhere; prefer over relative ranges).
+- **Path alias:** `@/*` → `./src/*` (used everywhere; prefer over relative paths).
 - **Components:** PascalCase filenames in `src/components/`, one component per file, `.tsx`.
-- **Server actions:** colocated in `src/app/actions/index.ts` with `"use server"` at top. Never pass `email` from client without re-deriving actor server-side.
+- **Server actions:** colocated in `src/app/actions/index.ts` with `"use server"` at top. Organised into banner sections — append to the relevant one, do not create new files:
+  - `// ==================== AUTH ACTIONS ====================`
+  - `// ==================== GOOGLE + JWT ====================`
+  - `// ==================== LOGOUT ====================`
+  - `// ==================== FEEDBACK ACTIONS ====================`
+  - `// ==================== AI ROUTINE ACTIONS ====================`
+  - `// ==================== EMAIL VERIFICATION HELPERS ====================`
+  - Photo actions follow at the end (no banner yet).
 - **Models:** one Mongoose schema per file in `src/models/`. Pattern: `mongoose.models.<name> || mongoose.model(...)` to survive HMR. `select: false` on `password`; use `.select("+password")` when needed.
 - **Routes:** mix of camelCase (`/dashBoard`, `/changePassword`) and kebab (`/ai-routine`, `/terms-and-conditions`) — **match existing** when adding links; do not rename.
-- **Imports:** external first, then `@/` aliases, then relative. Default ESLint `import` order is not enforced, but existing files follow this loosely.
+- **Imports:** external first, then `@/` aliases, then relative.
 - **Types:** re-exported widely from `src/store/features/auth/authSlice` (`CleanUser`, `IRoutine`, `IGoal`, `IStatEntry`, etc.). Use these instead of redefining.
 - **Clean for client:** always run Mongoose docs through `cleanUserForClient` (or analogous helpers in `jwt.ts`) before sending to client — strips `_id`, version keys, Buffer internals.
 - **ESLint quirks:** `@typescript-eslint/no-explicit-any` is **off**, `react/prop-types` off, `react/react-in-jsx-scope` off.
-- **`.eslintrc.json` and `eslint.config.mjs` coexist** — flat config is authoritative for ESLint 9, legacy file kept for editor plugins.
 
 ## Environment Variables
 
@@ -150,7 +144,7 @@ Redux store has three slices: `auth` (user + routine + goals + stats), `price` (
 |---|---|---|
 | `MONGODB_URI` | Mongo connection string | Yes |
 | `JWT_SECRET` | Signs custom `authToken` (HS256, 7d) | Yes |
-| `NEXTAUTH_SECRET` / `AUTH_SECRET` | NextAuth v5 session secret | Yes |
+| `NEXTAUTH_SECRET` / `AUTH_SECRET` | NextAuth v5 session secret (set both) | Yes |
 | `NEXTAUTH_URL` | Base URL for NextAuth callbacks | Yes |
 | `NEXT_PUBLIC_APP_URL` | Canonical site URL for metadata / emails | Yes |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth | If using Google sign-in |
@@ -180,7 +174,6 @@ No test framework, no test directory, no test script. Verification is manual: `n
 - **React Compiler is enabled** (`reactCompiler: true`). Avoid unnecessary `useMemo`/`useCallback` — compiler handles memoization. But do not remove existing memoization in a sweep; do it only when touching the component.
 - **CSP is strict.** New third-party scripts/frames require editing `next.config.ts#headers`. Paddle domains already allowlisted.
 - **Paddle subscriptions** (monthly & annual plans). Webhook events fire on `transaction.completed`, `subscription.activated`, and `subscription.canceled`. On cancellation, user keeps access until end of billing period; webhook finalizes expiry. `paddleSubscriptionId` stored on `subscription.activated` for fast cancellation via `POST /subscriptions/{id}/cancel`.
-- **`src/app/actions/index.ts` is ~970 lines.** When adding an action, append to the relevant `====` banner section; resist extracting into new files unless the user asks (existing convention is one fat actions file).
 - **Dark mode is class-based** (`darkMode: "class"`, `ThemeProvider` sets it). Use `dark:` Tailwind variants; do not use media-query approach.
 - **Server action bodies up to 10 MB** (for photo upload). Do not reduce without checking photo flow.
 - **No tests.** If you change auth, payments, or webhooks, verify manually in browser + hit endpoints with `curl`. Do not claim success from type-check alone.

@@ -3,6 +3,7 @@ import { updatePaymentType } from "@/app/actions";
 import { dbConnect } from "@/lib/mongo";
 import { PaddleWebhookEvent } from "@/models/PaddleWebhookEvent";
 import crypto from "crypto";
+import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 
 const PADDLE_WEBHOOK_SECRET = process.env.PADDLE_WEBHOOK_SECRET!;
@@ -214,6 +215,36 @@ async function handleSubscriptionActivated(subscription: PaddleTransaction) {
   if (!subscriptionId) {
     console.warn("Paddle: no subscription ID in subscription.activated payload");
     return;
+  }
+
+  // Auto-cancel old subscription if user upgrading
+  const User = mongoose.models.User || mongoose.model("User");
+  const user = await User.findOne({ email });
+  if (user?.paddleSubscriptionId && user.paddleSubscriptionId !== subscriptionId) {
+    console.log("[handleSubscriptionActivated] Canceling old subscription:", user.paddleSubscriptionId);
+    try {
+      const paddleApiKey = process.env.PADDLE_API_KEY;
+      const cancelResponse = await fetch(
+        `https://api.paddle.com/subscriptions/${user.paddleSubscriptionId}/cancel`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${paddleApiKey}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!cancelResponse.ok) {
+        console.error(
+          `[handleSubscriptionActivated] Failed to cancel old subscription: ${cancelResponse.status}`,
+          await cancelResponse.text()
+        );
+      } else {
+        console.log("[handleSubscriptionActivated] Old subscription canceled successfully");
+      }
+    } catch (error) {
+      console.error("[handleSubscriptionActivated] Error canceling old subscription:", error);
+    }
   }
 
   const expiredAt = new Date();

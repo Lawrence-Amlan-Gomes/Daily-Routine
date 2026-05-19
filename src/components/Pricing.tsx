@@ -6,7 +6,7 @@ import { useAuth } from "@/app/hooks/useAuth";
 import { usePrice } from "@/app/hooks/usePrice";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function Pricing() {
   const { user: auth } = useAuth();
@@ -22,6 +22,9 @@ export default function Pricing() {
     setFreeTierExpired,
   } = usePrice();
 
+  const [showUpgradeWarning, setShowUpgradeWarning] = useState(false);
+  const [pendingUpgrade, setPendingUpgrade] = useState<{ type: string; duration: string } | null>(null);
+
   // ---- keep free-tier UI in sync with auth.paymentType ----
   useEffect(() => {
     if (auth && auth.paymentType === "Expired") {
@@ -30,6 +33,48 @@ export default function Pricing() {
       setFreeTierExpired(false);
     }
   }, [auth, setFreeTierExpired]);
+
+  const handleUpgradeClick = (planTitle: string, duration: string) => {
+    // Check if user has any active subscription
+    const hasAnyActiveSubscription =
+      auth?.paymentType &&
+      auth.paymentType !== "Expired" &&
+      auth?.expiredAt &&
+      new Date(auth.expiredAt) > new Date();
+
+    if (hasAnyActiveSubscription) {
+      // Parse current subscription
+      const userPlanType = auth?.paymentType?.split(" ").slice(0, -1).join(" ") || "";
+      const userDuration = auth?.paymentType?.includes("Monthly")
+        ? "monthly"
+        : auth?.paymentType?.includes("Annually")
+          ? "annual"
+          : "";
+
+      // Check if trying to change plan or duration
+      const isDifferentPlan =
+        userPlanType.toLowerCase() !== planTitle.toLowerCase() || userDuration !== duration;
+
+      if (isDifferentPlan) {
+        setPendingUpgrade({ type: planTitle, duration });
+        setShowUpgradeWarning(true);
+        return;
+      }
+    }
+
+    // No warning needed, proceed to checkout
+    setWantToPayment(planTitle, duration);
+    router.push("/billing");
+  };
+
+  const confirmUpgrade = () => {
+    if (pendingUpgrade) {
+      setWantToPayment(pendingUpgrade.type, pendingUpgrade.duration);
+      setShowUpgradeWarning(false);
+      setPendingUpgrade(null);
+      router.push("/billing");
+    }
+  };
 
   const plans = [
     {
@@ -426,22 +471,20 @@ export default function Pricing() {
                     </div>
                   ) : auth ? (
                     <div className="mb-5">
-                      <Link href="/billing" className="w-full">
-                        <button
-                          onClick={() =>
-                            setWantToPayment(plan.title, billingPeriod)
-                          }
-                          className={`w-full py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                            plan.isMostPopular
-                              ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-200"
-                              : plan.badge === "Admin Only"
-                                ? "bg-orange-500 text-white hover:bg-orange-600"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-                          }`}
-                        >
-                          {plan.isMostPopular ? "Get Started" : plan.cta}
-                        </button>
-                      </Link>
+                      <button
+                        onClick={() =>
+                          handleUpgradeClick(plan.title, billingPeriod)
+                        }
+                        className={`w-full py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                          plan.isMostPopular
+                            ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-200"
+                            : plan.badge === "Admin Only"
+                              ? "bg-orange-500 text-white hover:bg-orange-600"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                        }`}
+                      >
+                        {plan.isMostPopular ? "Get Started" : plan.cta}
+                      </button>
                     </div>
                   ) : (
                     <div className="mb-5">
@@ -509,6 +552,102 @@ export default function Pricing() {
           All plans include SSL security. Cancel or change your plan at any time.
         </p>
       </div>
+
+      {/* ── Upgrade Warning Modal ── */}
+      {showUpgradeWarning && pendingUpgrade && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="relative w-full sm:max-w-md rounded-2xl bg-white dark:bg-gray-950 shadow-xl overflow-hidden">
+            {/* Header */}
+            <div className="p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    ⚠️ Subscription Change
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Your current plan will be canceled
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              {auth?.expiredAt && (
+                <>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <strong>Current plan expires on:</strong>
+                    </p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                      {new Date(auth.expiredAt).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <strong>Days remaining:</strong>
+                    </p>
+                    <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
+                      {Math.ceil(
+                        (new Date(auth.expiredAt).getTime() - new Date().getTime()) /
+                          (1000 * 60 * 60 * 24)
+                      )}{" "}
+                      days
+                    </p>
+                  </div>
+
+                  <div className="pt-2 border-t border-gray-200 dark:border-gray-800">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <strong>What happens:</strong>
+                    </p>
+                    <ul className="space-y-1.5 text-sm text-gray-700 dark:text-gray-300">
+                      <li className="flex items-start gap-2">
+                        <span className="text-red-500 font-bold mt-0.5">✕</span>
+                        <span>Current subscription cancels immediately</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-red-500 font-bold mt-0.5">✕</span>
+                        <span>You lose {Math.ceil(
+                        (new Date(auth.expiredAt).getTime() - new Date().getTime()) /
+                          (1000 * 60 * 60 * 24)
+                      )} days of unused time</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-green-500 font-bold mt-0.5">✓</span>
+                        <span>New plan ({pendingUpgrade.type} {pendingUpgrade.duration === "monthly" ? "Monthly" : "Annually"}) starts instantly</span>
+                      </li>
+                    </ul>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex gap-3">
+              <button
+                onClick={() => {
+                  setShowUpgradeWarning(false);
+                  setPendingUpgrade(null);
+                }}
+                className="flex-1 py-2 px-4 rounded-lg text-sm font-semibold text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmUpgrade}
+                className="flex-1 py-2 px-4 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              >
+                Confirm & Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
