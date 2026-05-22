@@ -154,7 +154,7 @@ export default function PaddleForm() {
         "Premium monthly": "pri_01kpf635sdhtbak3tecz31cjkr",
         "Premium annual": "pri_01kpf66wsrnfnzd9ptnvrxdaxy",
         "Admin monthly": "pri_01krx4s2cbrsawpppxybw9rggg",
-        "Admin annual": "pri_01krx4nkm89ftvjk6jba3drgd2",
+        "Premium Admin annual": "pri_01krx4nkm89ftvjk6jba3drgd2",
       };
 
       const priceId = priceIdMap[key];
@@ -169,7 +169,7 @@ export default function PaddleForm() {
       }
 
       const discountId =
-        type === "Admin"
+        type.includes("Admin")
           ? "dsc_01krwxp338pq4avppr6ybmjtfq"
           : undefined;
 

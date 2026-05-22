@@ -69,9 +69,12 @@ async function getActionActor(): Promise<ActionActor> {
   const tokenUser = await verifyToken(token);
   if (!tokenUser?.email) throw new Error("UNAUTHORIZED");
 
+  await dbConnect();
+  const dbUser = await User.findOne({ email: tokenUser.email.toLowerCase().trim() }).select("email isAdmin");
+
   return {
-    email: tokenUser.email.toLowerCase().trim(),
-    isAdmin: Boolean(tokenUser.isAdmin),
+    email: dbUser?.email ?? tokenUser.email.toLowerCase().trim(),
+    isAdmin: Boolean(dbUser?.isAdmin),
   };
 }
 
@@ -244,7 +247,10 @@ export async function createUser(data: {
   await user.save();
 
   // Send welcome email for both manual and Google registrations
-  await sendWelcomeEmail(email, data.name);
+  const welcomeEmailResult = await sendWelcomeEmail(user.email, user.name);
+  if (!welcomeEmailResult.success) {
+    console.error("[createUser] Welcome email failed:", welcomeEmailResult.error);
+  }
 
   return cleanUserForClient(user.toObject());
 }
@@ -1004,6 +1010,7 @@ export type AIRoutineData = {
 };
 
 export type ChatMessage = {
+  id?: string;
   role: "user" | "ai";
   text: string;
   timestamp: string;
@@ -1142,17 +1149,27 @@ export async function uploadPhoto(email: string, formData: FormData) {
   const file = formData.get("photo") as File;
   if (!file) throw new Error("No file provided");
 
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error("File too large. Max 5 MB.");
+  }
+
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    throw new Error("Invalid file type. Only JPEG, PNG, WebP, and GIF allowed.");
+  }
+
   const buffer = Buffer.from(await file.arrayBuffer());
 
   const user = await User.findOne({ email });
   if (!user) throw new Error("User not found");
 
-  // Delete old photo from S3
-  if (user.photoKey) await deleteFromS3(user.photoKey);
-
   const { url, key } = await uploadToS3(user._id.toString(), buffer);
 
+  const oldKey = user.photoKey;
   await User.updateOne({ email }, { photo: url, photoKey: key });
+
+  // Delete old photo after DB update succeeds — orphaned file preferred over stale DB ref
+  if (oldKey) await deleteFromS3(oldKey);
   revalidatePath("/profile");
 
   return { photo: url };

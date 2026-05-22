@@ -52,7 +52,7 @@ const PRICE_ID_TO_PLAN: Record<
   pri_01kpf635sdhtbak3tecz31cjkr: { type: "Premium", duration: "monthly" },
   pri_01kpf66wsrnfnzd9ptnvrxdaxy: { type: "Premium", duration: "annual" },
   pri_01krx4s2cbrsawpppxybw9rggg: { type: "Admin", duration: "monthly" },
-  pri_01krx4nkm89ftvjk6jba3drgd2: { type: "Admin", duration: "annual" },
+  pri_01krx4nkm89ftvjk6jba3drgd2: { type: "Premium Admin", duration: "annual" },
 };
 
 export async function POST(req: NextRequest) {
@@ -90,11 +90,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await processWebhookEvent(event);
     await PaddleWebhookEvent.create({
       eventId: event.event_id,
       eventType: event.event_type,
     });
+    await processWebhookEvent(event);
 
     return NextResponse.json(
       { received: true, verified: true, event_type: event.event_type },

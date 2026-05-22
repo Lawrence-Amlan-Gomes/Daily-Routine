@@ -199,7 +199,7 @@ export default function Pricing() {
           },
           {
             id: "admin-annual",
-            title: "Admin",
+            title: "Premium Admin",
             description: "Admin annual subscription",
             priceMonthly: 1,
             priceAnnual: 1,
