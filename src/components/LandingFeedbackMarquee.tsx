@@ -59,15 +59,17 @@ export default function LandingFeedbackMarquee() {
   const [items, setItems] = useState<PublicFeedback[]>([]);
 
   useEffect(() => {
+    let mounted = true;
     const load = async () => {
       try {
         const data = await getPublicFeedbacks();
-        setItems(data);
+        if (mounted) setItems(data);
       } catch (error) {
         console.error("Failed to load public feedbacks:", error);
       }
     };
     load();
+    return () => { mounted = false; };
   }, []);
 
   const loopItems = useMemo(() => {

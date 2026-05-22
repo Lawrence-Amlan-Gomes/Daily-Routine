@@ -2,6 +2,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface IRoutineItem {
+  id?: string;
   name: string;
   time: string;
   category?: string;

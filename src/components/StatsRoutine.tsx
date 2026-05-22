@@ -678,9 +678,9 @@ export default function StatsRoutine() {
   const availableYears = useMemo(() => extractYears(stats), [stats]);
 
   // Auto-select most recent year
-  useMemo(() => {
+  useEffect(() => {
     if (availableYears.length > 0 && selectedYear === null) {
-      // eslint-disable-next-line react-hooks/set-state-in-render
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedYear(availableYears[0]);
     }
   }, [availableYears, selectedYear]);
@@ -697,7 +697,7 @@ export default function StatsRoutine() {
     () => stats.reduce((sum, s) => sum + s.completedTasks.length, 0),
     [stats],
   );
-  const uniqueDays = useMemo(() => stats.length, [stats]);
+  const uniqueDays = stats.length;
   const streak = useMemo(() => getCurrentStreak(stats), [stats]);
   const bestStreak = useMemo(() => getBestStreak(stats), [stats]);
   const consistency = useMemo(() => getConsistencyScore(stats), [stats]);
@@ -1317,7 +1317,7 @@ export default function StatsRoutine() {
               <div className="grid grid-cols-7 gap-1">
                 {calendarData.cells.map((cell, i) => (
                   <div
-                    key={i}
+                    key={cell.date ?? `cell-${i}`}
                     title={
                       cell.date ? `${cell.date}: ${cell.count}% completed` : ""
                     }
@@ -1574,7 +1574,7 @@ export default function StatsRoutine() {
                           : 0;
                       return (
                         <div
-                          key={i}
+                          key={m.monthKey}
                           className="p-4 space-y-2 border-b last:border-b-0"
                           style={{ borderColor: t.border }}
                         >
@@ -1670,7 +1670,7 @@ export default function StatsRoutine() {
                               : 0;
                           return (
                             <tr
-                              key={i}
+                              key={m.monthKey}
                               className="border-b transition-colors"
                               style={{ borderColor: t.border, color: t.text }}
                               onMouseEnter={(e) => {
@@ -1965,8 +1965,8 @@ export default function StatsRoutine() {
             </div>
 
             {/* Insight cards */}
-            {insights.map((ins, i) => (
-              <InsightCard key={i} {...ins} t={t} />
+            {insights.map((ins) => (
+              <InsightCard key={ins.title} {...ins} t={t} />
             ))}
 
             {/* Summary pills */}

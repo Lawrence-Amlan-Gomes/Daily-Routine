@@ -9,6 +9,8 @@ import { store } from "./store";
 export default function ReduxProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof window === "undefined") return;
+    let mounted = true;
+    const controller = new AbortController();
 
     const loadAuth = async () => {
       const storedUser = localStorage.getItem("authUser");
@@ -18,7 +20,7 @@ export default function ReduxProvider({ children }: { children: ReactNode }) {
       if (storedUser) {
         try {
           const user = JSON.parse(storedUser);
-          store.dispatch(setAuth(user));
+          if (mounted) store.dispatch(setAuth(user));
         } catch {
           localStorage.removeItem("authUser");
         }
@@ -31,8 +33,10 @@ export default function ReduxProvider({ children }: { children: ReactNode }) {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ token: storedToken }),
+            signal: controller.signal,
           });
 
+          if (!mounted) return;
           if (res.ok) {
             const user = await res.json();
             store.dispatch(setAuth(user));
@@ -41,6 +45,7 @@ export default function ReduxProvider({ children }: { children: ReactNode }) {
             localStorage.removeItem("authToken");
           }
         } catch (err) {
+          if ((err as Error)?.name === "AbortError") return;
           console.error("JWT verification failed:", err);
           localStorage.removeItem("authToken");
         }
@@ -48,6 +53,10 @@ export default function ReduxProvider({ children }: { children: ReactNode }) {
     };
 
     loadAuth();
+    return () => {
+      mounted = false;
+      controller.abort();
+    };
   }, []);
 
   return <Provider store={store}>{children}</Provider>;

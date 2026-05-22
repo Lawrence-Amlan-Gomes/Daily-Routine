@@ -21,27 +21,25 @@ export default function EmailNotVerified() {
 
   // Poll for verification status every 5 seconds
   useEffect(() => {
+    if (!auth?.email) return;
+    const snapshot = auth;
+    let mounted = true;
+
     const checkVerification = async () => {
-      if (!auth?.email) return;
-
-      const result = await checkEmailVerificationStatus(auth.email);
-
+      const result = await checkEmailVerificationStatus(snapshot.email);
+      if (!mounted) return;
       if (result.success && result.isEmailVerified) {
-        // Update Redux state
-        setAuth({
-          ...auth,
-          isEmailVerified: true,
-        });
+        setAuth({ ...snapshot, isEmailVerified: true });
       }
     };
 
-    // Check immediately
     checkVerification();
-
-    // Then check every 5 seconds
     const interval = setInterval(checkVerification, 5000);
 
-    return () => clearInterval(interval);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth?.email]);
 

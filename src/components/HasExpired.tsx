@@ -16,8 +16,7 @@ export default function HasExpired({
   const FREE_LIMIT_DAYS = 30;
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHasMounted(true);
+    setHasMounted(true); // eslint-disable-line react-hooks/set-state-in-effect
   }, []);
 
   // ── Check and update expiry status ─────────────────────────

@@ -124,13 +124,7 @@ export default function ShowRoutine({
   // ── State ──────────────────────────────────────────────────
   const [zoomLevel, setZoomLevel] = useState(3.5);
   const [nowHeight, setNowHeight] = useState(20);
-  const [currentTime, setCurrentTime] = useState(
-    new Date().toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    }),
-  );
+  const [currentTime, setCurrentTime] = useState("");
   const [hoveredTask, setHoveredTask] = useState<{ name: string; time: string; minutes: number } | null>(null);
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
@@ -176,7 +170,7 @@ export default function ShowRoutine({
   const hourHeight = 60 * pxPerMinute;
   const minutesPerSlot = getMinutesPerSlot(zoomLevel);
   const slotsPerHour = 60 / minutesPerSlot;
-  const today = new Date().toLocaleString("en-US", { weekday: "long" });
+  const [today, setToday] = useState("");
 
   // ── Time utilities ─────────────────────────────────────────
   const timeToMinutes = (timeStr: string): number => {
@@ -293,13 +287,15 @@ export default function ShowRoutine({
   // Update current time every minute
   useEffect(() => {
     const updateTime = () => {
+      const now = new Date();
       setCurrentTime(
-        new Date().toLocaleTimeString("en-US", {
+        now.toLocaleTimeString("en-US", {
           hour: "2-digit",
           minute: "2-digit",
           hour12: true,
         }),
       );
+      setToday(now.toLocaleString("en-US", { weekday: "long" }));
     };
     updateTime();
     const interval = setInterval(updateTime, 60000);
@@ -1353,7 +1349,7 @@ export default function ShowRoutine({
 
               return (
                 <button
-                  key={idx}
+                  key={d.dateStr}
                   onClick={() => {
                     setSelectedDay?.(d.dayName.toLowerCase() as Day);
                     setSelectedDateIndex(idx);

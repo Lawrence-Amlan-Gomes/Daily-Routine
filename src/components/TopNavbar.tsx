@@ -47,7 +47,6 @@ const TopNavbar = () => {
   const { user: auth, setAuth } = useAuth();
   const dispatch = useDispatch();
   const [active, setActive] = useState("home");
-  const [firstTime, setFirstTime] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
   const trimedPathname = pathname.split("/").pop();
@@ -67,14 +66,12 @@ const TopNavbar = () => {
     ? [...baseNavItems, { href: "/admin", label: "Admin", activeKey: "admin" }]
     : baseNavItems;
 
-  useEffect(() => {
-    setFirstTime(false);
-  }, []);
-
   // ──────────────────────────────────────────────────────────────
   // Fetch fresh user data from DB **only once** on first render
   // ──────────────────────────────────────────────────────────────
   useEffect(() => {
+    let mounted = true;
+
     const syncAuthWithDB = async () => {
       if (!auth) return; // no user logged in → skip
       if (!auth.routine) {
@@ -85,6 +82,7 @@ const TopNavbar = () => {
 
       try {
         const freshUser = await findUserByEmail(auth.email);
+        if (!mounted) return;
 
         if (freshUser) {
           setAuth({
@@ -97,6 +95,7 @@ const TopNavbar = () => {
           await signOut({ redirect: false });
         }
       } catch (err) {
+        if (!mounted) return;
         const msg = err instanceof Error ? err.message : String(err);
         if (msg === "UNAUTHORIZED" || msg === "FORBIDDEN") {
           // Auth cookie expired — clear stale local state silently
@@ -109,8 +108,9 @@ const TopNavbar = () => {
     };
 
     syncAuthWithDB();
+    return () => { mounted = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firstTime]); // ← empty deps = run only once on mount
+  }, []); // run only once on mount
 
   useEffect(() => {
     if (trimedPathname) {

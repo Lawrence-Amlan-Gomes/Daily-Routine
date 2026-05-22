@@ -281,6 +281,17 @@ export default function EditRoutine({
   const [nowTick, setNowTick] = useState(0);
 
   useEffect(() => {
+    const d = new Date();
+    setTodayIndex(d.getDay());
+    setTodayDateFormatted(
+      d
+        .toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })
+        .replace(/\//g, "-"),
+    );
     const interval = setInterval(() => {
       setNowTick((t) => t + 1);
     }, 60000);
@@ -297,22 +308,16 @@ export default function EditRoutine({
     "friday",
     "saturday",
   ];
-  const todayIndex = new Date().getDay();
-  const todayName = todayDayNames[todayIndex] as Day;
+  const [todayIndex, setTodayIndex] = useState(-1);
+  const todayName = (todayDayNames[todayIndex] ?? undefined) as Day | undefined;
 
   const isToday = selectedDay === todayName;
 
-  const todayDateFormatted = new Date()
-    .toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    })
-    .replace(/\//g, "-"); // → 07-04-2026
+  const [todayDateFormatted, setTodayDateFormatted] = useState("");
 
   // ── Local state ────────────────────────────────────────────
   const [tasks, setTasks] = useState<IRoutineItem[]>([]);
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [selectedDaysForMultiAdd, setSelectedDaysForMultiAdd] = useState<
     Set<Day>
   >(new Set());
@@ -332,6 +337,9 @@ export default function EditRoutine({
   const [newCategory, setNewCategory] = useState<string>("");
 
   // ── Derived values ─────────────────────────────────────────
+  const editingTask = editingTaskId !== null
+    ? (tasks.find((t) => t.id === editingTaskId) ?? null)
+    : null;
   const fromTimeStr = formatTimePart(fromHour, fromMinute, fromPeriod);
   const toTimeStr = formatTimePart(toHour, toMinute, toPeriod);
   const fromMins = timeToMinutes(fromTimeStr);
@@ -342,7 +350,8 @@ export default function EditRoutine({
   // ── Sync tasks from auth whenever day or auth changes ──────
   useEffect(() => {
     if (auth?.routine?.[selectedDay]) {
-      const dayTasks = [...auth.routine[selectedDay]];
+      const dayTasks = [...auth.routine[selectedDay]]
+        .map((t) => (t.id ? t : { ...t, id: crypto.randomUUID() }));
       dayTasks.sort((a, b) => {
         const startA = timeToMinutes(a.time.split(" - ")[0]);
         const startB = timeToMinutes(b.time.split(" - ")[0]);
@@ -361,7 +370,7 @@ export default function EditRoutine({
     setToMinute("");
     setToPeriod("AM");
     setIsPortalOpen(false);
-    setEditingIndex(null);
+    setEditingTaskId(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDay, auth]);
 
@@ -398,7 +407,7 @@ export default function EditRoutine({
     setToHour("");
     setToMinute("");
     setToPeriod("AM");
-    setEditingIndex(null);
+    setEditingTaskId(null);
     setSelectedDaysForMultiEdit(new Set());
     setSwapSearchQuery("");
     setSelectedDaysForSwap(new Set());
@@ -451,15 +460,15 @@ export default function EditRoutine({
     if (duration > 1439) return "Task cannot exceed 23 hours 59 minutes";
     if (duration < 5) return "Task must be at least 5 minutes long";
 
-    const hasDuplicateName = tasks.some((task, idx) => {
-      if (editingIndex !== null && idx === editingIndex) return false;
+    const hasDuplicateName = tasks.some((task) => {
+      if (editingTaskId && task.id === editingTaskId) return false;
       return task.name.toLowerCase() === newName.trim().toLowerCase();
     });
     if (hasDuplicateName)
       return "A task with this name already exists on this day";
 
-    const hasOverlap = tasks.some((task, idx) => {
-      if (editingIndex !== null && idx === editingIndex) return false;
+    const hasOverlap = tasks.some((task) => {
+      if (editingTaskId && task.id === editingTaskId) return false;
       const [existingFrom, existingTo] = task.time.split(" - ");
       const eFrom = timeToMinutes(existingFrom);
       const eTo = timeToMinutes(existingTo);
@@ -493,7 +502,7 @@ export default function EditRoutine({
     toPeriod,
     tasks,
     duration,
-    editingIndex,
+    editingTaskId,
   ]);
 
   // ─── Validation: multi-day ADD ─────────────────────────────
@@ -616,9 +625,9 @@ export default function EditRoutine({
     if (duration > 1439) return "Task cannot exceed 23 hours 59 minutes";
     if (duration < 5) return "Task must be at least 5 minutes long";
 
-    if (!auth?.routine || editingIndex === null) return null;
+    if (!auth?.routine || !editingTask) return null;
 
-    const originalTaskName = tasks[editingIndex]?.name;
+    const originalTaskName = editingTask.name;
     if (!originalTaskName) return null;
 
     const selectedDays = selectedDaysForMultiEdit;
@@ -698,7 +707,7 @@ export default function EditRoutine({
     toPeriod,
     auth?.routine,
     duration,
-    editingIndex,
+    editingTask,
     tasks,
     selectedDaysForMultiEdit,
     fromMins,
@@ -739,9 +748,9 @@ export default function EditRoutine({
     if (!swapSearchQuery.trim()) return null;
     if (selectedDaysForSwap.size === 0) return null;
     if (!swapTask) return "No task found with that name";
-    if (editingIndex === null) return null;
+    if (!editingTask) return null;
 
-    const originalTaskName = tasks[editingIndex]?.name;
+    const originalTaskName = editingTask.name;
     if (!originalTaskName) return null;
 
     const daysWithoutOriginal = Array.from(selectedDaysForSwap).filter(
@@ -771,8 +780,7 @@ export default function EditRoutine({
     swapSearchQuery,
     selectedDaysForSwap,
     swapTask,
-    editingIndex,
-    tasks,
+    editingTask,
     auth?.routine,
   ]);
 
@@ -793,6 +801,7 @@ export default function EditRoutine({
 
     const fullTime = `${formatTimePart(fromHour, fromMinute, fromPeriod)} - ${formatTimePart(toHour, toMinute, toPeriod)}`;
     const newTask: IRoutineItem = {
+      id: crypto.randomUUID(),
       name: newName.trim(),
       time: fullTime,
       category: newCategory || "",
@@ -834,6 +843,7 @@ export default function EditRoutine({
 
     const fullTime = `${formatTimePart(fromHour, fromMinute, fromPeriod)} - ${formatTimePart(toHour, toMinute, toPeriod)}`;
     const newTask: IRoutineItem = {
+      id: crypto.randomUUID(),
       name: newName.trim(),
       time: fullTime,
       category: newCategory || "",
@@ -872,8 +882,9 @@ export default function EditRoutine({
   };
 
   /** Open the edit form for a task */
-  const openEditPortal = (index: number) => {
-    const task = tasks[index];
+  const openEditPortal = (taskId: string) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
     const [fromTime, toTime] = task.time.split(" - ");
     const fromParsed = parseTime(fromTime);
     const toParsed = parseTime(toTime);
@@ -886,7 +897,7 @@ export default function EditRoutine({
     setToHour(toParsed.hour);
     setToMinute(toParsed.minute);
     setToPeriod(toParsed.period);
-    setEditingIndex(index);
+    setEditingTaskId(taskId);
 
     if (auth?.routine) {
       const daysWithThisTask = daysOfWeek.filter((day) =>
@@ -898,17 +909,18 @@ export default function EditRoutine({
 
   /** Edit the task on the current day only */
   const editTask = () => {
-    if (isAddDisabled || editingIndex === null) return;
+    if (isAddDisabled || !editingTask) return;
 
     const fullTime = `${formatTimePart(fromHour, fromMinute, fromPeriod)} - ${formatTimePart(toHour, toMinute, toPeriod)}`;
     const updatedTask: IRoutineItem = {
+      id: editingTask.id ?? crypto.randomUUID(),
       name: newName.trim(),
       time: fullTime,
       category: newCategory || "",
     };
 
     const updatedTasks = tasks
-      .map((task, idx) => (idx === editingIndex ? updatedTask : task))
+      .map((t) => (t.id === editingTaskId ? updatedTask : t))
       .sort(
         (a, b) =>
           timeToMinutes(a.time.split(" - ")[0]) -
@@ -930,13 +942,13 @@ export default function EditRoutine({
     setToHour("");
     setToMinute("");
     setToPeriod("AM");
-    setEditingIndex(null);
+    setEditingTaskId(null);
   };
 
   /** Edit the task across multiple selected days */
   const editTaskOnSelectedDays = () => {
     if (
-      editingIndex === null ||
+      !editingTask ||
       selectedDaysForMultiEdit.size === 0 ||
       !!multiDayEditValidationError ||
       !newName.trim()
@@ -949,7 +961,7 @@ export default function EditRoutine({
       time: fullTime,
       category: newCategory || "",
     };
-    const originalTaskName = tasks[editingIndex].name;
+    const originalTaskName = editingTask.name;
 
     if (auth) {
       const updatedRoutine = { ...auth.routine };
@@ -957,7 +969,7 @@ export default function EditRoutine({
         const currentTasks = updatedRoutine[day] || [];
         if (currentTasks.some((t) => t.name === originalTaskName)) {
           const newTasks = currentTasks
-            .map((t) => (t.name === originalTaskName ? updatedTask : t))
+            .map((t) => (t.name === originalTaskName ? { ...updatedTask, id: t.id } : t))
             .sort(
               (a, b) =>
                 timeToMinutes(a.time.split(" - ")[0]) -
@@ -980,14 +992,14 @@ export default function EditRoutine({
   /** Swap task times across selected days */
   const swapTaskOnSelectedDays = () => {
     if (
-      editingIndex === null ||
+      !editingTask ||
       selectedDaysForSwap.size === 0 ||
       !!swapValidationError ||
       !swapTask
     )
       return;
 
-    const originalTaskName = tasks[editingIndex].name;
+    const originalTaskName = editingTask.name;
     if (auth) {
       const updatedRoutine = { ...auth.routine };
       Array.from(selectedDaysForSwap).forEach((day) => {
@@ -1019,12 +1031,12 @@ export default function EditRoutine({
 
   /** Delete the task from every day of the week */
   const deleteTaskFromEveryDay = () => {
-    if (editingIndex === null) return;
+    if (!editingTask) return;
     const sure = confirm(
-      `Are you sure you want to delete this task: ${tasks[editingIndex].name} from every day?`,
+      `Are you sure you want to delete this task: ${editingTask.name} from every day?`,
     );
     if (!sure) return;
-    const taskNameToDelete = tasks[editingIndex].name;
+    const taskNameToDelete = editingTask.name;
     if (auth) {
       const updatedRoutine = { ...auth.routine };
       daysOfWeek.forEach((day) => {
@@ -1043,7 +1055,7 @@ export default function EditRoutine({
     setToHour("");
     setToMinute("");
     setToPeriod("AM");
-    setEditingIndex(null);
+    setEditingTaskId(null);
     setMessage({ type: "success", text: "Deleted from every day!" });
     setTimeout(() => setMessage(null), 2000);
   };
@@ -1134,14 +1146,14 @@ export default function EditRoutine({
   };
 
   /** Remove a single task from the current day only */
-  const removeTask = (index: number, name: string) => {
+  const removeTask = (taskId: string, name: string) => {
     const sure = confirm(
       `Are you sure you want to delete this task: ${name} from ${selectedDay
         .charAt(0)
         .toUpperCase()}${selectedDay.slice(1)}?`,
     );
     if (!sure) return;
-    const updatedTasks = tasks.filter((_, i) => i !== index);
+    const updatedTasks = tasks.filter((t) => t.id !== taskId);
     setTasks(updatedTasks);
     if (auth) {
       updateRoutineWithHistory({
@@ -1149,6 +1161,7 @@ export default function EditRoutine({
         [selectedDay]: updatedTasks,
       });
     }
+    if (editingTaskId === taskId) resetEditForm();
   };
 
   /** Save the current routine to the database */
@@ -1684,7 +1697,7 @@ export default function EditRoutine({
           className={"space-y-2 overflow-y-auto scrollbar-thin h-full pr-3 bg-[#ffffff] scrollbar-thumb-gray-400 scrollbar-track-[#f8f8f8] dark:bg-gray-950 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-900"}
         >
           {/* ── Add Task Form ────────────────────────── */}
-          {editingIndex === null && (
+          {editingTaskId === null && (
             <>
               {isPortalOpen ? (
                 <div
@@ -1846,8 +1859,8 @@ export default function EditRoutine({
             filteredTasks.map((task) => {
               const originalIndex = tasks.indexOf(task);
               return (
-                <div key={originalIndex}>
-                  {editingIndex === originalIndex ? (
+                <div key={task.id ?? originalIndex}>
+                  {editingTaskId === task.id ? (
                     /* ── Edit Portal ───────────────────── */
                     <div
                       className={"p-3 rounded text-sm border bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-800"}
@@ -1857,7 +1870,7 @@ export default function EditRoutine({
                           Edit task
                         </h4>
                         <button
-                          onClick={() => setEditingIndex(null)}
+                          onClick={() => setEditingTaskId(null)}
                           className="text-white bg-red-600 hover:bg-red-700 text-xs border-[1px] px-1 font-bold flex justify-center items-center rounded-sm border-red-600"
                         >
                           Close
@@ -1871,7 +1884,7 @@ export default function EditRoutine({
                         onChange={(e) => setNewName(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && !isAddDisabled) editTask();
-                          if (e.key === "Escape") setEditingIndex(null);
+                          if (e.key === "Escape") setEditingTaskId(null);
                         }}
                         className={"w-full px-3 py-2 text-sm rounded border mb-3 bg-white border-gray-300 focus:border-blue-500 dark:bg-gray-900 dark:border-gray-700 outline-none"}
                       />
@@ -1962,11 +1975,10 @@ export default function EditRoutine({
                             showAll
                             allLabel="All Relevant"
                             allDays={
-                              auth?.routine && editingIndex !== null
+                              auth?.routine && editingTask
                                 ? daysOfWeek.filter((day) =>
                                     (auth.routine[day] || []).some(
-                                      (t) =>
-                                        t.name === tasks[editingIndex]?.name,
+                                      (t) => t.name === editingTask.name,
                                     ),
                                   )
                                 : []
@@ -2070,13 +2082,12 @@ export default function EditRoutine({
                                   showAll
                                   allLabel="All Relevant"
                                   allDays={
-                                    editingIndex !== null && auth?.routine
+                                    editingTask && auth?.routine
                                       ? daysOfWeek.filter(
                                           (day) =>
                                             (auth.routine[day] || []).some(
                                               (t) =>
-                                                t.name ===
-                                                tasks[editingIndex]?.name,
+                                                t.name === editingTask.name,
                                             ) &&
                                             (auth.routine[day] || []).some(
                                               (t) => t.name === swapTask.name,
@@ -2125,11 +2136,11 @@ export default function EditRoutine({
                   ) : (
                     /* ── Task Card ────────────────────── */
                     <div
-                      onClick={() => openEditPortal(originalIndex)}
+                      onClick={() => openEditPortal(task.id!)}
                       className={`flex items-center justify-between p-2 rounded text-sm cursor-pointer bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 ${
                         currentActiveTask === task.name &&
                         selectedDay ===
-                          (["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][new Date().getDay()] as Day)
+                          (todayDayNames[todayIndex] as Day)
                           ? "task-blink border-green-500"
                           : ""
                       }`}
@@ -2153,15 +2164,7 @@ export default function EditRoutine({
                       <div className="flex items-center gap-1 ml-2 flex-shrink-0">
                         {/* Green check — only shown when selectedDay is today */}
                         {selectedDay ===
-                          ([
-                            "sunday",
-                            "monday",
-                            "tuesday",
-                            "wednesday",
-                            "thursday",
-                            "friday",
-                            "saturday",
-                          ][new Date().getDay()] as Day) && (
+                          (todayDayNames[todayIndex] as Day) && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -2190,7 +2193,7 @@ export default function EditRoutine({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            removeTask(originalIndex, task.name);
+                            removeTask(task.id!, task.name);
                           }}
                           className="text-red-500 hover:text-white hover:bg-red-600 text-xs border-[1px] h-[15px] w-[15px] font-bold flex justify-center items-center rounded-sm border-red-500 hover:border-red-600"
                         >

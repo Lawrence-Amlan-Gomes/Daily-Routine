@@ -54,6 +54,7 @@ export default function Admin() {
       return;
     }
     const adminEmail = auth.email;
+    let mounted = true;
 
     async function load() {
       try {
@@ -61,15 +62,17 @@ export default function Admin() {
           getAllFeedbacks(adminEmail),
           getAllUsers(),
         ]);
+        if (!mounted) return;
         setFeedbacks(feedbacksData);
         setUsers(usersData);
       } catch (err) {
         console.error("Failed to load admin data:", err);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
     load();
+    return () => { mounted = false; };
   }, [auth?.email, auth?.isAdmin]);
 
   const filteredFeedbacks =

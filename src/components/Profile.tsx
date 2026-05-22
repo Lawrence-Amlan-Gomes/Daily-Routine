@@ -28,8 +28,8 @@ const Profile = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (auth) setName(auth.name || "");
-  }, [auth]);
+    if (auth?.name !== undefined) setName(auth.name || "");
+  }, [auth?.name]);
 
   const handleUpdate = async () => {
     if (!auth || !name.trim()) return;

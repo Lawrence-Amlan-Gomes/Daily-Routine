@@ -17,54 +17,28 @@ const ChangePassword = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [oldError, setOldError] = useState({
-    iserror: true,
-    error: "Current password is required",
-  });
-  const [newError, setNewError] = useState({
-    iserror: true,
-    error: "At least 8 characters required",
-  });
-  const [confirmError, setConfirmError] = useState({
-    iserror: true,
-    error: "At least 8 characters required",
-  });
-
+  const [oldServerError, setOldServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [serverMsg, setServerMsg] = useState("");
   const [success, setSuccess] = useState(false);
 
+  const oldError = oldServerError
+    ? { iserror: true, error: oldServerError }
+    : { iserror: !oldPassword, error: oldPassword ? "" : "Current password is required" };
+  const newError = {
+    iserror: newPassword.length < 8,
+    error: newPassword.length >= 8 ? "" : "At least 8 characters required",
+  };
+  const confirmError =
+    confirmPassword.length < 8
+      ? { iserror: true, error: "At least 8 characters required" }
+      : newPassword !== confirmPassword
+        ? { iserror: true, error: "Passwords do not match" }
+        : { iserror: false, error: "" };
+
   useEffect(() => {
     if (!auth) router.push("/login");
   }, [auth, router]);
-
-  useEffect(() => {
-    setOldError({
-      iserror: !oldPassword,
-      error: oldPassword ? "" : "Current password is required",
-    });
-  }, [oldPassword]);
-
-  useEffect(() => {
-    const ok = newPassword.length >= 8;
-    setNewError({
-      iserror: !ok,
-      error: ok ? "" : "At least 8 characters required",
-    });
-  }, [newPassword]);
-
-  useEffect(() => {
-    if (confirmPassword.length < 8) {
-      setConfirmError({
-        iserror: true,
-        error: "At least 8 characters required",
-      });
-    } else if (newPassword !== confirmPassword) {
-      setConfirmError({ iserror: true, error: "Passwords do not match" });
-    } else {
-      setConfirmError({ iserror: false, error: "" });
-    }
-  }, [newPassword, confirmPassword]);
 
   const isFormValid =
     !oldError.iserror && !newError.iserror && !confirmError.iserror;
@@ -78,7 +52,7 @@ const ChangePassword = () => {
       setSuccess(true);
     } catch (err: unknown) {
       if (err instanceof Error && err.message === "INCORRECT_OLD_PASSWORD") {
-        setOldError({ iserror: true, error: "Current password is incorrect" });
+        setOldServerError("Current password is incorrect");
       } else {
         setServerMsg("Something went wrong. Please try again.");
       }
@@ -204,6 +178,7 @@ const ChangePassword = () => {
               setValue={(v) => {
                 setOldPassword(v);
                 setServerMsg("");
+                setOldServerError(null);
               }}
               iserror={oldError.iserror}
               error={oldError.error}

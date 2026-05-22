@@ -325,17 +325,8 @@ export default function AIRoutineBoard() {
   const [loadingRoutine, setLoadingRoutine] = useState(true);
   const [selectedDay, setSelectedDay] = useState<Day>("saturday");
   const [zoomLevel, setZoomLevel] = useState(3.5);
-  const [nowHeight, setNowHeight] = useState(() => {
-    const now = new Date();
-    return (now.getHours() * 60 + now.getMinutes()) * 3.5 + 20;
-  });
-  const [currentTime, setCurrentTime] = useState(
-    new Date().toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    }),
-  );
+  const [nowHeight, setNowHeight] = useState(20);
+  const [currentTime, setCurrentTime] = useState("");
   const [daysOfWeekOrder, setDaysOfWeekOrder] = useState([
     { full: "Saturday", short: "Sat" },
     { full: "Sunday", short: "Sun" },
@@ -472,10 +463,7 @@ export default function AIRoutineBoard() {
 
   // ── Premium check ──────────────────────────────────────────
   const MAX_RESPONSES = 100; // Updated to 100 per month
-  const currentMonthStr = new Date().toLocaleDateString("en-CA", {
-    year: "numeric",
-    month: "2-digit",
-  });
+  const [currentMonthStr, setCurrentMonthStr] = useState("");
 
   const isPremium = (): boolean =>
     (auth?.paymentType?.toLowerCase() ?? "").includes("premium");
@@ -494,7 +482,7 @@ export default function AIRoutineBoard() {
   const hourHeight = 60 * pxPerMinute;
   const minutesPerSlot = getMinutesPerSlot(zoomLevel);
   const slotsPerHour = 60 / minutesPerSlot;
-  const today = new Date().toLocaleString("en-US", { weekday: "long" });
+  const [today, setToday] = useState("");
 
   // ── Animation (mirrors DashBoard) ─────────────────────────
   const spring = { stiffness: 320, damping: 32, mass: 1 };
@@ -510,10 +498,15 @@ export default function AIRoutineBoard() {
 
   // ── Effects ────────────────────────────────────────────────
   useEffect(() => {
+    const now = new Date();
     setHasMounted(true);
+    setCurrentMonthStr(
+      now.toLocaleDateString("en-CA", { year: "numeric", month: "2-digit" }),
+    );
+    setToday(now.toLocaleString("en-US", { weekday: "long" }));
+    setSelectedDay(now.toLocaleString("en-US", { weekday: "long" }).toLowerCase() as Day);
   }, []);
 
-  // ── Audio setup ────────────────────────────────────────────
   useEffect(() => {
     if (!_aiPersistedAudio) {
       _aiPersistedAudio = new Audio("/ringtone.mp3");
@@ -614,37 +607,36 @@ export default function AIRoutineBoard() {
     if (!auth?.email || !isPremium()) return;
     const parts = auth.thisMonthPremiumResponses?.split(" ") ?? [];
     if (parts.length === 2 && parts[0] === currentMonthStr) return;
+    const snapshot = auth;
     const newValue = `${currentMonthStr} 0`;
-    setAuth({ ...auth, thisMonthPremiumResponses: newValue });
-    incrementThisMonthPremiumCount(auth.email, newValue)
-      .then((result) => console.log("Monthly initialization result:", result))
-      .catch((error) =>
-        console.error("Failed to initialize monthly count:", error),
-      );
+    let mounted = true;
+    setAuth({ ...snapshot, thisMonthPremiumResponses: newValue });
+    incrementThisMonthPremiumCount(snapshot.email, newValue)
+      .then((result) => { if (mounted) console.log("Monthly initialization result:", result); })
+      .catch((error) => { if (mounted) console.error("Failed to initialize monthly count:", error); });
+    return () => { mounted = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth?.email]);
 
   useEffect(() => {
     if (!auth?.email) return;
+    const email = auth.email;
+    let mounted = true;
     setLoadingRoutine(true);
-    getAIRoutineDoc(auth.email)
+    getAIRoutineDoc(email)
       .then(({ aiRoutine, chatHistory }) => {
+        if (!mounted) return;
         setAiRoutine(aiRoutine);
         setChatHistory(chatHistory);
         setLoadingRoutine(false);
       })
       .catch((err) => {
+        if (!mounted) return;
         console.error("Failed to load AI routine:", err);
         setLoadingRoutine(false);
       });
+    return () => { mounted = false; };
   }, [auth?.email]);
-
-  useEffect(() => {
-    const todayLower = new Date()
-      .toLocaleString("en-US", { weekday: "long" })
-      .toLowerCase() as Day;
-    setSelectedDay(todayLower);
-  }, []);
 
   useEffect(() => {
     const update = () => {
@@ -664,16 +656,21 @@ export default function AIRoutineBoard() {
   }, [pxPerMinute]);
 
   useEffect(() => {
-    setTimeout(scrollAllChatsToBottom, 80);
+    const id = setTimeout(scrollAllChatsToBottom, 80);
+    return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeMessages.length, activeMessages[activeMessages.length - 1]?.text]);
 
   useEffect(() => {
-    if (isSidebarOpen) {
-      setTimeout(scrollAllChatsToBottom, 100);
-      setTimeout(scrollAllChatsToBottom, 300);
-      setTimeout(scrollAllChatsToBottom, 600);
-    }
+    if (!isSidebarOpen) return;
+    const t1 = setTimeout(scrollAllChatsToBottom, 100);
+    const t2 = setTimeout(scrollAllChatsToBottom, 300);
+    const t3 = setTimeout(scrollAllChatsToBottom, 600);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
   }, [isSidebarOpen]);
 
   // ── Keyboard shortcuts ─────────────────────────────────────
@@ -965,8 +962,8 @@ export default function AIRoutineBoard() {
     const timestamp = new Date().toISOString();
     setIsThinking(true);
 
-    const userMsgObj: ChatMessage = { role: "user", text: userMsg, timestamp };
-    const loadingMsg: ChatMessage = { role: "ai", text: "loading", timestamp };
+    const userMsgObj: ChatMessage = { id: crypto.randomUUID(), role: "user", text: userMsg, timestamp };
+    const loadingMsg: ChatMessage = { id: crypto.randomUUID(), role: "ai", text: "loading", timestamp };
 
     setChatHistory((prev) => {
       const existing = prev.find((s) => s.date === activeDate);
@@ -1003,6 +1000,7 @@ export default function AIRoutineBoard() {
         JSON.stringify(aiRoutine),
       );
       const aiMsg: ChatMessage = {
+        id: crypto.randomUUID(),
         role: "ai",
         text: result.text,
         timestamp: new Date().toISOString(),
@@ -1044,6 +1042,7 @@ export default function AIRoutineBoard() {
       }
     } catch {
       const errMsg: ChatMessage = {
+        id: crypto.randomUUID(),
         role: "ai",
         text: "Sorry, something went wrong. Please try again.",
         timestamp: new Date().toISOString(),
@@ -1535,7 +1534,7 @@ export default function AIRoutineBoard() {
                   i === activeMessages.length - 1 &&
                   isThinking;
                 return (
-                  <div key={i} className="mb-2">
+                  <div key={msg.id ?? `${msg.timestamp}-${msg.role}`} className="mb-2">
                     {msg.role === "user" ? (
                       <div className="flex flex-col items-end gap-0.5">
                         <div
@@ -2184,7 +2183,7 @@ export default function AIRoutineBoard() {
                   const isSelected = selectedDateIndex === idx;
                   return (
                     <button
-                      key={idx}
+                      key={d.dateStr}
                       onClick={() => {
                         setSelectedDay(d.dayName.toLowerCase() as Day);
                         setSelectedDateIndex(idx);

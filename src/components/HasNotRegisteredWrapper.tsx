@@ -14,8 +14,7 @@ export default function HasNotRegisteredWrapper({
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHasMounted(true);
+    setHasMounted(true); // eslint-disable-line react-hooks/set-state-in-effect
   }, []);
 
   useEffect(() => {

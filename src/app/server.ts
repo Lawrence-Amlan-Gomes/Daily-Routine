@@ -107,8 +107,8 @@ Only include the ROUTINE_UPDATE block when you are actually making changes. Alwa
       try {
         const parsed = JSON.parse(routineMatch[1].trim());
         updatedRoutine = parsed;
-      } catch {
-        // malformed JSON — ignore update
+      } catch (e) {
+        console.error("[aiRoutineResponse] Malformed JSON from Gemini:", e);
       }
       displayText = fullText
         .replace(/<<<ROUTINE_UPDATE>>>[\s\S]*?<<<END_ROUTINE_UPDATE>>>/g, "")

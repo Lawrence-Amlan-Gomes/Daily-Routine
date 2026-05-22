@@ -26,28 +26,19 @@ const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const [emailError, setEmailError] = useState({
-    iserror: true,
-    error: "Email is required",
-  });
-  const [passwordError, setPasswordError] = useState({
-    iserror: true,
-    error: "Password is required",
-  });
   const [mainError, setMainError] = useState({ isError: false, error: "" });
   const [googleError, setGoogleError] = useState({ isError: false, error: "" });
 
+  // Derived validation — no state needed
+  const emailError = email
+    ? { iserror: false, error: "" }
+    : { iserror: true, error: "Email is required" };
+  const passwordError = password
+    ? { iserror: false, error: "" }
+    : { iserror: true, error: "Password is required" };
+
+  // Clear server errors when the user edits the form
   useEffect(() => {
-    setEmailError(
-      email
-        ? { iserror: false, error: "" }
-        : { iserror: true, error: "Email is required" },
-    );
-    setPasswordError(
-      password
-        ? { iserror: false, error: "" }
-        : { iserror: true, error: "Password is required" },
-    );
     setMainError({ isError: false, error: "" });
     setGoogleError({ isError: false, error: "" });
   }, [email, password]);

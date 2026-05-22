@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 // Define the props interface
 interface EachFieldProps {
@@ -28,17 +28,8 @@ const EachField = ({
   error,
   showToggle = false,
 }: EachFieldProps) => {
-  const [firstTime, setFirstTime] = useState(true);
+  const firstTime = value === "";
   const [showPassword, setShowPassword] = useState(false);
-
-  useEffect(() => {
-    if (value === "") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFirstTime(true);
-    } else {
-      setFirstTime(false);
-    }
-  }, [value]);
 
   const inputType =
     type === "password" && showToggle

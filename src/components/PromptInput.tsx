@@ -20,8 +20,7 @@ export default function PromptInput({
   const [iAmThinking, setIAmThinking] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIAmThinking(false);
+    setIAmThinking(false); // eslint-disable-line react-hooks/set-state-in-effect
   }, [aiResponse]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

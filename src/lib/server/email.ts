@@ -2,9 +2,12 @@
 import nodemailer from "nodemailer";
 // sendVerificationEmail removed — OTP flow replaces it
 
-if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-  console.error("SMTP_USER and SMTP_PASS must be set in environment");
+if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS || !process.env.SMTP_FROM) {
+  throw new Error("[email.ts] Missing required SMTP env vars: SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_FROM");
 }
+
+const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
+if (!baseUrl) throw new Error("[email.ts] Neither NEXTAUTH_URL nor NEXT_PUBLIC_APP_URL is set");
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -14,6 +17,12 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+});
+
+transporter.verify((error) => {
+  if (error) {
+    console.error("[email] SMTP transporter verify failed:", error);
+  }
 });
 
 export async function sendOtpEmail(email: string, name: string, code: string) {
@@ -173,7 +182,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
         <!-- CTA -->
         <tr>
           <td style="padding:0 48px 40px;text-align:center;">
-            <a href="${process.env.NEXTAUTH_URL}/login"
+            <a href="${baseUrl}/login"
                style="display:inline-block;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 40px;border-radius:10px;letter-spacing:0.2px;box-shadow:0 4px 12px rgba(37,99,235,0.30);">
               Get Started →
             </a>
@@ -204,106 +213,6 @@ export async function sendWelcomeEmail(email: string, name: string) {
     return { success: true };
   } catch (error) {
     console.error("Welcome email send error:", error);
-    return { success: false, error };
-  }
-}
-
-// ← NEW: Send success email after verification
-export async function sendVerificationSuccessEmail(
-  email: string,
-  name: string,
-) {
-  const mailOptions = {
-    from: process.env.SMTP_FROM,
-    to: email,
-    subject: "My Daily Routine — Email Verified Successfully",
-    html: `
-<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Email Verified</title></head>
-<body style="margin:0;padding:0;background-color:#f0f4ff;font-family:'Segoe UI',Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4ff;padding:40px 0;">
-    <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(37,99,235,0.10);">
-
-        <!-- Header -->
-        <tr>
-          <td style="background:linear-gradient(135deg,#1d4ed8 0%,#3b82f6 100%);padding:48px 48px 40px;text-align:center;">
-            <div style="display:inline-block;background:rgba(255,255,255,0.18);border-radius:50%;width:72px;height:72px;line-height:72px;font-size:36px;margin-bottom:18px;">✅</div>
-            <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;letter-spacing:-0.3px;">Email Verified!</h1>
-            <p style="margin:10px 0 0;color:#bfdbfe;font-size:15px;">My Daily Routine</p>
-          </td>
-        </tr>
-
-        <!-- Success badge -->
-        <tr>
-          <td style="padding:32px 48px 0;text-align:center;">
-            <span style="display:inline-block;background:#eff6ff;border:1px solid #bfdbfe;border-radius:999px;padding:8px 20px;font-size:13px;font-weight:600;color:#1d4ed8;letter-spacing:0.3px;">
-              Account activated
-            </span>
-          </td>
-        </tr>
-
-        <!-- Body -->
-        <tr>
-          <td style="padding:24px 48px 32px;">
-            <p style="margin:0 0 8px;font-size:18px;font-weight:600;color:#1e293b;">Hi ${name},</p>
-            <p style="margin:0 0 20px;font-size:15px;color:#475569;line-height:1.7;">
-              Great news — your email address has been successfully verified. Your account is now fully active and you have access to everything My Daily Routine has to offer.
-            </p>
-
-            <!-- Checkmark list -->
-            <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:4px 0;margin-bottom:28px;">
-              <tr><td style="padding:12px 20px;">
-                <span style="color:#3b82f6;font-size:16px;margin-right:10px;">✦</span>
-                <span style="font-size:14px;color:#334155;">Create and manage your daily routines</span>
-              </td></tr>
-              <tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;">
-                <span style="color:#3b82f6;font-size:16px;margin-right:10px;">✦</span>
-                <span style="font-size:14px;color:#334155;">Set goals and track your progress</span>
-              </td></tr>
-              <tr><td style="padding:12px 20px;border-top:1px solid #e2e8f0;">
-                <span style="color:#3b82f6;font-size:16px;margin-right:10px;">✦</span>
-                <span style="font-size:14px;color:#334155;">Build streaks and stay consistent</span>
-              </td></tr>
-            </table>
-          </td>
-        </tr>
-
-        <!-- CTA -->
-        <tr>
-          <td style="padding:0 48px 40px;text-align:center;">
-            <a href="${process.env.NEXTAUTH_URL}/login"
-               style="display:inline-block;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 40px;border-radius:10px;letter-spacing:0.2px;box-shadow:0 4px 12px rgba(37,99,235,0.30);">
-              Sign In to Your Account →
-            </a>
-          </td>
-        </tr>
-
-        <!-- Divider -->
-        <tr><td style="padding:0 48px;"><div style="border-top:1px solid #e2e8f0;"></div></td></tr>
-
-        <!-- Footer -->
-        <tr>
-          <td style="padding:24px 48px 36px;text-align:center;">
-            <p style="margin:0 0 4px;font-size:13px;color:#94a3b8;">Thank you for choosing</p>
-            <p style="margin:0;font-size:13px;font-weight:600;color:#3b82f6;">My Daily Routine</p>
-          </td>
-        </tr>
-
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>
-    `,
-  };
-
-  try {
-    await transporter.sendMail(mailOptions);
-    return { success: true };
-  } catch (error) {
-    console.error("Success email send error:", error);
     return { success: false, error };
   }
 }

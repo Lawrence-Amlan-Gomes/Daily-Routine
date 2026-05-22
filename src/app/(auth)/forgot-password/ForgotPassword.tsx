@@ -18,10 +18,6 @@ const ForgotPassword = () => {
 
   // email step
   const [email, setEmail] = useState("");
-  const [emailError, setEmailError] = useState({
-    iserror: true,
-    error: "Email is required",
-  });
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [sendError, setSendError] = useState("");
 
@@ -36,60 +32,37 @@ const ForgotPassword = () => {
   // reset step
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [newPasswordError, setNewPasswordError] = useState({
-    iserror: true,
-    error: "Password must be at least 8 characters",
-  });
-  const [confirmPasswordError, setConfirmPasswordError] = useState({
-    iserror: true,
-    error: "Password must be at least 8 characters",
-  });
   const [isResetting, setIsResetting] = useState(false);
   const [resetError, setResetError] = useState("");
+
+  // Derived validation — computed every render, no state needed
+  const emailError = !email
+    ? { iserror: true, error: "Email is required" }
+    : !email.endsWith("@gmail.com")
+      ? { iserror: true, error: "Use @gmail.com as your email format" }
+      : { iserror: false, error: "" };
+
+  const newPasswordError = newPassword.length >= 8
+    ? { iserror: false, error: "" }
+    : { iserror: true, error: "Password must be at least 8 characters" };
+
+  const confirmPasswordError =
+    confirmPassword.length < 8
+      ? { iserror: true, error: "Password must be at least 8 characters" }
+      : newPassword !== confirmPassword
+        ? { iserror: true, error: "Passwords do not match" }
+        : { iserror: false, error: "" };
+
+  // Clear server-side send error when email changes
+  useEffect(() => {
+    setSendError("");
+  }, [email]);
 
   useEffect(() => {
     return () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
   }, []);
-
-  useEffect(() => {
-    if (!email) {
-      setEmailError({ iserror: true, error: "Email is required" });
-    } else if (!email.endsWith("@gmail.com")) {
-      setEmailError({
-        iserror: true,
-        error: "Use @gmail.com as your email format",
-      });
-    } else {
-      setEmailError({ iserror: false, error: "" });
-    }
-    setSendError("");
-  }, [email]);
-
-  useEffect(() => {
-    setNewPasswordError(
-      newPassword.length >= 8
-        ? { iserror: false, error: "" }
-        : { iserror: true, error: "Password must be at least 8 characters" },
-    );
-  }, [newPassword]);
-
-  useEffect(() => {
-    if (confirmPassword.length < 8) {
-      setConfirmPasswordError({
-        iserror: true,
-        error: "Password must be at least 8 characters",
-      });
-    } else if (newPassword !== confirmPassword) {
-      setConfirmPasswordError({
-        iserror: true,
-        error: "Passwords do not match",
-      });
-    } else {
-      setConfirmPasswordError({ iserror: false, error: "" });
-    }
-  }, [newPassword, confirmPassword]);
 
   const startCountdown = () => {
     setOtpCountdown(60);

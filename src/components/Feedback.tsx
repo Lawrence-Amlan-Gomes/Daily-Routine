@@ -36,10 +36,12 @@ export default function Feedback() {
       return;
     }
     const userEmail = user.email;
+    let mounted = true;
 
     async function load() {
       try {
         const data = await getMyFeedback(userEmail);
+        if (!mounted) return;
         if (data) {
           setRating(data.rating);
           setComment(data.comment);
@@ -49,16 +51,18 @@ export default function Feedback() {
           }
         }
       } catch (err) {
+        if (!mounted) return;
         if (err instanceof Error && err.message === "UNAUTHORIZED") {
           dispatch(logout());
         } else {
           console.error("Failed to load feedback:", err);
         }
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
     load();
+    return () => { mounted = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email]);
 

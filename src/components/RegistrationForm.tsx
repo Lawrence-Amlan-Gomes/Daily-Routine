@@ -31,66 +31,31 @@ const RegistrationForm = () => {
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const pendingUserData = useRef<{
+  const [pendingUserData, setPendingUserData] = useState<{
     name: string;
     email: string;
     password: string;
   } | null>(null);
 
-  const [nameError, setNameError] = useState({
-    iserror: true,
-    error: "Name is required",
-  });
-  const [emailError, setEmailError] = useState({
-    iserror: true,
-    error: "Email is required",
-  });
-  const [passwordError, setPasswordError] = useState({
-    iserror: true,
-    error: "Your password must be at least 8 characters",
-  });
   const [googleError, setGoogleError] = useState({ isError: false, error: "" });
   const [successMessage, setSuccessMessage] = useState("");
-  const [noError, setNoError] = useState(false);
+  const [emailServerError, setEmailServerError] = useState<string | null>(null);
 
-  // Validation
-  useEffect(() => {
-    setNameError(
-      name
-        ? { iserror: false, error: "" }
-        : { iserror: true, error: "Name is required" },
-    );
-  }, [name]);
-
-  useEffect(() => {
-    if (!email) {
-      setEmailError({ iserror: true, error: "Email is required" });
-    } else if (!email.endsWith("@gmail.com")) {
-      setEmailError({
-        iserror: true,
-        error: "Use @gmail.com as your email format",
-      });
-    } else {
-      setEmailError({ iserror: false, error: "" });
-    }
-  }, [email]);
-
-  useEffect(() => {
-    setPasswordError(
-      password.length >= 8
-        ? { iserror: false, error: "" }
-        : {
-            iserror: true,
-            error: "Your password must be at least 8 characters",
-          },
-    );
-  }, [password]);
-
-  useEffect(() => {
-    setNoError(
-      !nameError.iserror && !emailError.iserror && !passwordError.iserror,
-    );
-  }, [nameError.iserror, emailError.iserror, passwordError.iserror]);
+  // Derived validation — computed every render, no state needed
+  const nameError = name
+    ? { iserror: false, error: "" }
+    : { iserror: true, error: "Name is required" };
+  const emailError = emailServerError
+    ? { iserror: true, error: emailServerError }
+    : !email
+      ? { iserror: true, error: "Email is required" }
+      : !email.endsWith("@gmail.com")
+        ? { iserror: true, error: "Use @gmail.com as your email format" }
+        : { iserror: false, error: "" };
+  const passwordError = password.length >= 8
+    ? { iserror: false, error: "" }
+    : { iserror: true, error: "Your password must be at least 8 characters" };
+  const noError = !nameError.iserror && !emailError.iserror && !passwordError.iserror;
 
   useEffect(() => {
     if (googleError.isError) {
@@ -158,7 +123,7 @@ const RegistrationForm = () => {
 
   const submitForm = async () => {
     if (!noError) return;
-    pendingUserData.current = { name, email, password };
+    setPendingUserData({ name, email, password });
     await sendOtp(name, email);
   };
 
@@ -167,7 +132,7 @@ const RegistrationForm = () => {
       setOtpError("Please enter the full 6-digit code.");
       return;
     }
-    if (!pendingUserData.current) return;
+    if (!pendingUserData) return;
 
     setIsVerifying(true);
     setOtpError("");
@@ -177,7 +142,7 @@ const RegistrationForm = () => {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: pendingUserData.current.email,
+          email: pendingUserData.email,
           code: otpCode,
         }),
       });
@@ -189,7 +154,7 @@ const RegistrationForm = () => {
         return;
       }
 
-      const { name: n, email: e, password: p } = pendingUserData.current;
+      const { name: n, email: e, password: p } = pendingUserData;
       await createUser({
         name: n,
         email: e,
@@ -203,10 +168,7 @@ const RegistrationForm = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       if (err.message === "EMAIL_ALREADY_EXISTS") {
-        setEmailError({
-          iserror: true,
-          error: "This email is already registered",
-        });
+        setEmailServerError("This email is already registered");
         setOtpSent(false);
         setOtpCode("");
       } else {
@@ -245,53 +207,59 @@ const RegistrationForm = () => {
   );
 
   useEffect(() => {
-    if (session?.user && isGoogleClicked) {
-      setIsLoadingGoogle(true);
-      const user = session.user;
+    if (!session?.user || !isGoogleClicked) return;
+    let mounted = true;
+    setIsLoadingGoogle(true);
+    const user = session.user;
 
-      const run = async () => {
-        if (!user.email) {
+    const run = async () => {
+      if (!user.email) {
+        if (mounted) {
           setGoogleError({
             isError: true,
             error: "Google account has no email. Please try again.",
           });
           setIsGoogleClicked(false);
-          return;
         }
+        return;
+      }
 
-        const userEmail = user.email;
+      const userEmail = user.email;
 
-        try {
-          await createUser({
-            name: user.name ?? userEmail.split("@")[0],
-            email: userEmail,
-            password: "",
-            photo: "",
-            isRegisteredWithGoogle: true,
-            isEmailVerified: true,
+      try {
+        await createUser({
+          name: user.name ?? userEmail.split("@")[0],
+          email: userEmail,
+          password: "",
+          photo: "",
+          isRegisteredWithGoogle: true,
+          isEmailVerified: true,
+        });
+        if (mounted) setSuccessMessage(`${userEmail} successfully registered`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
+        if (!mounted) return;
+        if (err.message === "EMAIL_ALREADY_EXISTS") {
+          setGoogleError({
+            isError: true,
+            error: `${userEmail} is already registered. Please sign in instead.`,
           });
-          setSuccessMessage(`${userEmail} successfully registered`);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-          if (err.message === "EMAIL_ALREADY_EXISTS") {
-            setGoogleError({
-              isError: true,
-              error: `${userEmail} is already registered. Please sign in instead.`,
-            });
-          } else {
-            setGoogleError({
-              isError: true,
-              error: "Registration failed. Please try again.",
-            });
-          }
-        } finally {
+        } else {
+          setGoogleError({
+            isError: true,
+            error: "Registration failed. Please try again.",
+          });
+        }
+      } finally {
+        if (mounted) {
           setIsLoadingGoogle(false);
           setIsGoogleClicked(false);
         }
-      };
+      }
+    };
 
-      run();
-    }
+    run();
+    return () => { mounted = false; };
   }, [session, isGoogleClicked]);
 
   return (
@@ -337,7 +305,7 @@ const RegistrationForm = () => {
               <span
                 className={`font-semibold text-gray-700 dark:text-gray-200`}
               >
-                {pendingUserData.current?.email}
+                {pendingUserData?.email}
               </span>
             </p>
 
@@ -423,8 +391,8 @@ const RegistrationForm = () => {
             <button
               onClick={() =>
                 sendOtp(
-                  pendingUserData.current?.name ?? name,
-                  pendingUserData.current?.email ?? email,
+                  pendingUserData?.name ?? name,
+                  pendingUserData?.email ?? email,
                 )
               }
               disabled={isSendingOtp || otpCountdown > 0}
@@ -452,7 +420,7 @@ const RegistrationForm = () => {
                 setOtpCode("");
                 setOtpError("");
                 setOtpSuccess("");
-                pendingUserData.current = null;
+                setPendingUserData(null);
               }}
               className={`mt-5 text-xs sm:text-sm underline underline-offset-2 transition-colors duration-200 cursor-pointer bg-transparent border-none text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300`}
             >
@@ -502,7 +470,7 @@ const RegistrationForm = () => {
             <p
               className={`text-sm mb-1 text-gray-500 dark:text-gray-400`}
             >
-              {pendingUserData.current?.email} is now registered.
+              {pendingUserData?.email} is now registered.
             </p>
             <p
               className={`text-xs text-gray-400 dark:text-gray-500`}
@@ -536,7 +504,7 @@ const RegistrationForm = () => {
                 isReal={false}
                 placeholder="Enter your email"
                 value={email}
-                setValue={setEmail}
+                setValue={(v) => { setEmail(v); setEmailServerError(null); }}
                 iserror={emailError.iserror}
                 error={emailError.error}
               />
@@ -572,7 +540,7 @@ const RegistrationForm = () => {
               isReal={true}
               placeholder="Enter your email"
               value={email}
-              setValue={setEmail}
+              setValue={(v) => { setEmail(v); setEmailServerError(null); }}
               iserror={emailError.iserror}
               error={emailError.error}
             />

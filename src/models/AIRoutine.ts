@@ -12,6 +12,7 @@ const AIRoutineItemSchema = new mongoose.Schema(
 
 const ChatMessageSchema = new mongoose.Schema(
   {
+    id: { type: String },
     role: { type: String, enum: ["user", "ai"], required: true },
     text: { type: String, required: true },
     timestamp: { type: String, required: true },

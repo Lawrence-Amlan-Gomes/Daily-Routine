@@ -1,6 +1,14 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 export default function CancellationPolicy() {
+  const [lastUpdated, setLastUpdated] = useState("");
+
+  useEffect(() => {
+    setLastUpdated(new Date().toLocaleDateString());
+  }, []);
+
   return (
     <div className="px-[8%] sm:px-[10%] mt-[20%] sm:mt-[10%] mb-[5%] pb-[5%] w-full bg-[#ffffff] dark:bg-[#000000] text-[#1f2937] dark:text-[#e5e7eb]">
       <div className="max-w-4xl mx-auto text-left">
@@ -8,7 +16,7 @@ export default function CancellationPolicy() {
           Cancellation Policy
         </h1>
         <p className="text-sm sm:text-base opacity-80 mb-8">
-          Last updated: {new Date().toLocaleDateString()}
+          Last updated: {lastUpdated}
         </p>
 
         <div className="space-y-6 text-sm sm:text-base leading-7">
