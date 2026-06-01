@@ -1,7 +1,7 @@
 "use client";
 
 import colors from "@/app/color/color";
-import { motion } from "framer-motion";
+import { LazyMotion, domAnimation, m } from "framer-motion";
 import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
@@ -88,14 +88,15 @@ export default function Hero() {
   }
 
   return (
-    <motion.div
+    <LazyMotion features={domAnimation}>
+    <m.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
       className="w-full px-5 sm:px-8 md:px-[10%] flex flex-col md:flex-row items-center justify-between gap-12 md:gap-10"
     >
       {/* Left — Text content */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, x: -24 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.15, duration: 0.7 }}
@@ -151,10 +152,10 @@ export default function Hero() {
         <p className="text-xs text-gray-500 dark:text-gray-500">
           30-day free trial &mdash; no credit card required
         </p>
-      </motion.div>
+      </m.div>
 
       {/* Right — Video */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, x: 24 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.25, duration: 0.7 }}
@@ -233,7 +234,8 @@ export default function Hero() {
             </div>
           </div>
         </div>
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
+    </LazyMotion>
   );
 }

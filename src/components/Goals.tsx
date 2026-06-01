@@ -28,7 +28,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -535,7 +535,7 @@ function GoalForm({
 
 // ─── Goal Card ────────────────────────────────────────────────────────────────
 
-function GoalCard({
+const GoalCard = memo(function GoalCard({
   goal,
   onEdit,
   onDelete,
@@ -830,7 +830,7 @@ function GoalCard({
       )}
     </div>
   );
-}
+});
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 

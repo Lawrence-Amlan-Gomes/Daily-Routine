@@ -28,6 +28,7 @@ const ForgotPassword = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mountedRef = useRef(true);
 
   // reset step
   const [newPassword, setNewPassword] = useState("");
@@ -42,9 +43,11 @@ const ForgotPassword = () => {
       ? { iserror: true, error: "Use @gmail.com as your email format" }
       : { iserror: false, error: "" };
 
-  const newPasswordError = newPassword.length >= 8
-    ? { iserror: false, error: "" }
-    : { iserror: true, error: "Password must be at least 8 characters" };
+  const newPasswordError = newPassword.length > 72
+    ? { iserror: true, error: "Password must be 72 characters or fewer" }
+    : newPassword.length >= 8
+      ? { iserror: false, error: "" }
+      : { iserror: true, error: "Password must be at least 8 characters" };
 
   const confirmPasswordError =
     confirmPassword.length < 8
@@ -62,6 +65,10 @@ const ForgotPassword = () => {
     return () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
+  }, []);
+
+  useEffect(() => {
+    return () => { mountedRef.current = false; };
   }, []);
 
   const startCountdown = () => {
@@ -91,6 +98,7 @@ const ForgotPassword = () => {
         body: JSON.stringify({ email: targetEmail, name: "User" }),
       });
       const data = await res.json();
+      if (!mountedRef.current) return;
 
       if (data.success) {
         setStep("otp");
@@ -122,6 +130,7 @@ const ForgotPassword = () => {
         body: JSON.stringify({ email, code: otpCode }),
       });
       const data = await res.json();
+      if (!mountedRef.current) return;
 
       if (data.success) {
         setStep("reset");
@@ -150,6 +159,8 @@ const ForgotPassword = () => {
         setResetError("Verification session expired. Please start over.");
       } else if (msg === "USER_NOT_FOUND") {
         setResetError("No account found with this email.");
+      } else if (msg.includes("PASSWORD_TOO_LONG")) {
+        setResetError("Password must be 72 characters or fewer");
       } else {
         setResetError("Failed to reset password. Please try again.");
       }

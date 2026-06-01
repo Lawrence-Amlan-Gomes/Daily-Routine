@@ -1,7 +1,7 @@
 "use client";
 
 import colors from "@/app/color/color";
-import { motion } from "framer-motion";
+import { LazyMotion, domAnimation, m } from "framer-motion";
 import { Bot, CalendarCheck, TrendingUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -106,9 +106,10 @@ export default function HowToUse() {
   }, []);
 
   return (
+    <LazyMotion features={domAnimation}>
     <div className="w-full px-5 sm:px-8 md:px-[10%]">
       {/* Section header */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -126,12 +127,12 @@ export default function HowToUse() {
           My Daily Routine guides you from setting intentions to building
           lasting habits — no willpower required.
         </p>
-      </motion.div>
+      </m.div>
 
       {/* Steps row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-14 md:mb-16">
         {STEPS.map(({ icon: Icon, step, title, description }, i) => (
-          <motion.div
+          <m.div
             key={step}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -153,12 +154,12 @@ export default function HowToUse() {
             <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
               {description}
             </p>
-          </motion.div>
+          </m.div>
         ))}
       </div>
 
       {/* Video */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, scale: 0.98 }}
         whileInView={{ opacity: 1, scale: 1 }}
         viewport={{ once: true }}
@@ -238,7 +239,8 @@ export default function HowToUse() {
             </div>
           </div>
         </div>
-      </motion.div>
+      </m.div>
     </div>
+    </LazyMotion>
   );
 }

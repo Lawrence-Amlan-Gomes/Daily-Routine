@@ -1,5 +1,5 @@
 "use client";
-import { motion, Variants } from "framer-motion";
+import { LazyMotion, domAnimation, m, Variants } from "framer-motion";
 import { useState } from "react";
 import { CgCopy } from "react-icons/cg";
 
@@ -128,6 +128,7 @@ export default function EachInputOutput({
   };
 
   return (
+    <LazyMotion features={domAnimation}>
     <div className="w-full relative">
       {/* User Input */}
       <div className="relative w-full">
@@ -172,15 +173,15 @@ export default function EachInputOutput({
         className={`w-[78%] mr-[20%] ml-[2%] text-[#111111] dark:text-[#dddddd] text-justify pr-3 pl-2 rounded-md sm:mb-10 mb-6 relative`}
       >
         {isLast && isLoading ? (
-          <motion.div
+          <m.div
             className="flex items-center space-x-2"
             variants={typingVariants}
             animate="animate"
           >
-            <motion.span className="inline-block w-2 h-2 bg-current rounded-full"></motion.span>
-            <motion.span className="inline-block w-2 h-2 bg-current rounded-full"></motion.span>
-            <motion.span className="inline-block w-2 h-2 bg-current rounded-full"></motion.span>
-          </motion.div>
+            <m.span className="inline-block w-2 h-2 bg-current rounded-full"></m.span>
+            <m.span className="inline-block w-2 h-2 bg-current rounded-full"></m.span>
+            <m.span className="inline-block w-2 h-2 bg-current rounded-full"></m.span>
+          </m.div>
         ) : (
           <>
             {pair[1]
@@ -238,5 +239,6 @@ export default function EachInputOutput({
         )}
       </div>
     </div>
+    </LazyMotion>
   );
 }

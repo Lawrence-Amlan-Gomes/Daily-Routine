@@ -14,7 +14,7 @@ import {
 } from "@/app/actions";
 import { useAuth } from "@/app/hooks/useAuth";
 import { aiRoutineResponse } from "@/app/server";
-import { AnimatePresence, motion as m, motion, Variants } from "framer-motion";
+import { AnimatePresence, LazyMotion, domAnimation, m, Variants } from "framer-motion";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FaArrowLeft,
@@ -27,6 +27,7 @@ import {
   MdKeyboardDoubleArrowLeft,
   MdKeyboardDoubleArrowRight,
 } from "react-icons/md";
+import Image from "next/image";
 
 // ─── Module-level audio persistence (survives route changes) ──
 let _aiPersistedAudio: HTMLAudioElement | null = null;
@@ -1608,8 +1609,7 @@ export default function AIRoutineBoard() {
         <div className="flex flex-col items-center gap-8">
           {/* Logo */}
           <div className="w-16 h-16 rounded-2xl bg-blue-600/10 border border-blue-600/20 flex items-center justify-center shadow-lg shadow-blue-600/10">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/Icon.png" alt="AI Routine" className="w-10 h-10 object-contain" />
+            <Image src="/Icon.png" alt="AI Routine" width={40} height={40} className="object-contain" />
           </div>
 
           {/* Spinner */}
@@ -1654,7 +1654,7 @@ export default function AIRoutineBoard() {
     left: string;
     size?: number;
   }) => (
-    <motion.div
+    <m.div
       onClick={() => setIsSidebarOpen((prev) => !prev)}
       className={`flex absolute h-[${size}px] w-[${size}px] justify-center items-center cursor-pointer border-[1px] rounded-md z-10 transition-colors ${
         "border-purple-400 dark:border-purple-600 text-purple-600 dark:text-purple-400 hover:bg-purple-600 hover:text-white"
@@ -1667,7 +1667,7 @@ export default function AIRoutineBoard() {
       ) : (
         <MdKeyboardDoubleArrowRight size={20} />
       )}
-    </motion.div>
+    </m.div>
   );
 
   // ── Chat sidebar content (replaces EditRoutine) ────────────
@@ -1762,7 +1762,7 @@ export default function AIRoutineBoard() {
 
   // ── Main render — mirrors DashBoard exactly ────────────────
   return (
-    <>
+    <LazyMotion features={domAnimation}>
       <style>{`
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f8f8f8; }
@@ -1779,7 +1779,7 @@ export default function AIRoutineBoard() {
         style={{ top: "64px", height: "calc(100% - 64px)" }}
       >
         {/* Chat sidebar */}
-        <motion.div
+        <m.div
           className="h-full float-left bg-white dark:bg-black border-r-[1px] border-gray-200 dark:border-gray-800"
           initial={{ width: sidebar.closed }}
           animate={{ width: isSidebarOpen ? sidebar.open : sidebar.closed }}
@@ -1787,7 +1787,7 @@ export default function AIRoutineBoard() {
         >
           <AnimatePresence>
             {isSidebarOpen && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -1795,16 +1795,16 @@ export default function AIRoutineBoard() {
                 className="h-full w-full overflow-hidden"
               >
                 {renderChatSidebar(chatScrollDesktopRef)}
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
-        </motion.div>
+        </m.div>
 
         {/* Toggle button */}
         <SidebarToggle top="20px" left="1.25%" />
 
         {/* Main content */}
-        <motion.div
+        <m.div
           className="h-full relative float-left"
           initial={{ width: "100%" }}
           animate={{ width: isSidebarOpen ? main.open : main.closed }}
@@ -2080,7 +2080,7 @@ export default function AIRoutineBoard() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </m.div>
       </div>
 
       {/* ═══════════════════════════════════════════════════ */}
@@ -2090,7 +2090,7 @@ export default function AIRoutineBoard() {
         className="hidden sm:block lg:hidden w-full overflow-hidden fixed"
         style={{ top: "56px", height: "calc(100% - 56px)" }}
       >
-        <motion.div
+        <m.div
           className="h-full float-left bg-white dark:bg-black border-r-[1px] border-gray-200 dark:border-gray-800"
           initial={{ width: sidebarTablet.closed }}
           animate={{
@@ -2100,7 +2100,7 @@ export default function AIRoutineBoard() {
         >
           <AnimatePresence>
             {isSidebarOpen && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -2108,14 +2108,14 @@ export default function AIRoutineBoard() {
                 className="h-full w-full overflow-hidden"
               >
                 {renderChatSidebar(chatScrollTabletRef)}
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
-        </motion.div>
+        </m.div>
 
         <SidebarToggle top="10px" left="2%" />
 
-        <motion.div
+        <m.div
           className="h-full relative float-left"
           initial={{ width: "100%" }}
           animate={{
@@ -2329,7 +2329,7 @@ export default function AIRoutineBoard() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </m.div>
       </div>
 
       {/* ═══════════════════════════════════════════════════ */}
@@ -2339,7 +2339,7 @@ export default function AIRoutineBoard() {
         className="block sm:hidden w-full overflow-hidden fixed"
         style={{ top: "56px", height: "calc(100% - 56px)" }}
       >
-        <motion.div
+        <m.div
           className="h-full float-left bg-white dark:bg-black border-r-[1px] border-gray-200 dark:border-gray-800"
           initial={{ width: sidebarMobile.closed }}
           animate={{
@@ -2349,7 +2349,7 @@ export default function AIRoutineBoard() {
         >
           <AnimatePresence>
             {isSidebarOpen && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -2357,12 +2357,12 @@ export default function AIRoutineBoard() {
                 className="h-full w-full overflow-hidden"
               >
                 {renderChatSidebar(chatScrollMobileRef)}
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           onClick={() => setIsSidebarOpen((prev) => !prev)}
           className="flex absolute h-[25px] w-[25px] justify-center items-center cursor-pointer border-[1px] rounded-md top-[10px] left-[2%] z-10 transition-colors border-purple-400 dark:border-purple-600 text-purple-600 dark:text-purple-400 hover:bg-purple-600 hover:text-white"
           whileTap={{ scale: 0.92 }}
@@ -2372,9 +2372,9 @@ export default function AIRoutineBoard() {
           ) : (
             <MdKeyboardDoubleArrowRight size={20} />
           )}
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           className="h-full relative float-left"
           initial={{ width: "100%" }}
           animate={{
@@ -2592,7 +2592,7 @@ export default function AIRoutineBoard() {
               )}
             </div>
           </div>
-        </motion.div>
+        </m.div>
       </div>
       {/* ── Hover tooltip for small tasks ── */}
       {hoveredTask && (
@@ -2832,6 +2832,6 @@ export default function AIRoutineBoard() {
           </div>
         </div>
       )}
-    </>
+    </LazyMotion>
   );
 }

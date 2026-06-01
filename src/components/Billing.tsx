@@ -3,6 +3,7 @@
 import { useAuth } from "@/app/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import ErrorBoundary from "./ErrorBoundary";
 import PaddleForm from "./PaddleForm";
 
 export default function Billing() {
@@ -18,7 +19,9 @@ export default function Billing() {
   return (
     <div className="min-h-screen w-full pt-[100px] flex flex-col items-center justify-center p-6 bg-[#ffffff] dark:bg-[#000000] text-[#0a0a0a] dark:text-[#ebebeb]">
       {/* PaddleForm handles opening the checkout */}
-      <PaddleForm />
+      <ErrorBoundary>
+        <PaddleForm />
+      </ErrorBoundary>
     </div>
   );
 }

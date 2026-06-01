@@ -38,6 +38,15 @@ export async function sendOtpEmail(email: string, name: string, code: string) {
     from: process.env.SMTP_FROM,
     to: email,
     subject: "My Daily Routine — Your Verification Code",
+    text: `Hi ${name},
+
+Your verification code for My Daily Routine is: ${code}
+
+This code expires in 5 minutes.
+
+Enter this code in the verification screen to activate your account. If you didn't request this, you can safely ignore this email.
+
+— My Daily Routine`,
     html: `
 <!DOCTYPE html>
 <html lang="en">
@@ -124,6 +133,20 @@ export async function sendWelcomeEmail(email: string, name: string) {
     from: process.env.SMTP_FROM,
     to: email,
     subject: "Welcome to My Daily Routine!",
+    text: `Hi ${name},
+
+Welcome to My Daily Routine! Your account is now active and ready to go.
+
+We're thrilled to have you join the community of people building better daily habits.
+
+What you can do:
+- Plan: Build structured daily routines
+- Track: Monitor your daily progress
+- Grow: Build lasting habits over time
+
+Get started: ${baseUrl}/login
+
+— My Daily Routine`,
     html: `
 <!DOCTYPE html>
 <html lang="en">

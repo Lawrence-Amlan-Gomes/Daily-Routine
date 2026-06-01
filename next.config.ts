@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  /* config options here */
+  output: "standalone",
   reactCompiler: true,
   experimental: {
     serverActions: {

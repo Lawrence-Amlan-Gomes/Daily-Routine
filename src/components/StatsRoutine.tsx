@@ -1,29 +1,18 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useAuth } from "@/app/hooks/useAuth";
 import { IStatEntry } from "@/store/features/auth/authSlice";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  PieChart,
-  Pie,
-  Legend,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  Radar,
-} from "recharts";
+import dynamic from "next/dynamic";
+import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, Line, Area, Pie, Legend, PolarGrid, PolarAngleAxis, Radar } from "recharts";
+
+const ChartSkeleton = () => <div className="h-full w-full animate-pulse rounded bg-gray-200 dark:bg-gray-700" />;
+const ResponsiveContainer = dynamic(() => import("recharts").then((m) => ({ default: m.ResponsiveContainer })), { ssr: false });
+const BarChart = dynamic(() => import("recharts").then((m) => ({ default: m.BarChart })), { ssr: false, loading: ChartSkeleton });
+const LineChart = dynamic(() => import("recharts").then((m) => ({ default: m.LineChart })), { ssr: false, loading: ChartSkeleton });
+const AreaChart = dynamic(() => import("recharts").then((m) => ({ default: m.AreaChart })), { ssr: false, loading: ChartSkeleton });
+const PieChart = dynamic(() => import("recharts").then((m) => ({ default: m.PieChart })), { ssr: false, loading: ChartSkeleton });
+const RadarChart = dynamic(() => import("recharts").then((m) => ({ default: m.RadarChart })), { ssr: false, loading: ChartSkeleton });
 import {
   CheckCircle,
   Calendar,
@@ -664,6 +653,7 @@ export default function StatsRoutine() {
   const t = getTokens(!isDark); // !isDark === isLight
 
   const [activeTab, setActiveTab] = useState<ViewTab>("overview");
+  const [isPending, startTransition] = useTransition();
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
   const [calendarOffset, setCalendarOffset] = useState(0);
@@ -944,12 +934,15 @@ export default function StatsRoutine() {
             return (
               <button
                 key={id}
-                onClick={() => setActiveTab(id)}
+                onClick={() => startTransition(() => setActiveTab(id))}
                 className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold transition-all relative flex-shrink-0"
                 style={{ color: active ? "#6366f1" : t.muted }}
               >
                 <Icon size={14} />
                 {label}
+                {active && isPending && (
+                  <span className="w-3 h-3 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+                )}
                 {active && (
                   <span
                     className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"

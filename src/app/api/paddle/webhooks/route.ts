@@ -26,6 +26,8 @@ function verifyPaddleSignature(
     if (!tsMatch || !h1Match) return false;
 
     const timestamp = tsMatch.split("=")[1];
+    const tsNum = Number(timestamp);
+    if (isNaN(tsNum) || Math.abs(Date.now() / 1000 - tsNum) > 300) return false;
     const signature = h1Match.split("=")[1];
     const signedPayload = timestamp + ":" + rawBody.toString("utf8");
 
@@ -80,20 +82,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const existingEvent = await PaddleWebhookEvent.findOne({
-      eventId: event.event_id,
-    });
-    if (existingEvent) {
-      return NextResponse.json(
-        { received: true, verified: true, duplicate: true },
-        { status: 200 },
-      );
+    // Atomic dedup: create first; unique index on eventId throws 11000 on replay.
+    try {
+      await PaddleWebhookEvent.create({
+        eventId: event.event_id,
+        eventType: event.event_type,
+      });
+    } catch (err: unknown) {
+      if ((err as { code?: number }).code === 11000) {
+        return NextResponse.json(
+          { received: true, verified: true, duplicate: true },
+          { status: 200 },
+        );
+      }
+      throw err;
     }
 
-    await PaddleWebhookEvent.create({
-      eventId: event.event_id,
-      eventType: event.event_type,
-    });
     await processWebhookEvent(event);
 
     return NextResponse.json(
@@ -128,23 +132,21 @@ interface PaddleWebhookEvent {
 }
 
 async function processWebhookEvent(event: PaddleWebhookEvent) {
-  try {
-    if (event.event_type === "transaction.completed") {
-      await handleTransactionCompleted(event.data);
-    } else if (event.event_type === "subscription.activated") {
-      await handleSubscriptionActivated(event.data);
-    } else if (event.event_type === "subscription.canceled") {
-      const email =
-        event.data.custom_data?.userEmail || event.data.customer?.email;
-      if (email) {
-        await updatePaymentType(email, "Expired", new Date(), {
-          bypassAuth: true,
-          clearSubscriptionId: true,
-        });
-      }
+  if (event.event_type === "transaction.completed") {
+    await handleTransactionCompleted(event.data);
+  } else if (event.event_type === "subscription.activated") {
+    await handleSubscriptionActivated(event.data);
+  } else if (event.event_type === "subscription.canceled") {
+    const email =
+      event.data.custom_data?.userEmail || event.data.customer?.email;
+    if (email) {
+      await updatePaymentType(email, "Expired", new Date(), {
+        bypassAuth: true,
+        clearSubscriptionId: true,
+      });
     }
-  } catch (error) {
-    console.error(`Paddle event processing failed [${event.event_type}]:`, error);
+  } else {
+    console.warn("Unhandled Paddle event type:", event.event_type);
   }
 }
 
@@ -179,11 +181,7 @@ async function handleTransactionCompleted(transaction: PaddleTransaction) {
 }
 
 async function handleSubscriptionActivated(subscription: PaddleTransaction) {
-  console.log("[handleSubscriptionActivated] Processing subscription activation");
-  console.log("[handleSubscriptionActivated] Full subscription data:", JSON.stringify(subscription, null, 2));
-
   const priceId = subscription.items?.[0]?.price_id ?? subscription.items?.[0]?.price?.id;
-  console.log("[handleSubscriptionActivated] Price ID found:", priceId);
 
   if (!priceId) {
     console.warn("Paddle: missing price ID in subscription.activated payload");
@@ -191,7 +189,6 @@ async function handleSubscriptionActivated(subscription: PaddleTransaction) {
   }
 
   const plan = PRICE_ID_TO_PLAN[priceId];
-  console.log("[handleSubscriptionActivated] Plan found:", plan);
 
   if (!plan) {
     console.warn(`Paddle: unknown subscription price ID ${priceId}`);
@@ -200,7 +197,6 @@ async function handleSubscriptionActivated(subscription: PaddleTransaction) {
 
   const email =
     subscription.custom_data?.userEmail || subscription.customer?.email;
-  console.log("[handleSubscriptionActivated] Email found:", email);
 
   if (!email) {
     console.warn("Paddle: no email in subscription.activated payload");
@@ -208,9 +204,6 @@ async function handleSubscriptionActivated(subscription: PaddleTransaction) {
   }
 
   const subscriptionId = subscription.subscription_id || subscription.id;
-  console.log("[handleSubscriptionActivated] Subscription ID found:", subscriptionId);
-  console.log("[handleSubscriptionActivated] subscription.subscription_id:", subscription.subscription_id);
-  console.log("[handleSubscriptionActivated] subscription.id:", subscription.id);
 
   if (!subscriptionId) {
     console.warn("Paddle: no subscription ID in subscription.activated payload");
@@ -221,7 +214,6 @@ async function handleSubscriptionActivated(subscription: PaddleTransaction) {
   const User = mongoose.models.User || mongoose.model("User");
   const user = await User.findOne({ email });
   if (user?.paddleSubscriptionId && user.paddleSubscriptionId !== subscriptionId) {
-    console.log("[handleSubscriptionActivated] Canceling old subscription:", user.paddleSubscriptionId);
     try {
       const paddleApiKey = process.env.PADDLE_API_KEY;
       const cancelResponse = await fetch(
@@ -236,14 +228,11 @@ async function handleSubscriptionActivated(subscription: PaddleTransaction) {
       );
       if (!cancelResponse.ok) {
         console.error(
-          `[handleSubscriptionActivated] Failed to cancel old subscription: ${cancelResponse.status}`,
-          await cancelResponse.text()
+          `Paddle: failed to cancel old subscription: ${cancelResponse.status}`,
         );
-      } else {
-        console.log("[handleSubscriptionActivated] Old subscription canceled successfully");
       }
     } catch (error) {
-      console.error("[handleSubscriptionActivated] Error canceling old subscription:", error);
+      console.error("Paddle: error canceling old subscription:", error);
     }
   }
 
@@ -253,15 +242,8 @@ async function handleSubscriptionActivated(subscription: PaddleTransaction) {
   );
 
   const paymentString = `${plan.type} ${plan.duration === "monthly" ? "Monthly" : "Annually"}`;
-  console.log("[handleSubscriptionActivated] Calling updatePaymentType with:", {
-    email,
-    paymentString,
-    expiredAt,
-    subscriptionId,
-  });
-
   await updatePaymentType(email, paymentString, expiredAt, { bypassAuth: true, subscriptionId });
-  console.log("[handleSubscriptionActivated] updatePaymentType completed");
+  console.log("paddle event processed", { eventType: "subscription.activated" });
 }
 
 export const dynamic = "force-dynamic";

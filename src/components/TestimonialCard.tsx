@@ -1,4 +1,3 @@
-"use client";
 import colors from "@/app/color/color";
 import Image from "next/image";
 import { FaQuoteLeft } from "react-icons/fa";

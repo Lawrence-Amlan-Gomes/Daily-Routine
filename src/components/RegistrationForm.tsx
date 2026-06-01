@@ -31,6 +31,7 @@ const RegistrationForm = () => {
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mountedRef = useRef(true);
   const [pendingUserData, setPendingUserData] = useState<{
     name: string;
     email: string;
@@ -80,6 +81,10 @@ const RegistrationForm = () => {
     };
   }, []);
 
+  useEffect(() => {
+    return () => { mountedRef.current = false; };
+  }, []);
+
   const startCountdown = () => {
     setOtpCountdown(60);
     if (countdownRef.current) clearInterval(countdownRef.current);
@@ -106,6 +111,7 @@ const RegistrationForm = () => {
         body: JSON.stringify({ email: emailVal, name: nameVal }),
       });
       const data = await res.json();
+      if (!mountedRef.current) return;
       if (data.success) {
         setOtpSuccess("Verification code sent! Check your inbox.");
         startCountdown();
@@ -147,6 +153,7 @@ const RegistrationForm = () => {
         }),
       });
       const data = await res.json();
+      if (!mountedRef.current) return;
 
       if (!data.success) {
         setOtpError(data.error || "Invalid code. Please try again.");

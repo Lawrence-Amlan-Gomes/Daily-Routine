@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   },
 };
 
+export const revalidate = false;
 
 const RegistrationPage = () => {
   return <RegistrationForm />;

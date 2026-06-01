@@ -1,5 +1,3 @@
-"use client";
-
 export default function RefundPolicy() {
   return (
     <div className="px-[8%] sm:px-[10%] mt-[20%] sm:mt-[10%] mb-[5%] pb-[5%] w-full bg-[#ffffff] dark:bg-[#000000] text-[#1f2937] dark:text-[#e5e7eb]">

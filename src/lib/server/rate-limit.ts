@@ -17,13 +17,12 @@ function getClientIp(req: NextRequest): string {
   return req.headers.get("x-real-ip") || "unknown";
 }
 
-export async function enforceRateLimit(
-  req: NextRequest,
+async function enforceRateLimitCore(
+  ip: string,
   options: RateLimitOptions,
 ): Promise<{ allowed: boolean; remaining: number; retryAfterSec: number }> {
   await dbConnect();
 
-  const ip = getClientIp(req);
   const parts = [ip, ...(options.keyParts ?? [])];
   const key = parts.join(":");
   const now = Date.now();
@@ -71,4 +70,19 @@ export async function enforceRateLimit(
     Math.ceil(((updated?.expiresAt.getTime() ?? now + options.windowMs) - now) / 1000),
   );
   return { allowed: true, remaining, retryAfterSec };
+}
+
+export async function enforceRateLimit(
+  req: NextRequest,
+  options: RateLimitOptions,
+): Promise<{ allowed: boolean; remaining: number; retryAfterSec: number }> {
+  return enforceRateLimitCore(getClientIp(req), options);
+}
+
+// For use in server actions where NextRequest is unavailable — pass IP from next/headers.
+export async function enforceRateLimitByIp(
+  ip: string,
+  options: RateLimitOptions,
+): Promise<{ allowed: boolean; remaining: number; retryAfterSec: number }> {
+  return enforceRateLimitCore(ip, options);
 }

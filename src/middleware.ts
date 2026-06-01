@@ -27,10 +27,16 @@ export default auth(async (req) => {
   const authToken = req.cookies.get("authToken")?.value;
   if (authToken) {
     try {
-      await jwtVerify(
+      const { payload } = await jwtVerify(
         authToken,
         new TextEncoder().encode(process.env.JWT_SECRET!),
       );
+      // Admin routes require isAdmin in JWT payload.
+      // NextAuth path above cannot be checked here — req.auth has no isAdmin,
+      // and a DB call is not allowed in Edge middleware.
+      if (pathname.startsWith("/admin") && !payload.isAdmin) {
+        return NextResponse.redirect(new URL("/", req.url));
+      }
       return NextResponse.next();
     } catch {
       // expired or tampered token — fall through to redirect
@@ -38,7 +44,7 @@ export default auth(async (req) => {
   }
 
   const loginUrl = new URL("/login", req.url);
-  loginUrl.searchParams.set("callbackUrl", pathname);
+  loginUrl.searchParams.set("callbackUrl", req.nextUrl.href);
   return NextResponse.redirect(loginUrl);
 });
 

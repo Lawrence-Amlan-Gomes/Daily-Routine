@@ -2,13 +2,14 @@
 // This is the root layout for the Next.js application.
 import { ThemeProvider } from "@/components/ThemeProvider";
 import type { Metadata } from "next";
-import { Google_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import Script from "next/script";
 import ClientLayout from "./ClientLayout";
 import "./globals.css";
 
-const myFont = Google_Sans({
+const inter = Inter({
   subsets: ["latin"],
+  display: "swap",
 });
 
 const siteUrl =
@@ -78,14 +79,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={myFont.className} suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
         <Script
           id="ld-json-webapp"
           type="application/ld+json"

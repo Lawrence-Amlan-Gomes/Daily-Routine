@@ -8,11 +8,11 @@ export const dynamic = 'force-dynamic'; // ← Critical for cron jobs
 export async function GET(request: Request) {
   // Security – Vercel sends this special header, but we use our own secret
   if (!process.env.CRON_SECRET) {
-    return new Response('Unauthorized', { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const authHeader = request.headers.get('authorization'); // Retrieves the value of the "authorization" header from the incoming request.
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) { // Checks if the authorization header matches the expected format and value.
-    return new Response('Unauthorized', { status: 401 }); // If the header is missing or incorrect, it returns a 401 Unauthorized response.
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); // If the header is missing or incorrect, it returns a 401 Unauthorized response.
   }
 
   try {

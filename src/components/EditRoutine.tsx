@@ -374,29 +374,6 @@ export default function EditRoutine({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDay, auth]);
 
-  useEffect(() => {
-    if (!auth) return; // don't run if not logged in
-
-    const todayDayNames = [
-      "sunday",
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-    ];
-
-    const todayIndex = new Date().getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    const todayName = todayDayNames[todayIndex] as Day;
-
-    // Only change if it's different → prevents unnecessary re-renders
-    if (selectedDay !== todayName) {
-      setSelectedDay(todayName);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // ── Reset helper ───────────────────────────────────────────
   const resetEditForm = () => {
     setNewName("");

@@ -1,20 +1,17 @@
 "use client";
-import { motion } from "framer-motion"; // Import framer-motion
-import { ReactNode } from "react"; // ← ONLY ADDED THIS
+import { LazyMotion, domAnimation, m } from "framer-motion";
+import { ReactNode } from "react";
 
-// ──────────────────────────────────────────────────────────────
-//  ONLY ADDED: Props interface + type annotation
-// ──────────────────────────────────────────────────────────────
 interface TopNavBarWarperProps {
   children: ReactNode;
 }
 
 export default function TopNavBarWarper({ children }: TopNavBarWarperProps) {
   return (
-    <>
-      <motion.div className={`w-full overflow-auth scrollbar`}>
+    <LazyMotion features={domAnimation}>
+      <m.div className={`w-full overflow-auth scrollbar`}>
         {children}
-      </motion.div>
-    </>
+      </m.div>
+    </LazyMotion>
   );
 }

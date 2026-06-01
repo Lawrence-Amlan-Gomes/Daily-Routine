@@ -7,7 +7,7 @@ import colors from "@/app/color/color";
 import { useAuth } from "@/app/hooks/useAuth";
 import EditRoutine from "@/components/EditRoutine";
 import ShowRoutine from "@/components/ShowRoutine";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, LazyMotion, domAnimation, m } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import { updateStats } from "@/app/actions";
 import { useRouter } from "next/navigation";
@@ -18,6 +18,7 @@ import {
   MdKeyboardDoubleArrowRight,
 } from "react-icons/md";
 import { IRoutine } from "@/store/features/auth/authSlice";
+import Image from "next/image";
 
 // ─── Module-level audio persistence (survives route changes) ──
 let _persistedAudio: HTMLAudioElement | null = null;
@@ -42,7 +43,10 @@ export default function DashBoard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [selectedDay, setSelectedDay] = useState<Day>("saturday");
+  const [selectedDay, setSelectedDay] = useState<Day>(() => {
+    const days = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"] as const;
+    return days[new Date().getDay()];
+  });
   const [hasMounted, setHasMounted] = useState(false);
   const [undoStack, setUndoStack] = useState<IRoutine[]>([]);
   const [redoStack, setRedoStack] = useState<IRoutine[]>([]);
@@ -376,8 +380,7 @@ export default function DashBoard() {
         <div className="flex flex-col items-center gap-8">
           {/* Logo */}
           <div className="w-16 h-16 rounded-2xl bg-blue-600/10 border border-blue-600/20 flex items-center justify-center shadow-lg shadow-blue-600/10">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/Icon.png" alt="Daily Routine" className="w-10 h-10 object-contain" />
+            <Image src="/Icon.png" alt="Daily Routine" width={40} height={40} className="object-contain" />
           </div>
 
           {/* Spinner */}
@@ -410,7 +413,7 @@ export default function DashBoard() {
     left: string;
     size?: number;
   }) => (
-    <motion.div
+    <m.div
       onClick={() => {
         if (isSidebarOpen) setSettingsMode(false);
         setIsSidebarOpen((prev) => !prev);
@@ -424,7 +427,7 @@ export default function DashBoard() {
       ) : (
         <MdKeyboardDoubleArrowRight size={20} />
       )}
-    </motion.div>
+    </m.div>
   );
 
   // ── Helper: Settings button ────────────────────────────────
@@ -439,7 +442,7 @@ export default function DashBoard() {
   }) => {
     if (isSidebarOpen) return null;
     return (
-      <motion.div
+      <m.div
         onClick={() => {
           setSettingsMode(true);
           setIsSidebarOpen(true);
@@ -448,13 +451,13 @@ export default function DashBoard() {
         style={{ top, left }}
         whileTap={{ scale: 0.92 }}
       >
-        <motion.div
+        <m.div
           animate={{ rotate: 360 }}
           transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
         >
           <IoMdSettings size={20} />
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
     );
   };
 
@@ -472,13 +475,13 @@ export default function DashBoard() {
   }) => {
     if (isSidebarOpen) return null;
     return (
-      <motion.div
+      <m.div
         onClick={() => router.push("/ai-routine")}
         className={`flex absolute h-[${size}px] w-[${size}px] justify-center items-center cursor-pointer border-[1px] ${colors.keyBorder} ${colors.keyHoverBg} ${colors.keyText} hover:text-white rounded-md z-10`}
         style={{ top, left }}
         whileTap={{ scale: 0.92 }}
       >
-        <motion.div
+        <m.div
           animate={{ y: [-2, 2] }}
           transition={{
             duration: 1,
@@ -488,20 +491,20 @@ export default function DashBoard() {
           }}
         >
           <FaRobot size={iconSize} />
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
     );
   };
 
   // ── Main render ────────────────────────────────────────────
   return (
-    <>
+    <LazyMotion features={domAnimation}>
       {/* ═══════════════════════════════════════════════════ */}
       {/* DESKTOP (lg+)                                      */}
       {/* ═══════════════════════════════════════════════════ */}
       <div className="hidden lg:block w-full overflow-hidden fixed" style={{ top: "64px", height: "calc(100% - 64px)" }}>
         {/* Sidebar */}
-        <motion.div
+        <m.div
           className={`h-full float-left bg-white border-r-[1px] border-gray-200 dark:bg-black dark:border-gray-800`}
           initial={{ width: sidebar.closed }}
           animate={{
@@ -511,7 +514,7 @@ export default function DashBoard() {
         >
           <AnimatePresence>
             {isSidebarOpen && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -519,10 +522,10 @@ export default function DashBoard() {
                 className="h-full w-full overflow-auto"
               >
                 <EditRoutine variant="desktop" {...editRoutineProps} />
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
-        </motion.div>
+        </m.div>
 
         {/* Controls */}
         {/* Controls */}
@@ -531,7 +534,7 @@ export default function DashBoard() {
         <ChatBotButton top="120px" left="1.25%" />
         {!isSidebarOpen && (
           <>
-            <motion.div
+            <m.div
               onClick={undo}
               title="Undo (Ctrl+Z)"
               className={`flex absolute h-[30px] w-[30px] justify-center items-center border-[1px] ${colors.keyBorder} ${colors.keyHoverBg} ${colors.keyText} hover:text-white rounded-md z-10 ${undoStack.length === 0 ? "opacity-30 pointer-events-none" : "cursor-pointer"}`}
@@ -539,8 +542,8 @@ export default function DashBoard() {
               whileTap={{ scale: 0.92 }}
             >
               ↩
-            </motion.div>
-            <motion.div
+            </m.div>
+            <m.div
               onClick={redo}
               title="Redo (Ctrl+Y)"
               className={`flex absolute h-[30px] w-[30px] justify-center items-center border-[1px] ${colors.keyBorder} ${colors.keyHoverBg} ${colors.keyText} hover:text-white rounded-md z-10 ${redoStack.length === 0 ? "opacity-30 pointer-events-none" : "cursor-pointer"}`}
@@ -548,9 +551,9 @@ export default function DashBoard() {
               whileTap={{ scale: 0.92 }}
             >
               ↪
-            </motion.div>
+            </m.div>
             {!isSidebarOpen && (
-              <motion.div
+              <m.div
                 onClick={() => setSyncDrag((prev) => !prev)}
                 title="Sync drag across all days"
                 className={`flex absolute h-[30px] w-[30px] justify-center items-center cursor-pointer border-[1px] rounded-md z-10 transition-colors ${
@@ -576,13 +579,13 @@ export default function DashBoard() {
                   <rect x="18" y="3" width="4" height="18" rx="1" />
                   <path d="M4 12h16" />
                 </svg>
-              </motion.div>
+              </m.div>
             )}
           </>
         )}
 
         {/* Main content */}
-        <motion.div
+        <m.div
           className="h-full relative float-left sm:float-left"
           initial={{ width: "100%" }}
           animate={{
@@ -603,7 +606,7 @@ export default function DashBoard() {
             updateRoutineWithHistory={updateRoutineWithHistory}
             syncDrag={syncDrag}
           />
-        </motion.div>
+        </m.div>
       </div>
 
       {/* ═══════════════════════════════════════════════════ */}
@@ -611,7 +614,7 @@ export default function DashBoard() {
       {/* ═══════════════════════════════════════════════════ */}
       <div className="hidden sm:block lg:hidden w-full overflow-hidden fixed" style={{ top: "56px", height: "calc(100% - 56px)" }}>
         {/* Sidebar */}
-        <motion.div
+        <m.div
           className={`h-full float-left bg-white border-r-[1px] border-gray-200 dark:bg-black dark:border-gray-800`}
           initial={{ width: sidebarTablet.closed }}
           animate={{
@@ -621,7 +624,7 @@ export default function DashBoard() {
         >
           <AnimatePresence>
             {isSidebarOpen && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -629,10 +632,10 @@ export default function DashBoard() {
                 className="h-full w-full overflow-auto"
               >
                 <EditRoutine variant="tablet" {...editRoutineProps} />
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
-        </motion.div>
+        </m.div>
 
         {/* Controls */}
         <SidebarToggle top="20px" left="2%" />
@@ -640,7 +643,7 @@ export default function DashBoard() {
         <ChatBotButton top="120px" left="2%" />
         {!isSidebarOpen && (
           <>
-            <motion.div
+            <m.div
               onClick={undo}
               title="Undo (Ctrl+Z)"
               className={`flex absolute h-[30px] w-[30px] justify-center items-center border-[1px] ${colors.keyBorder} ${colors.keyHoverBg} ${colors.keyText} hover:text-white rounded-md z-10 ${undoStack.length === 0 ? "opacity-30 pointer-events-none" : "cursor-pointer"}`}
@@ -648,8 +651,8 @@ export default function DashBoard() {
               whileTap={{ scale: 0.92 }}
             >
               ↩
-            </motion.div>
-            <motion.div
+            </m.div>
+            <m.div
               onClick={redo}
               title="Redo (Ctrl+Y)"
               className={`flex absolute h-[30px] w-[30px] justify-center items-center border-[1px] ${colors.keyBorder} ${colors.keyHoverBg} ${colors.keyText} hover:text-white rounded-md z-10 ${redoStack.length === 0 ? "opacity-30 pointer-events-none" : "cursor-pointer"}`}
@@ -657,9 +660,9 @@ export default function DashBoard() {
               whileTap={{ scale: 0.92 }}
             >
               ↪
-            </motion.div>
+            </m.div>
             {!isSidebarOpen && (
-              <motion.div
+              <m.div
                 onClick={() => setSyncDrag((prev) => !prev)}
                 title="Sync drag across all days"
                 className={`flex absolute h-[30px] w-[30px] justify-center items-center cursor-pointer border-[1px] rounded-md z-10 transition-colors ${
@@ -685,13 +688,13 @@ export default function DashBoard() {
                   <rect x="18" y="3" width="4" height="18" rx="1" />
                   <path d="M4 12h16" />
                 </svg>
-              </motion.div>
+              </m.div>
             )}
           </>
         )}
 
         {/* Main content */}
-        <motion.div
+        <m.div
           className="h-full relative float-left sm:float-left"
           initial={{ width: "100%" }}
           animate={{
@@ -713,7 +716,7 @@ export default function DashBoard() {
             updateRoutineWithHistory={updateRoutineWithHistory}
             syncDrag={syncDrag}
           />
-        </motion.div>
+        </m.div>
       </div>
 
       {/* ═══════════════════════════════════════════════════ */}
@@ -721,7 +724,7 @@ export default function DashBoard() {
       {/* ═══════════════════════════════════════════════════ */}
       <div className="block sm:hidden w-full overflow-hidden fixed" style={{ top: "56px", height: "calc(100% - 56px)" }}>
         {/* Sidebar */}
-        <motion.div
+        <m.div
           className={`h-full float-left bg-white border-r-[1px] border-gray-200 dark:bg-black dark:border-gray-800`}
           initial={{ width: sidebarMobile.closed }}
           animate={{
@@ -731,7 +734,7 @@ export default function DashBoard() {
         >
           <AnimatePresence>
             {isSidebarOpen && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -739,13 +742,13 @@ export default function DashBoard() {
                 className="h-full w-full overflow-auto"
               >
                 <EditRoutine variant="tablet" {...editRoutineProps} />
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
-        </motion.div>
+        </m.div>
 
         {/* Controls */}
-        <motion.div
+        <m.div
           onClick={() => {
             if (isSidebarOpen) setSettingsMode(false);
             setIsSidebarOpen((prev) => !prev);
@@ -758,10 +761,10 @@ export default function DashBoard() {
           ) : (
             <MdKeyboardDoubleArrowRight size={20} />
           )}
-        </motion.div>
+        </m.div>
 
         {!isSidebarOpen && (
-          <motion.div
+          <m.div
             onClick={() => {
               setSettingsMode(true);
               setIsSidebarOpen(true);
@@ -769,7 +772,7 @@ export default function DashBoard() {
             className={`flex absolute h-[25px] w-[25px] justify-center items-center cursor-pointer border-[1px] ${colors.keyBorder} ${colors.keyHoverBg} ${colors.keyText} hover:text-white rounded-md top-[50px] left-[2%] z-10`}
             whileTap={{ scale: 0.92 }}
           >
-            <motion.div
+            <m.div
               animate={{ rotate: 360 }}
               transition={{
                 duration: 5,
@@ -778,17 +781,17 @@ export default function DashBoard() {
               }}
             >
               <IoMdSettings size={20} />
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
 
         {!isSidebarOpen && (
-          <motion.div
+          <m.div
             onClick={() => router.push("/ai-routine")}
             className={`flex absolute h-[25px] w-[25px] justify-center items-center cursor-pointer border-[1px] ${colors.keyBorder} ${colors.keyHoverBg} ${colors.keyText} hover:text-white rounded-md top-[90px] left-[2%] z-10`}
             whileTap={{ scale: 0.92 }}
           >
-            <motion.div
+            <m.div
               animate={{ y: [-2, 2] }}
               transition={{
                 duration: 1,
@@ -798,33 +801,33 @@ export default function DashBoard() {
               }}
             >
               <FaRobot size={18} />
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
 
         {!isSidebarOpen && (
-          <motion.div
+          <m.div
             onClick={undo}
             title="Undo"
             className={`flex absolute h-[25px] w-[25px] justify-center items-center border-[1px] ${colors.keyBorder} ${colors.keyHoverBg} ${colors.keyText} hover:text-white rounded-md top-[130px] left-[2%] z-10 ${undoStack.length === 0 ? "opacity-30 pointer-events-none" : "cursor-pointer"}`}
             whileTap={{ scale: 0.92 }}
           >
             ↩
-          </motion.div>
+          </m.div>
         )}
 
         {!isSidebarOpen && (
-          <motion.div
+          <m.div
             onClick={redo}
             title="Redo"
             className={`flex absolute h-[25px] w-[25px] justify-center items-center border-[1px] ${colors.keyBorder} ${colors.keyHoverBg} ${colors.keyText} hover:text-white rounded-md top-[165px] left-[2%] z-10 ${redoStack.length === 0 ? "opacity-30 pointer-events-none" : "cursor-pointer"}`}
             whileTap={{ scale: 0.92 }}
           >
             ↪
-          </motion.div>
+          </m.div>
         )}
         {!isSidebarOpen && (
-          <motion.div
+          <m.div
             onClick={() => setSyncDrag((prev) => !prev)}
             title="Sync drag across all days"
             className={`flex absolute h-[25px] w-[25px] justify-center items-center cursor-pointer border-[1px] rounded-md top-[200px] left-[2%] z-10 transition-colors ${
@@ -849,11 +852,11 @@ export default function DashBoard() {
               <rect x="18" y="3" width="4" height="18" rx="1" />
               <path d="M4 12h16" />
             </svg>
-          </motion.div>
+          </m.div>
         )}
 
         {/* Main content */}
-        <motion.div
+        <m.div
           className="h-full relative float-left sm:float-left"
           initial={{ width: "100%" }}
           animate={{
@@ -876,7 +879,7 @@ export default function DashBoard() {
             updateRoutineWithHistory={updateRoutineWithHistory}
             syncDrag={syncDrag}
           />
-        </motion.div>
+        </m.div>
       </div>
 
       {/* ═══════════════════════════════════════════════════ */}
@@ -949,6 +952,6 @@ export default function DashBoard() {
           </div>
         </div>
       )}
-    </>
+    </LazyMotion>
   );
 }

@@ -7,13 +7,14 @@ import { dbConnect } from "@/lib/mongo";
 import { deleteFromS3, uploadToS3 } from "@/lib/photoService";
 import { sendOtpEmail, sendWelcomeEmail } from "@/lib/server/email";
 import { generateToken, verifyToken } from "@/lib/server/jwt";
+import { enforceRateLimitByIp } from "@/lib/server/rate-limit";
 import { Feedback } from "@/models/Feedback";
 import { OtpCode } from "@/models/OtpCode";
 import { User } from "@/models/User";
 import { CleanUser, IRoutine } from "@/store/features/auth/authSlice";
 import bcrypt from "bcrypt";
 import { unstable_noStore as noStore, revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
@@ -209,6 +210,14 @@ export async function createUser(data: {
   isRegisteredWithGoogle?: boolean;
   isEmailVerified?: boolean;
 }) {
+  const emailCheck = z.string().email().safeParse(data.email);
+  if (!emailCheck.success) return { error: "Invalid email address" };
+
+  if (!data.isRegisteredWithGoogle) {
+    const pwCheck = z.string().min(8).max(72).safeParse(data.password);
+    if (!pwCheck.success) return { error: "Password must be 8–72 characters" };
+  }
+
   await dbConnect();
 
   const { email } = data;
@@ -284,12 +293,24 @@ export async function changePhoto(email: string, photo: string) {
   revalidatePath("/profile");
 }
 
+const paymentTypeSchema = z.enum([
+  "Free One Month",
+  "Standard",
+  "Premium",
+  "Premium Admin",
+  "Expired",
+  "Free",
+]);
+
 export async function updatePaymentType(
   email: string,
   paymentType: string,
   expiredAt: Date,
   options?: { bypassAuth?: boolean; subscriptionId?: string; clearSubscriptionId?: boolean },
 ) {
+  const parsedType = paymentTypeSchema.safeParse(paymentType);
+  if (!parsedType.success) return { error: "Invalid payment type" };
+
   if (!options?.bypassAuth) {
     const actor = await getActionActor();
     const normalizedTarget = String(email).toLowerCase().trim();
@@ -299,7 +320,7 @@ export async function updatePaymentType(
     }
   }
   await dbConnect();
-  const updateData: any = { paymentType, expiredAt };
+  const updateData: any = { paymentType: parsedType.data, expiredAt };
   if (options?.subscriptionId) {
     updateData.paddleSubscriptionId = options.subscriptionId;
   }
@@ -360,6 +381,7 @@ export async function cancelSubscription(email: string) {
         headers: {
           "Authorization": `Bearer ${paddleApiKey}`,
         },
+        cache: "no-store",
       });
 
       if (!response.ok) {
@@ -469,6 +491,7 @@ export async function incrementThisMonthPremiumCount(
 }
 
 export async function resetPassword(email: string, newPassword: string) {
+  if (newPassword.length > 72) throw new Error("PASSWORD_TOO_LONG");
   await dbConnect();
   const normalizedEmail = String(email).toLowerCase().trim();
   const otpRecord = await OtpCode.findOne({ email: normalizedEmail });
@@ -485,6 +508,7 @@ export async function resetPassword(email: string, newPassword: string) {
   const hashed = await bcrypt.hash(newPassword, 12);
   await User.updateOne({ email: normalizedEmail }, { password: hashed });
   await OtpCode.deleteOne({ email: normalizedEmail });
+  revalidatePath("/profile");
 }
 
 export async function updateUser(
@@ -701,10 +725,10 @@ export async function updateRoutine(email: string, routine: IRoutine) {
 const statsSchema = z
   .array(
     z.object({
-      date: z.string().max(32),
-      day: z.string().max(16),
+      date: z.string().min(1).max(32),
+      day: z.string().min(1).max(16),
       totalTasks: z.number().int().min(0).max(1000),
-      completedTasks: z.array(z.string().max(200)).max(1000),
+      completedTasks: z.array(z.string().min(1).max(200)).max(1000),
     }),
   )
   .max(2000);
@@ -734,11 +758,11 @@ const subtaskSchema = z.object({
 });
 
 const goalSchema = z.object({
-  id: z.string().max(64),
+  id: z.string().min(1).max(64),
   name: z.string().trim().min(1).max(200),
   description: z.string().max(2000),
-  priority: z.string().max(32),
-  status: z.string().max(32),
+  priority: z.string().min(1).max(32),
+  status: z.string().min(1).max(32),
   category: z.string().max(64),
   dueDate: z.string().max(64),
   time: z.string().max(32),
@@ -746,7 +770,7 @@ const goalSchema = z.object({
   repeat: z.string().max(32),
   tags: z.array(z.string().max(64)).max(50),
   subtasks: z.array(subtaskSchema).max(100),
-  createdAt: z.string().max(64),
+  createdAt: z.string().min(1).max(64),
   finishedAt: z.string().max(64),
   pinned: z.boolean(),
   color: z.string().max(32),
@@ -782,6 +806,7 @@ export async function updateGoals(
   await dbConnect();
   await User.updateOne({ email }, { goals: parsed.data });
   revalidatePath("/goals");
+  revalidatePath("/dashBoard");
 }
 
 // ==================== GOOGLE + JWT ====================
@@ -1072,20 +1097,47 @@ export async function appendChatMessage(
   await assertActorCanAccessEmail(email);
   await dbConnect();
   const { AIRoutine } = await import("@/models/AIRoutine");
-  // Try to push into existing session for that date
-  const result = await AIRoutine.findOneAndUpdate(
-    { email, "chatHistory.date": date },
-    { $push: { "chatHistory.$.messages": message } },
-    { new: true },
+  // Single atomic pipeline update: append to existing session or create new one.
+  // Two separate findOneAndUpdate calls had a TOCTOU race where concurrent requests
+  // could both miss the session-exists check and push duplicate chatHistory entries.
+  await AIRoutine.findOneAndUpdate(
+    { email },
+    [
+      {
+        $set: {
+          chatHistory: {
+            $cond: {
+              if: { $in: [date, { $ifNull: ["$chatHistory.date", []] }] },
+              then: {
+                $map: {
+                  input: "$chatHistory",
+                  as: "session",
+                  in: {
+                    $cond: {
+                      if: { $eq: ["$$session.date", date] },
+                      then: {
+                        date: "$$session.date",
+                        messages: { $concatArrays: ["$$session.messages", [message]] },
+                      },
+                      else: "$$session",
+                    },
+                  },
+                },
+              },
+              else: {
+                $concatArrays: [
+                  { $ifNull: ["$chatHistory", []] },
+                  [{ date, messages: [message] }],
+                ],
+              },
+            },
+          },
+        },
+      },
+    ],
+    { upsert: true, new: true },
   );
-  // If no session exists for that date yet, create one
-  if (!result) {
-    await AIRoutine.findOneAndUpdate(
-      { email },
-      { $push: { chatHistory: { date, messages: [message] } } },
-      { upsert: true, new: true },
-    );
-  }
+  revalidatePath("/ai-routine");
 }
 
 export async function clearChatSession(
@@ -1099,6 +1151,7 @@ export async function clearChatSession(
     { email },
     { $pull: { chatHistory: { date } } },
   );
+  revalidatePath("/ai-routine");
 }
 
 // ==================== EMAIL VERIFICATION HELPERS ====================
@@ -1124,8 +1177,22 @@ export async function resendVerificationEmail(
   name: string,
 ): Promise<{ success: boolean; error?: string }> {
   await assertActorCanAccessEmail(email);
-  await dbConnect();
+
   const normalizedEmail = String(email).toLowerCase().trim();
+  const reqHeaders = await headers();
+  const forwarded = reqHeaders.get("x-forwarded-for");
+  const ip = (forwarded ? forwarded.split(",")[0].trim() : reqHeaders.get("x-real-ip")) || "unknown";
+  const limit = await enforceRateLimitByIp(ip, {
+    route: "send-otp:resend",
+    max: 5,
+    windowMs: 10 * 60 * 1000,
+    keyParts: [normalizedEmail],
+  });
+  if (!limit.allowed) {
+    return { success: false, error: "Too many requests. Please try again later." };
+  }
+
+  await dbConnect();
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   const codeHash = await bcrypt.hash(code, 12);
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
@@ -1169,7 +1236,13 @@ export async function uploadPhoto(email: string, formData: FormData) {
   await User.updateOne({ email }, { photo: url, photoKey: key });
 
   // Delete old photo after DB update succeeds — orphaned file preferred over stale DB ref
-  if (oldKey) await deleteFromS3(oldKey);
+  if (oldKey) {
+    try {
+      await deleteFromS3(oldKey);
+    } catch (err) {
+      console.error("Failed to delete old S3 photo (orphaned):", oldKey, err);
+    }
+  }
   revalidatePath("/profile");
 
   return { photo: url };
