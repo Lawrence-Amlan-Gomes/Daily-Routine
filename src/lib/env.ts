@@ -23,4 +23,10 @@ const envSchema = z.object({
   CRON_SECRET: z.string().min(1),
 });
 
-export const env = envSchema.parse(process.env);
+// Skip validation during `next build` — secrets are runtime-only and not present
+// in the build container. The instrumentation hook re-imports this at server start,
+// which is when the real parse runs and throws on any missing var.
+export const env =
+  process.env.NEXT_PHASE === "phase-production-build"
+    ? ({} as z.infer<typeof envSchema>)
+    : envSchema.parse(process.env);
