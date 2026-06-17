@@ -63,6 +63,7 @@ export interface CleanUser {
   expiredAt: string;
   paymentType: string;
   paddleSubscriptionId?: string;
+  subscriptionCanceledAt?: string | null;
   routine: IRoutine;
   thisMonthPremiumResponses: string;
   stats: IStatEntry[];

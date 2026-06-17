@@ -53,7 +53,7 @@ const PRICE_ID_TO_PLAN: Record<
   pri_01kpf65jm2m5cg2y7z0sqrajjg: { type: "Standard", duration: "annual" },
   pri_01kpf635sdhtbak3tecz31cjkr: { type: "Premium", duration: "monthly" },
   pri_01kpf66wsrnfnzd9ptnvrxdaxy: { type: "Premium", duration: "annual" },
-  pri_01krx4s2cbrsawpppxybw9rggg: { type: "Premium Admin", duration: "monthly" },
+  pri_01krx4s2cbrsawpppxybw9rggg: { type: "Admin", duration: "monthly" },
   pri_01krx4nkm89ftvjk6jba3drgd2: { type: "Premium Admin", duration: "annual" },
 };
 

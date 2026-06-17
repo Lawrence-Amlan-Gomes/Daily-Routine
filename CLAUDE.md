@@ -88,7 +88,7 @@ No test runner, no formatter script. `prettier` field is empty in `package.json`
 - Unverified users auto-deleted after 30 days by `GET /api/cron/cleanup-unverified` (Bearer `CRON_SECRET`).
 
 ### Data model (User doc)
-Single `users` collection holds routine (per-weekday array of `{name, time, category}`), goals (with subtasks, priority, status, repeat, tags), stats (per-day completed task names), plus `paymentType`, `expiredAt`, `isAdmin`, `isEmailVerified`, `photo` + `photoKey`.
+Single `users` collection holds routine (per-weekday array of `{name, time, category}`), goals (with subtasks, priority, status, repeat, tags), stats (per-day completed task names), plus `paymentType`, `expiredAt`, `paddleSubscriptionId`, `subscriptionCanceledAt` (set when a paid plan is cancelled but still active until period end), `isAdmin`, `isEmailVerified`, `photo` + `photoKey`.
 
 ### AI Routine
 - Separate `AIRoutine` collection per user holds conversation history + AI-generated routine.
@@ -102,7 +102,7 @@ Single `users` collection holds routine (per-weekday array of `{name, time, cate
   - `transaction.completed` → updates user with plan + `expiredAt` (30d for monthly, 365d for annual)
   - `subscription.activated` → stores `paddleSubscriptionId` for future cancellation; overwrites plan/expiredAt
   - `subscription.canceled` → sets `paymentType: "Expired"`, clears `paddleSubscriptionId`
-- **Cancellation:** `cancelSubscription` action calls `POST /subscriptions/{id}/cancel` in Paddle API (defaults to end-of-period cancellation). User keeps access until period ends; webhook finalizes when Paddle sends `subscription.canceled` event.
+- **Cancellation (two-phase):** `cancelSubscription` action calls `POST /subscriptions/{id}/cancel` in Paddle API (defaults to end-of-period cancellation) **and sets `subscriptionCanceledAt` on the user immediately**. User keeps access until period ends. The `subscription.canceled` webhook fires only at period end → flips `paymentType: "Expired"` and clears both `paddleSubscriptionId` and `subscriptionCanceledAt`. The profile card reads `subscriptionCanceledAt` to render the "cancelled, access until …" state during the gap. **`paymentType` strings the webhook writes (`<Tier> Monthly/Annually`) MUST stay in sync with `paymentTypeSchema` in `actions/index.ts`** — a mismatch makes `updatePaymentType` silently reject the write. See `PRICING_MECHANISM.md` gotchas #9–10.
 - **Fallback:** If `paddleSubscriptionId` not stored, cancellation fetches active subscriptions from Paddle API and filters by customer email.
 
 ### Photos

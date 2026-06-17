@@ -115,6 +115,8 @@ export async function generateToken(user: CleanUser): Promise<string> {
     createdAt: user.createdAt,
     expiredAt: user.expiredAt,
     paymentType: user.paymentType ?? "Free One Month",
+    paddleSubscriptionId: user.paddleSubscriptionId,
+    subscriptionCanceledAt: user.subscriptionCanceledAt ?? null,
     routine: plainRoutine,
     thisMonthPremiumResponses: user.thisMonthPremiumResponses ?? "",
     stats: plainStats,

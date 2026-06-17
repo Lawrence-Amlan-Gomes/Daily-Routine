@@ -55,6 +55,7 @@ interface RawUser {
   expiredAt?: unknown;
   paymentType?: unknown;
   paddleSubscriptionId?: unknown;
+  subscriptionCanceledAt?: unknown;
   routine?: RawRoutine;
   thisMonthPremiumResponses?: unknown;
   stats?: unknown;
@@ -119,6 +120,12 @@ export const cleanUserForClient = (user: RawUser) => {
         : null) || expiredAt.toISOString(),
     paymentType: user.paymentType || "Free One Month",
     paddleSubscriptionId: user.paddleSubscriptionId ? String(user.paddleSubscriptionId) : undefined,
+    subscriptionCanceledAt:
+      user.subscriptionCanceledAt &&
+      (typeof user.subscriptionCanceledAt === "string" ||
+        user.subscriptionCanceledAt instanceof Date)
+        ? new Date(user.subscriptionCanceledAt as string | Date).toISOString()
+        : null,
     routine: cleanRoutine(user.routine || {}),
     thisMonthPremiumResponses: user.thisMonthPremiumResponses || "",
     stats: Array.isArray(user.stats) ? user.stats : [],

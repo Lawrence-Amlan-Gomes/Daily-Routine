@@ -303,9 +303,11 @@ export async function changePhoto(email: string, photo: string) {
 }
 
 // NOTE: these MUST match the strings the Paddle webhook writes
-// (`${plan.type} ${Monthly|Annually}` in src/app/api/paddle/webhooks/route.ts).
-// The UI also depends on the duration suffix (`.includes("Monthly")` /
-// `.includes("Annually")` in Pricing.tsx). Do not drop the suffix.
+// (`${plan.type} ${Monthly|Annually}` in src/app/api/paddle/webhooks/route.ts,
+// where plan.type comes from PRICE_ID_TO_PLAN). The UI also depends on the
+// duration suffix (`.includes("Monthly")` / `.includes("Annually")` in
+// Pricing.tsx). Do not drop the suffix. The admin tier is intentionally
+// asymmetric: "Admin Monthly" + "Premium Admin Annually".
 const paymentTypeSchema = z.enum([
   "Free One Month",
   "Free",
@@ -314,7 +316,7 @@ const paymentTypeSchema = z.enum([
   "Standard Annually",
   "Premium Monthly",
   "Premium Annually",
-  "Premium Admin Monthly",
+  "Admin Monthly",
   "Premium Admin Annually",
 ]);
 
@@ -336,12 +338,16 @@ export async function updatePaymentType(
     }
   }
   await dbConnect();
-  const updateData: { paymentType: string; expiredAt: Date | null; paddleSubscriptionId?: string } = { paymentType: parsedType.data, expiredAt };
+  const updateData: { paymentType: string; expiredAt: Date | null; paddleSubscriptionId?: string; subscriptionCanceledAt?: Date | null } = { paymentType: parsedType.data, expiredAt };
   if (options?.subscriptionId) {
     updateData.paddleSubscriptionId = options.subscriptionId;
+    // A freshly activated subscription is no longer pending-cancel.
+    updateData.subscriptionCanceledAt = null;
   }
   if (options?.clearSubscriptionId) {
     updateData.paddleSubscriptionId = "";
+    // Cancellation is now finalized (paymentType → "Expired"); clear the flag.
+    updateData.subscriptionCanceledAt = null;
   }
   await User.updateOne({ email }, updateData);
   revalidatePath("/");
@@ -449,8 +455,14 @@ export async function cancelSubscription(email: string) {
       throw new Error(`Failed to cancel subscription in Paddle: ${cancelResponse.status} - ${errorText}`);
     }
 
-    console.log("[cancelSubscription] Paddle API success, webhook will handle DB update");
+    console.log("[cancelSubscription] Paddle API success, webhook will finalize DB update at period end");
     console.log("[cancelSubscription] User will keep access until end of billing period");
+
+    // Mark cancellation as pending now. The subscription.canceled webhook fires
+    // only at period end; until then this flag is the only signal that the
+    // still-active paid plan won't renew (drives the "already cancelled" state).
+    await User.updateOne({ email }, { subscriptionCanceledAt: new Date() });
+
     console.log("[cancelSubscription] Revalidating /profile path");
 
     revalidatePath("/profile");

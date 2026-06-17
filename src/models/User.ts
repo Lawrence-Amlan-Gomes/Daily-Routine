@@ -62,6 +62,7 @@ export interface IUser extends Document {
   isAdmin: boolean;
   paymentType: string;
   paddleSubscriptionId?: string;
+  subscriptionCanceledAt?: Date | null;
   routine: IRoutine;
   thisMonthPremiumResponses: string;
   isEmailVerified: boolean;
@@ -88,6 +89,11 @@ const UserSchema = new mongoose.Schema<IUser>(
     isAdmin: { type: Boolean, default: false },
     paymentType: { type: String, default: "Free One Month" },
     paddleSubscriptionId: { type: String, default: "" },
+    // Set when the user requests cancellation (Paddle confirms end-of-period
+    // cancel). Cleared when the subscription.canceled webhook finalizes to
+    // "Expired". Distinguishes an active sub from a cancelled-but-still-active
+    // one during the window before the webhook fires.
+    subscriptionCanceledAt: { type: Date, default: null },
     routine: {
       type: {
         saturday: {

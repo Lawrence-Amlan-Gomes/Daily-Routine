@@ -105,6 +105,8 @@ const Profile = () => {
   const doCancelSubscription = async () => {
     if (!auth?.email) throw new Error("Not signed in");
     await cancelSubscription(auth.email);
+    // Reflect the pending cancellation immediately (webhook finalizes at period end).
+    setAuth({ ...auth, subscriptionCanceledAt: new Date().toISOString() });
   };
 
   const getSubscriptionBadge = (type: string) => {
@@ -138,20 +140,32 @@ const Profile = () => {
         .slice(0, 2)
     : "U";
 
-  // ── Subscription state (drives label + cancel button) ──
-  // A plan only auto-renews if there is a live Paddle subscription behind it.
-  // Free One Month is a one-off trial; a paid plan with no paddleSubscriptionId
-  // has been cancelled (or never created a subscription) — neither renews.
-  const isFreeTrial = auth.paymentType === "Free One Month";
-  const hasActiveSubscription = Boolean(auth.paddleSubscriptionId);
-  const subscriptionDateLabel = hasActiveSubscription
-    ? "Renews"
-    : isFreeTrial
-      ? "Free trial ends"
-      : "Access until";
+  // ── Subscription state machine (drives the card label + button) ──
+  // Four mutually-exclusive states:
+  //   1. Free trial  → "Free One Month"            → "Free trial ends" + Upgrade
+  //   2. Inactive    → "Expired"/"Free"/missing    → "Ended"           + Upgrade
+  //   3. Active paid → paid plan, not cancelled    → "Auto renews at"  + Cancel
+  //   4. Cancelled   → paid plan, cancel pending   → "Access until"    + disabled
+  // State 4 exists because Paddle's subscription.canceled webhook only fires at
+  // period end; subscriptionCanceledAt is set at cancel-time to mark the gap.
+  const pt = auth.paymentType ?? "";
+  const isFreeTrial = pt === "Free One Month";
+  const isPaidPlan = /^(Standard|Premium|Admin) /.test(pt); // e.g. "Standard Monthly", "Premium Admin Annually"
+  const isCanceledPending = isPaidPlan && Boolean(auth.subscriptionCanceledAt);
+  const isActivePaid = isPaidPlan && !isCanceledPending;
+  const isInactive = !isFreeTrial && !isPaidPlan; // "Expired", "Free", or missing
+
+  const subscriptionPlanLabel = isInactive ? "Expired" : pt;
   const subscriptionDate = auth.expiredAt
     ? new Date(auth.expiredAt).toLocaleDateString()
     : "—";
+  const subscriptionDateLabel = isFreeTrial
+    ? "Free trial ends"
+    : isInactive
+      ? "Ended"
+      : isActivePaid
+        ? "Auto renews at"
+        : "Access until";
 
   return (
     <div
@@ -411,29 +425,41 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* ── Subscription card (if active) ── */}
-        {auth.paymentType && auth.paymentType !== "Expired" && !auth.paymentType.includes("Test") && (
+        {/* ── Subscription card ── */}
+        {!pt.includes("Test") && (
           <div className="w-full p-6 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-2xl">
             <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Your Subscription</h2>
             <div className="space-y-2 mb-6">
               <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-semibold">Plan:</span> {auth.paymentType}
+                <span className="font-semibold">Plan:</span> {subscriptionPlanLabel}
               </p>
               <p className="text-gray-700 dark:text-gray-300">
                 <span className="font-semibold">{subscriptionDateLabel}:</span> {subscriptionDate}
               </p>
-              {!hasActiveSubscription && !isFreeTrial && (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Your subscription is cancelled and will not renew. You keep access until the date above.
-                </p>
-              )}
             </div>
-            {hasActiveSubscription && (
+
+            {(isFreeTrial || isInactive) && (
+              <button
+                onClick={() => router.push("/pricing")}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold"
+              >
+                Upgrade
+              </button>
+            )}
+            {isActivePaid && (
               <button
                 onClick={() => setShowCancelModal(true)}
                 className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-semibold"
               >
                 Cancel Subscription
+              </button>
+            )}
+            {isCanceledPending && (
+              <button
+                disabled
+                className="px-6 py-2 bg-gray-400 text-white rounded-lg font-semibold cursor-not-allowed"
+              >
+                already cancelled
               </button>
             )}
           </div>
