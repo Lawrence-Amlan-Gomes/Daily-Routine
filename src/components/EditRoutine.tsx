@@ -1147,9 +1147,13 @@ export default function EditRoutine({
     setLoading(true);
     setMessage(null);
     try {
-      await updateRoutine(auth.email, auth.routine);
-      setMessage({ type: "success", text: "Saved!" });
-      setHasUnsavedChanges(false);
+      const result = await updateRoutine(auth.email, auth.routine);
+      if (result?.error) {
+        setMessage({ type: "error", text: result.error });
+      } else {
+        setMessage({ type: "success", text: "Saved!" });
+        setHasUnsavedChanges(false);
+      }
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       setMessage({ type: "error", text: "Save failed" });

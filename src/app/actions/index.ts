@@ -702,7 +702,7 @@ export async function verifyAndChangePassword(
 
 const taskSchema = z.object({
   name: z.string().trim().min(1).max(200),
-  time: z.string().regex(/^\d{2}:\d{2}$/),
+  time: z.string().regex(/^\d{2}:\d{2} (AM|PM) - \d{2}:\d{2} (AM|PM)$/),
   category: z.string().max(50).optional(),
 });
 
