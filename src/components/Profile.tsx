@@ -408,13 +408,15 @@ const Profile = () => {
                 <span className="font-semibold">Renews:</span> {auth.expiredAt ? new Date(auth.expiredAt).toLocaleDateString() : "—"}
               </p>
             </div>
-            <button
-              onClick={() => auth.paddleSubscriptionId && setShowCancelModal(true)}
-              disabled={!auth.paddleSubscriptionId}
-              className="px-6 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-lg transition-colors font-semibold"
-            >
-              {auth.paddleSubscriptionId ? "Cancel Subscription" : "Already Cancelled"}
-            </button>
+            {auth.paymentType !== "Free One Month" && (
+              <button
+                onClick={() => auth.paddleSubscriptionId && setShowCancelModal(true)}
+                disabled={!auth.paddleSubscriptionId}
+                className="px-6 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-lg transition-colors font-semibold"
+              >
+                {auth.paddleSubscriptionId ? "Cancel Subscription" : "Already Cancelled"}
+              </button>
+            )}
           </div>
         )}
 

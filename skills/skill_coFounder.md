@@ -50,22 +50,23 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 
 ## Last Session Summary
 
-**Date:** 2026-06-17  
+**Date:** 2026-06-18  
 **What we did:**
-- Added Google Analytics 4 (GA4) tracking to root layout.
+- Generated `CRON_SECRET` and added it to `.env.local`. Value: `6b2765b28504c947557a18d3a1e11d5fc61a04182a1798b10bbd6c4d1266bd18`.
+- Fixed bug: Free One Month users were seeing "Already Cancelled" button on the billing/profile page.
 
 **New code:**
-- `src/app/layout.tsx` — added `const GA_ID = "G-S546G5N7P2"` as single source of truth; two `<Script strategy="afterInteractive">` blocks inserted: GTM loader script + inline `ga-init` config. `next/script` was already imported — no new dependencies.
+- `.env.local` — `CRON_SECRET` added (was missing entirely; cron endpoint was non-functional without it).
+- `src/components/Profile.tsx` — wrapped cancel button in `auth.paymentType !== "Free One Month"` guard. Free One Month users now see the subscription card (plan + expiry) but no cancel button. Paid users with active subscription still see "Cancel Subscription"; those already cancelled see "Already Cancelled" (disabled).
 
 **Decisions made:**
-- GA ID defined once via `const GA_ID` — not hardcoded in multiple places.
-- `afterInteractive` strategy — non-blocking, fires after hydration.
+- Cancel button is hidden entirely for Free One Month users rather than showing a disabled state — they never had a Paddle subscription so there's nothing to cancel.
 
 **Open questions left unresolved:**
-- Cron still not scheduled in Coolify — needs daily trigger on `/api/cron/trial-expiry-warning` with `Authorization: Bearer <CRON_SECRET>`.
+- `CRON_SECRET` added to `.env.local` but **not yet added to Coolify env vars** and cron **not yet scheduled** in Coolify — feature is still dead in production until both are done.
 - Dedup decision still open: user expiring in 3 days will get 3 emails (1/day over 3-day window). Add `trialWarningEmailSentAt` to User model to cap at 1.
 - `CancelSubscriptionModal` not manually tested end-to-end yet.
-- Admin grant/revoke (built previous session) not manually tested end-to-end yet.
+- Admin grant/revoke not manually tested end-to-end yet.
 - Per-premium-user Gemini rate limit still not implemented.
 
 ---
@@ -74,7 +75,7 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 
 > *(Maintained as a ranked list. Top = most important.)*
 
-1. **Schedule the new cron in Coolify** — `GET /api/cron/trial-expiry-warning`, daily, `Authorization: Bearer <CRON_SECRET>`. Unscheduled = the whole trial warning feature is dead.
+1. **Deploy CRON_SECRET + schedule cron in Coolify** — add `CRON_SECRET=6b2765b28504c947557a18d3a1e11d5fc61a04182a1798b10bbd6c4d1266bd18` to Coolify env vars, redeploy, then schedule `GET /api/cron/trial-expiry-warning` daily with `Authorization: Bearer <CRON_SECRET>`. Until this is done the trial warning feature is completely dead.
 2. **Dedup decision** — decide whether 3 emails over 3 days is acceptable or add `trialWarningEmailSentAt` to User model to cap at 1. Lean toward adding the field.
 3. **Manual test: CancelSubscriptionModal** — test loading, success, and error states end-to-end in browser (`src/components/CancelSubscriptionModal.tsx`, not yet verified).
 4. **Manual test: Admin toggle** — test granting and revoking admin in the admin panel; confirm self-row shows "you" and self-demotion is blocked (`src/components/AdminNew.tsx`).
