@@ -138,6 +138,21 @@ const Profile = () => {
         .slice(0, 2)
     : "U";
 
+  // ── Subscription state (drives label + cancel button) ──
+  // A plan only auto-renews if there is a live Paddle subscription behind it.
+  // Free One Month is a one-off trial; a paid plan with no paddleSubscriptionId
+  // has been cancelled (or never created a subscription) — neither renews.
+  const isFreeTrial = auth.paymentType === "Free One Month";
+  const hasActiveSubscription = Boolean(auth.paddleSubscriptionId);
+  const subscriptionDateLabel = hasActiveSubscription
+    ? "Renews"
+    : isFreeTrial
+      ? "Free trial ends"
+      : "Access until";
+  const subscriptionDate = auth.expiredAt
+    ? new Date(auth.expiredAt).toLocaleDateString()
+    : "—";
+
   return (
     <div
       className={`min-h-screen w-full px-4 pt-[80px] md:pt-[100px] pb-12 bg-gray-50 dark:bg-black`}
@@ -405,16 +420,20 @@ const Profile = () => {
                 <span className="font-semibold">Plan:</span> {auth.paymentType}
               </p>
               <p className="text-gray-700 dark:text-gray-300">
-                <span className="font-semibold">Renews:</span> {auth.expiredAt ? new Date(auth.expiredAt).toLocaleDateString() : "—"}
+                <span className="font-semibold">{subscriptionDateLabel}:</span> {subscriptionDate}
               </p>
+              {!hasActiveSubscription && !isFreeTrial && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Your subscription is cancelled and will not renew. You keep access until the date above.
+                </p>
+              )}
             </div>
-            {auth.paymentType !== "Free One Month" && (
+            {hasActiveSubscription && (
               <button
-                onClick={() => auth.paddleSubscriptionId && setShowCancelModal(true)}
-                disabled={!auth.paddleSubscriptionId}
-                className="px-6 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-lg transition-colors font-semibold"
+                onClick={() => setShowCancelModal(true)}
+                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-semibold"
               >
-                {auth.paddleSubscriptionId ? "Cancel Subscription" : "Already Cancelled"}
+                Cancel Subscription
               </button>
             )}
           </div>

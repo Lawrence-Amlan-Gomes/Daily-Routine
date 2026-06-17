@@ -302,13 +302,20 @@ export async function changePhoto(email: string, photo: string) {
   revalidatePath("/profile");
 }
 
+// NOTE: these MUST match the strings the Paddle webhook writes
+// (`${plan.type} ${Monthly|Annually}` in src/app/api/paddle/webhooks/route.ts).
+// The UI also depends on the duration suffix (`.includes("Monthly")` /
+// `.includes("Annually")` in Pricing.tsx). Do not drop the suffix.
 const paymentTypeSchema = z.enum([
   "Free One Month",
-  "Standard",
-  "Premium",
-  "Premium Admin",
-  "Expired",
   "Free",
+  "Expired",
+  "Standard Monthly",
+  "Standard Annually",
+  "Premium Monthly",
+  "Premium Annually",
+  "Premium Admin Monthly",
+  "Premium Admin Annually",
 ]);
 
 export async function updatePaymentType(

@@ -296,6 +296,7 @@ Relevant payment fields in MongoDB `users` collection:
 6. **Expiry enforcement:** Frontend shows warnings; backend enforces on protected routes (middleware checks `expiredAt`). If user clears cookies, they bypass check.
 7. **Upgrade modal:** Detects ANY active subscription + different plan. Modal shows expiry, days left, consequences. User loses unused days (no refund). [Pricing.tsx:36-69](src/components/Pricing.tsx:36-69).
 8. **Auto-cancel logic:** Webhook compares `paddleSubscriptionId` before canceling. If user upgrades twice rapidly, old subscription might already be canceling — API call will fail silently (logged, doesn't block new activation).
+9. **`paymentType` schema sync (CRITICAL):** `paymentTypeSchema` (zod enum) in [actions/index.ts](src/app/actions/index.ts) MUST contain every string the webhook writes — i.e. `"<Tier> Monthly"` / `"<Tier> Annually"` with the duration suffix. The webhook builds `${plan.type} ${Monthly|Annually}`; if the enum lacks that exact value, `updatePaymentType` returns `{ error }` and **silently never writes** — paid users never get upgraded and `paddleSubscriptionId` is never stored. (This bug shipped 2026-06-02 → 2026-06-18.) Tier names in `PRICE_ID_TO_PLAN` must also stay consistent across monthly/annual (both Admin price IDs map to `"Premium Admin"`).
 
 ---
 

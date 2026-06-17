@@ -52,22 +52,30 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 
 **Date:** 2026-06-18  
 **What we did:**
-- Generated `CRON_SECRET` and added it to `.env.local`. Value: `6b2765b28504c947557a18d3a1e11d5fc61a04182a1798b10bbd6c4d1266bd18`.
-- Fixed bug: Free One Month users were seeing "Already Cancelled" button on the billing/profile page.
+- Generated `CRON_SECRET` and added it to `.env.local`. Value: `6b2765b28504c947557a18d3a1e11d5fc61a04182a1798b10bbd6c4d1266bd18`. ⚠️ `.env.local` is **gitignored/untracked** (CLAUDE.md wrongly says it's committed) — secret is LOCAL ONLY, must be pasted into Coolify env vars to reach prod.
+- **Found + fixed a CRITICAL production-down payment bug.** Traced full Paddle workflow. The `paymentTypeSchema` zod enum (added 2026-06-02 in "security hardening" commit `1356215`) only allowed bare `"Standard"`/`"Premium"`/`"Premium Admin"`, but the webhook writes duration-suffixed strings (`"Standard Monthly"`, `"Premium Annually"`, …). Result: since June 2, **every** `transaction.completed` + `subscription.activated` webhook was silently rejected by `updatePaymentType` (`{ error: "Invalid payment type" }`, no DB write). Paid users never upgraded; `paddleSubscriptionId` never stored — which is also why paid plans showed "Already Cancelled". No revenue lost only because there are **zero paying users**.
+- Fixed the Profile subscription-card label bug (Free One Month + cancelled plans were showing "Renews:").
 
 **New code:**
-- `.env.local` — `CRON_SECRET` added (was missing entirely; cron endpoint was non-functional without it).
-- `src/components/Profile.tsx` — wrapped cancel button in `auth.paymentType !== "Free One Month"` guard. Free One Month users now see the subscription card (plan + expiry) but no cancel button. Paid users with active subscription still see "Cancel Subscription"; those already cancelled see "Already Cancelled" (disabled).
+- `src/app/actions/index.ts` — expanded `paymentTypeSchema` to the real values the webhook produces: `Free One Month`, `Free`, `Expired`, and `{Standard|Premium|Premium Admin} {Monthly|Annually}`. Added comment tying it to webhook + UI.
+- `src/app/api/paddle/webhooks/route.ts` — fixed `PRICE_ID_TO_PLAN` admin inconsistency: monthly admin was `type: "Admin"` (→ "Admin Monthly", which fails `.includes("premium")` AI gate) while annual was `"Premium Admin"`. Both now `"Premium Admin"`.
+- `src/components/Profile.tsx` — subscription card now uses state-driven label: active sub (`paddleSubscriptionId` set) → "Renews"; Free One Month → "Free trial ends"; cancelled paid plan → "Access until" + a "will not renew" note. Cancel button only renders when `hasActiveSubscription`. Removed the misleading disabled "Already Cancelled" button.
+- `PRICING_MECHANISM.md` — added CRITICAL gotcha #9 documenting the schema↔webhook sync requirement.
 
 **Decisions made:**
-- Cancel button is hidden entirely for Free One Month users rather than showing a disabled state — they never had a Paddle subscription so there's nothing to cancel.
+- Fix the schema (accept duration-suffixed values) rather than change the webhook to write bare values — the UI depends on `.includes("Monthly")`/`.includes("Annually")`, so duration must stay in `paymentType`.
+- Both Admin price IDs map to `"Premium Admin"` for monthly/annual consistency.
+- Cancel button shows only for active subscriptions; cancelled paid plans get an info note, not a disabled button.
+
+**Verification:**
+- `npx tsc --noEmit` ✅, `npm run build` ✅ (all 26 routes compiled clean). No paying users → no data reconciliation needed.
 
 **Open questions left unresolved:**
-- `CRON_SECRET` added to `.env.local` but **not yet added to Coolify env vars** and cron **not yet scheduled** in Coolify — feature is still dead in production until both are done.
-- Dedup decision still open: user expiring in 3 days will get 3 emails (1/day over 3-day window). Add `trialWarningEmailSentAt` to User model to cap at 1.
-- `CancelSubscriptionModal` not manually tested end-to-end yet.
-- Admin grant/revoke not manually tested end-to-end yet.
-- Per-premium-user Gemini rate limit still not implemented.
+- **Fixes NOT yet committed/pushed.** 4 modified files (`actions/index.ts`, `webhooks/route.ts`, `Profile.tsx`, `PRICING_MECHANISM.md`) sitting uncommitted on `main`. Coolify deploys from repo → must commit + push to ship.
+- Payment flow has **never** been verified end-to-end. Needs one live **sandbox** purchase: checkout → webhook → confirm `paymentType` + `paddleSubscriptionId` written → cancel → confirm flips to `Expired`.
+- `CRON_SECRET` still **not in Coolify env vars** and cron **not scheduled**.
+- Dedup decision still open (3 emails vs cap at 1 via `trialWarningEmailSentAt`).
+- `CancelSubscriptionModal` + Admin grant/revoke still not manually tested e2e.
 
 ---
 
@@ -75,15 +83,15 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 
 > *(Maintained as a ranked list. Top = most important.)*
 
-1. **Deploy CRON_SECRET + schedule cron in Coolify** — add `CRON_SECRET=6b2765b28504c947557a18d3a1e11d5fc61a04182a1798b10bbd6c4d1266bd18` to Coolify env vars, redeploy, then schedule `GET /api/cron/trial-expiry-warning` daily with `Authorization: Bearer <CRON_SECRET>`. Until this is done the trial warning feature is completely dead.
-2. **Dedup decision** — decide whether 3 emails over 3 days is acceptable or add `trialWarningEmailSentAt` to User model to cap at 1. Lean toward adding the field.
-3. **Manual test: CancelSubscriptionModal** — test loading, success, and error states end-to-end in browser (`src/components/CancelSubscriptionModal.tsx`, not yet verified).
-4. **Manual test: Admin toggle** — test granting and revoking admin in the admin panel; confirm self-row shows "you" and self-demotion is blocked (`src/components/AdminNew.tsx`).
-5. **HowToUse + Pricing component updates** — changes sitting in diff (`src/components/HowToUse.tsx`, `src/components/Pricing.tsx`); needs review and ship.
-6. **data-util.ts improvements** — `cleanUserForClient` changes in diff (`src/lib/data-util.ts`); verify nothing leaks to client.
+1. **Commit + push the payment fix** — 4 uncommitted files on `main` (`src/app/actions/index.ts`, `src/app/api/paddle/webhooks/route.ts`, `src/components/Profile.tsx`, `PRICING_MECHANISM.md`). Build passes. Coolify deploys from repo, so nothing ships until pushed. Suggested message: "Fix: payment webhook silently rejected all paid plans + correct subscription labels".
+2. **Verify payments end-to-end in sandbox** — the flow has NEVER worked in prod and is still unproven. Set `NEXT_PUBLIC_PADDLE_ENV=sandbox` + sandbox keys, do a real checkout, confirm Mongo gets `paymentType: "<Tier> <Period>"` + `paddleSubscriptionId`, then Cancel → confirm `Expired`. This is the gate before any paid-acquisition push.
+3. **Add CRON_SECRET to Coolify + schedule cron** — paste `CRON_SECRET=6b2765b28504c947557a18d3a1e11d5fc61a04182a1798b10bbd6c4d1266bd18` into Coolify env vars (it's gitignored, won't deploy via repo), then schedule `GET /api/cron/trial-expiry-warning` daily with `Authorization: Bearer <CRON_SECRET>`. Trial-warning feature is dead until both done.
+4. **Dedup decision** — decide whether 3 emails over 3 days is acceptable or add `trialWarningEmailSentAt` to User model to cap at 1. Lean toward adding the field.
+5. **Manual test: CancelSubscriptionModal** — test loading, success, and error states end-to-end in browser (`src/components/CancelSubscriptionModal.tsx`, not yet verified).
+6. **Manual test: Admin toggle** — test granting and revoking admin in the admin panel; confirm self-row shows "you" and self-demotion is blocked (`src/components/AdminNew.tsx`).
 7. **Per-user Gemini rate limit** — paymentType gate blocks non-premium users, but a runaway premium user can still rack up Gemini cost. Add a per-user monthly cap check using `thisMonthPremiumResponses` (field already exists on User model).
 8. **GA4 verification** — confirm GA4 events hitting Google Analytics dashboard after next deploy. Check `G-S546G5N7P2` in GA real-time view.
-9. **Testing coverage** — Jest + `__tests__/` scaffolded. Need meaningful tests on auth actions (`src/app/actions/index.ts`), email validation (`src/lib/isValidEmail.ts`), schema validation (`src/lib/schemas.ts`).
+9. **Testing coverage** — Jest + `__tests__/` scaffolded. Highest-value first test: a unit test asserting `paymentTypeSchema` accepts every string the webhook can produce (would have caught today's bug). Then auth actions, email validation.
 10. **Growth / retention** — GA4 now wired. Consider PostHog funnels for registration → verification → first routine completion as next analytics layer.
 
 ---
@@ -105,7 +113,9 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 
 > *(Things that need fixing but aren't blocking a release right now.)*
 
-- No test suite yet — only TypeScript + ESLint as automated checks
+- No test suite yet — only TypeScript + ESLint as automated checks. Note: TS/ESLint did NOT catch today's payment bug (a runtime zod-validation mismatch) — only a unit test or live run would have.
+- **CLAUDE.md says `.env.local` "is committed" — FALSE. It's gitignored/untracked.** Any secret added there (e.g. `CRON_SECRET`) stays local and must be set in Coolify separately. Worth correcting CLAUDE.md next time it's touched.
+- **`paymentType` string is duplicated across 3 places that silently drift:** webhook (writes `"<Tier> <Period>"`), `paymentTypeSchema` (validates it), and UI (`.includes("Monthly"/"Annually"/"premium")`). No single source of truth → caused the June-2 outage. Candidate refactor: derive all three from one tier/period constant.
 - `actions/index.ts` is ~1180 LOC — growing; may need splitting when it hits 1500+
 - Two ESLint config files present (`.eslintrc.json` + `eslint.config.mjs`) — flat config is current but old one may cause confusion
 - Disk space on VPS accumulates Docker build cache — periodic pruning needed

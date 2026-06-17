@@ -184,7 +184,7 @@ No test framework, no test directory, no test script. Verification is manual: `n
 
 ## Important Notes for AI Assistance
 
-- **`.env.local` is committed** and contains real production secrets (Paddle live keys, Mongo URI with creds, SMTP password, S3 creds, Gemini key). Do not paste contents into logs, PRs, external tools, or new docs. If asked to rotate, do locally — never push secrets back.
+- **`.env.local` is gitignored/untracked** (NOT committed) and contains real production secrets (Paddle live keys, Mongo URI with creds, SMTP password, S3 creds, Gemini key). Do not paste contents into logs, PRs, external tools, or new docs. If asked to rotate, do locally — never commit secrets. **Deploy implication:** because it isn't in the repo, secrets added here do NOT reach production — they must also be set in **Coolify → Environment Variables** (this is why a locally-added `CRON_SECRET` won't work in prod until added in Coolify).
 - **Two auth systems run in parallel.** When touching auth, handle both: NextAuth session (Google) AND the custom JWT cookie (`authToken`). `getActionActor()` in `src/app/actions/index.ts` is the canonical pattern; reuse it.
 - **Server actions receive an `email` param from client** but MUST NOT trust it. Always call `assertActorCanAccessEmail(email)` (or equivalent) before mutating.
 - **Mongoose docs leak internals** into Redux / JWT payloads. Run through `cleanUserForClient` or the deep-sanitize helpers in `lib/server/jwt.ts` before serializing.
