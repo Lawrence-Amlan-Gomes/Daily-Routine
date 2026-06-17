@@ -7,6 +7,8 @@ import Script from "next/script";
 import ClientLayout from "./ClientLayout";
 import "./globals.css";
 
+const GA_ID = "G-S546G5N7P2";
+
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
@@ -87,6 +89,18 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="ga-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_ID}');
+          `}
+        </Script>
         <Script
           id="ld-json-webapp"
           type="application/ld+json"

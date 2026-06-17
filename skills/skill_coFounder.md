@@ -52,21 +52,20 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 
 **Date:** 2026-06-17  
 **What we did:**
-- Implemented "admin can grant/revoke admin status on another user" feature.
+- Added Google Analytics 4 (GA4) tracking to root layout.
 
 **New code:**
-- `src/app/actions/index.ts` — `setUserAdmin(targetEmail, makeAdmin)` server action: admin-only guard, self-demotion blocked server-side (throws `"You cannot change your own admin status"`), updates `isAdmin` via `User.updateOne`, throws if user not found. Also updated `getAllUsers` to include `isAdmin` in `.select()` and return value.
-- `src/components/AdminNew.tsx` — `setUserAdmin` imported; `UserItem` type gains `isAdmin: boolean`; `togglingAdmin` state tracks in-flight row; `handleToggleAdmin` calls server action then optimistically updates local state; new "Admin" column in users table — amber badge for admins, gray for regular users, "you" label (non-clickable) for the current admin's own row.
+- `src/app/layout.tsx` — added `const GA_ID = "G-S546G5N7P2"` as single source of truth; two `<Script strategy="afterInteractive">` blocks inserted: GTM loader script + inline `ga-init` config. `next/script` was already imported — no new dependencies.
 
 **Decisions made:**
-- Self-demotion blocked server-side to prevent accidental admin lockout.
-- Optimistic UI update after successful server action (no full reload needed).
-- TypeScript (`tsc --noEmit`) passed clean.
+- GA ID defined once via `const GA_ID` — not hardcoded in multiple places.
+- `afterInteractive` strategy — non-blocking, fires after hydration.
 
 **Open questions left unresolved:**
-- Cron still not scheduled in Coolify — needs a daily trigger against `/api/cron/trial-expiry-warning` with `Authorization: Bearer <CRON_SECRET>`
-- Dedup decision still open: user expiring in 3 days will get 3 emails (one per day). Add `trialWarningEmailSentAt` to User model to cap at 1.
+- Cron still not scheduled in Coolify — needs daily trigger on `/api/cron/trial-expiry-warning` with `Authorization: Bearer <CRON_SECRET>`.
+- Dedup decision still open: user expiring in 3 days will get 3 emails (1/day over 3-day window). Add `trialWarningEmailSentAt` to User model to cap at 1.
 - `CancelSubscriptionModal` not manually tested end-to-end yet.
+- Admin grant/revoke (built previous session) not manually tested end-to-end yet.
 - Per-premium-user Gemini rate limit still not implemented.
 
 ---
@@ -78,12 +77,13 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 1. **Schedule the new cron in Coolify** — `GET /api/cron/trial-expiry-warning`, daily, `Authorization: Bearer <CRON_SECRET>`. Unscheduled = the whole trial warning feature is dead.
 2. **Dedup decision** — decide whether 3 emails over 3 days is acceptable or add `trialWarningEmailSentAt` to User model to cap at 1. Lean toward adding the field.
 3. **Manual test: CancelSubscriptionModal** — test loading, success, and error states end-to-end in browser (`src/components/CancelSubscriptionModal.tsx`, not yet verified).
-4. **Manual test: Admin toggle** — test granting and revoking admin in the admin panel; confirm self-row shows "you" and self-demotion is blocked.
+4. **Manual test: Admin toggle** — test granting and revoking admin in the admin panel; confirm self-row shows "you" and self-demotion is blocked (`src/components/AdminNew.tsx`).
 5. **HowToUse + Pricing component updates** — changes sitting in diff (`src/components/HowToUse.tsx`, `src/components/Pricing.tsx`); needs review and ship.
 6. **data-util.ts improvements** — `cleanUserForClient` changes in diff (`src/lib/data-util.ts`); verify nothing leaks to client.
 7. **Per-user Gemini rate limit** — paymentType gate blocks non-premium users, but a runaway premium user can still rack up Gemini cost. Add a per-user monthly cap check using `thisMonthPremiumResponses` (field already exists on User model).
-8. **Testing coverage** — Jest + `__tests__/` scaffolded. Need meaningful tests on auth actions (`src/app/actions/index.ts`), email validation (`src/lib/isValidEmail.ts`), schema validation (`src/lib/schemas.ts`).
-9. **Growth / retention** — no analytics on activation or churn yet. Consider PostHog funnels for registration → verification → first routine completion.
+8. **GA4 verification** — confirm GA4 events hitting Google Analytics dashboard after next deploy. Check `G-S546G5N7P2` in GA real-time view.
+9. **Testing coverage** — Jest + `__tests__/` scaffolded. Need meaningful tests on auth actions (`src/app/actions/index.ts`), email validation (`src/lib/isValidEmail.ts`), schema validation (`src/lib/schemas.ts`).
+10. **Growth / retention** — GA4 now wired. Consider PostHog funnels for registration → verification → first routine completion as next analytics layer.
 
 ---
 
