@@ -39,8 +39,8 @@ const ForgotPassword = () => {
   // Derived validation — computed every render, no state needed
   const emailError = !email
     ? { iserror: true, error: "Email is required" }
-    : !email.endsWith("@gmail.com")
-      ? { iserror: true, error: "Use @gmail.com as your email format" }
+    : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+      ? { iserror: true, error: "Enter a valid email address" }
       : { iserror: false, error: "" };
 
   const newPasswordError = newPassword.length > 72

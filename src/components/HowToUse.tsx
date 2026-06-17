@@ -71,7 +71,7 @@ export default function HowToUse() {
         (target as any).mozRequestFullScreen();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } else if ((target as any)?.msRequestFullscreen) {
-        // eslint-disable-next-line @typescript-eslant/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (target as any).msRequestFullscreen();
       }
       setIsFullscreen(true);

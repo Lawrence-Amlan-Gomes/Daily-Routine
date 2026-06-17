@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
+import CancelSubscriptionModal from "@/components/CancelSubscriptionModal";
 
 const Profile = () => {
   const router = useRouter();
@@ -23,8 +24,7 @@ const Profile = () => {
   const [nameError, setNameError] = useState("");
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const [deletePhotoConfirm, setDeletePhotoConfirm] = useState(false);
-  const [isCanceling, setIsCanceling] = useState(false);
-  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -102,44 +102,9 @@ const Profile = () => {
     router.push("/login");
   };
 
-  const handleCancelSubscription = async () => {
-    console.log("[Profile] handleCancelSubscription called");
-    console.log("[Profile] auth.email:", auth?.email);
-
-    if (!auth?.email) {
-      console.error("[Profile] No auth email found");
-      return;
-    }
-
-    if (
-      !confirm(
-        "Are you sure you want to cancel your subscription? You will lose access to premium features.",
-      )
-    ) {
-      console.log("[Profile] User cancelled the confirmation dialog");
-      return;
-    }
-
-    console.log("[Profile] User confirmed cancellation, calling cancelSubscription action...");
-    setIsCanceling(true);
-    setCancelError(null);
-
-    try {
-      console.log("[Profile] Calling cancelSubscription with email:", auth.email);
-      const result = await cancelSubscription(auth.email);
-      console.log("[Profile] cancelSubscription result:", result);
-
-      alert("Subscription canceled successfully.");
-      console.log("[Profile] Reloading page...");
-      window.location.reload();
-    } catch (error) {
-      console.error("[Profile] Error in handleCancelSubscription:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to cancel subscription";
-      console.error("[Profile] Error message:", errorMessage);
-      setCancelError(errorMessage);
-      setIsCanceling(false);
-    }
+  const doCancelSubscription = async () => {
+    if (!auth?.email) throw new Error("Not signed in");
+    await cancelSubscription(auth.email);
   };
 
   const getSubscriptionBadge = (type: string) => {
@@ -443,15 +408,12 @@ const Profile = () => {
                 <span className="font-semibold">Renews:</span> {auth.expiredAt ? new Date(auth.expiredAt).toLocaleDateString() : "—"}
               </p>
             </div>
-            {cancelError && (
-              <p className="text-red-600 dark:text-red-400 mb-4">{cancelError}</p>
-            )}
             <button
-              onClick={auth.paddleSubscriptionId ? handleCancelSubscription : undefined}
-              disabled={isCanceling || !auth.paddleSubscriptionId}
+              onClick={() => auth.paddleSubscriptionId && setShowCancelModal(true)}
+              disabled={!auth.paddleSubscriptionId}
               className="px-6 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-lg transition-colors font-semibold"
             >
-              {isCanceling ? "Canceling..." : auth.paddleSubscriptionId ? "Cancel Subscription" : "Already Cancelled"}
+              {auth.paddleSubscriptionId ? "Cancel Subscription" : "Already Cancelled"}
             </button>
           </div>
         )}
@@ -591,6 +553,12 @@ const Profile = () => {
         </div>
 
       </div>
+
+      <CancelSubscriptionModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={doCancelSubscription}
+      />
     </div>
   );
 };

@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Storage:** S3-compatible (MinIO) via `@aws-sdk/client-s3`; `sharp` resizes profile photos to 256×256 webp
 - **Payments:** Paddle (`@paddle/paddle-js`) — subscription model with recurring billing (monthly/annual), HMAC-SHA256 webhook signature verification
 - **AI:** `@google/genai` (Gemini) for the AI routine builder
-- **Email:** `nodemailer` over Brevo SMTP (OTP, welcome, password reset)
+- **Email:** `nodemailer` over Brevo SMTP (OTP, welcome, password reset, trial expiry warning)
 - **Validation:** `zod` v4 — used in server actions for input validation
 - **Dates:** `date-fns` v4
 - **Charts:** Recharts 3
@@ -42,6 +42,7 @@ src/
 │   ├── api/
 │   │   ├── auth/[...nextauth]/ # NextAuth handlers
 │   │   ├── cron/cleanup-unverified/ # Deletes unverified users >30d; Bearer CRON_SECRET
+│   │   ├── cron/trial-expiry-warning/ # Emails Free One Month users expiring within 3 days; Bearer CRON_SECRET
 │   │   ├── paddle/webhooks/    # HMAC-verified Paddle webhook
 │   │   ├── send-otp/, verify-jwt/
 │   ├── manifest.ts, sitemap.ts, robots.ts
@@ -94,6 +95,7 @@ Single `users` collection holds routine (per-weekday array of `{name, time, cate
 - `src/app/server.ts#aiRoutineResponse` wraps Gemini with a system prompt that references the user's real routine and the current AI routine; returns text + optional `updatedRoutine`.
 
 ### Payments (Paddle, subscription model)
+- **Reference doc:** `/PRICING_MECHANISM.md` at the project root — read this before touching any payment code. Covers all 6 price IDs, webhook flow diagrams, DB schema, and gotchas.
 - **Pricing tiers:** 6 price IDs mapped in webhooks handler (Standard/Premium/Admin, each monthly & annual).
 - **Checkout flow:** Frontend opens Paddle checkout via `@paddle/paddle-js`. User email passed as `custom_data.userEmail` for webhook matching.
 - **Webhook events:** `POST /api/paddle/webhooks` handles `transaction.completed`, `subscription.activated`, `subscription.canceled`. Each event is HMAC-SHA256 verified (`ts:rawBody`), deduped via `PaddleWebhookEvent` collection.
@@ -158,6 +160,23 @@ All mutations use `revalidatePath(path)` from `next/cache` (imported alongside `
 | `CRON_SECRET` | Bearer token on `/api/cron/cleanup-unverified` | Cron cleanup |
 | `NEXT_PUBLIC_EMAILJS_*` | EmailJS client keys (legacy, exposed) | Optional |
 | `NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST` | PostHog analytics (exposed) | Optional |
+
+## Deployment
+
+- **Platform:** [Coolify](https://coolify.io) — self-hosted PaaS managing Docker-based builds and container orchestration.
+- **VPS:** Hostinger VPS at `185.201.8.71` (root access via `ssh root@185.201.8.71`).
+- **Build pipeline:** Coolify builds the Next.js app inside Docker on the VPS and runs it as a container.
+
+### Disk space troubleshooting
+Docker build cache accumulates over time and can fill the VPS disk (symptom: `ENOSPC: no space left on device` during `npm install` in Coolify builds). Fix:
+```bash
+ssh root@185.201.8.71
+df -h /                          # check usage — if 90%+, proceed
+docker builder prune -a -f       # clears build cache (~5–20 GB)
+docker image prune -a -f         # clears unused images (~20–30 GB, safe)
+df -h /                          # verify 20%+ free before re-deploying
+```
+**Do not delete** `/var/lib/docker/volumes/` — that holds Coolify app data and active container state.
 
 ## Testing
 

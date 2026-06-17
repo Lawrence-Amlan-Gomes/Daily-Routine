@@ -76,7 +76,19 @@ export default function Pricing() {
     }
   };
 
-  const plans = [
+  const plans: Array<{
+    id: string;
+    title: string;
+    description: string;
+    priceMonthly: number;
+    priceAnnual: number;
+    features: { name: string; value: string }[];
+    cta?: string;
+    isMostPopular?: boolean;
+    badge?: string;
+    billingPeriod?: string;
+    displayTitle?: string;
+  }> = [
     {
       id: "free",
       title: "Free",
@@ -298,8 +310,8 @@ export default function Pricing() {
         >
           {plans.filter((plan) => {
             // Show admin plans only on their matching billing period
-            if ((plan as any).billingPeriod === "monthly" && billingPeriod !== "monthly") return false;
-            if ((plan as any).billingPeriod === "annual" && billingPeriod !== "annual") return false;
+            if (plan.billingPeriod === "monthly" && billingPeriod !== "monthly") return false;
+            if (plan.billingPeriod === "annual" && billingPeriod !== "annual") return false;
             return true;
           }).map((plan) => {
             const price = getPrice(plan.id);
@@ -345,7 +357,7 @@ export default function Pricing() {
                     <h3
                       className={`text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100`}
                     >
-                      {(plan as any).displayTitle || plan.title}
+                      {plan.displayTitle || plan.title}
                     </h3>
                     {(plan.isMostPopular || plan.badge) && (
                       <span

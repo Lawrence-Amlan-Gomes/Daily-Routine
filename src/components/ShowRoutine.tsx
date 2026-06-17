@@ -5,6 +5,7 @@
 
 import { useAuth } from "@/app/hooks/useAuth";
 import { IRoutine, IRoutineItem } from "@/store/features/auth/authSlice";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   FaArrowLeft,
@@ -376,6 +377,39 @@ export default function ShowRoutine({
 
   const routine = auth.routine;
   const goals = Array.isArray(auth.goals) ? auth.goals : [];
+
+  const isRoutineEmpty = daysOfWeek.every(
+    (day) => !(routine[day as keyof typeof routine] ?? []).length,
+  );
+
+  if (isRoutineEmpty) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-white dark:bg-black">
+        <div className="text-center max-w-sm w-full mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3 tracking-tight text-gray-900 dark:text-gray-100">
+            Welcome! Let&apos;s build your routine
+          </h2>
+          <p className="text-base text-gray-500 dark:text-gray-400 mb-8">
+            Add your first task to get started, or let AI build your week.
+          </p>
+          <div className="flex gap-3 justify-center flex-wrap">
+            <button
+              onClick={() => setIsSidebarOpen?.(true)}
+              className="px-5 py-2.5 rounded-lg font-semibold text-sm bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white transition-colors shadow-sm"
+            >
+              Add a task
+            </button>
+            <Link
+              href="/ai-routine"
+              className="px-5 py-2.5 rounded-lg font-semibold text-sm border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              Try AI Builder
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Build a set of today's "todo" goal times for highlight lookup
   const _todayISO = (() => {

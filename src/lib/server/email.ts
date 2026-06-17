@@ -239,3 +239,122 @@ Get started: ${baseUrl}/login
     return { success: false, error };
   }
 }
+
+export async function sendTrialExpiringEmail(email: string, name: string, daysLeft: number) {
+  const dayLabel = daysLeft === 1 ? "1 day" : `${daysLeft} days`;
+  const mailOptions = {
+    from: process.env.SMTP_FROM,
+    to: email,
+    subject: `Your free trial ends in ${dayLabel}`,
+    text: `Hi ${name},
+
+Your free trial of My Daily Routine ends in ${dayLabel}.
+
+After your trial expires you will lose access to:
+- AI Routine Builder (powered by Gemini)
+- Advanced stats and progress charts
+- Priority goal management features
+
+Upgrade now to keep access: ${baseUrl}/pricing
+
+— My Daily Routine`,
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Your trial is ending</title></head>
+<body style="margin:0;padding:0;background-color:#f0f4ff;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4ff;padding:40px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(37,99,235,0.10);">
+
+        <!-- Header -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#b45309 0%,#f59e0b 100%);padding:40px 48px 36px;text-align:center;">
+            <div style="display:inline-block;background:rgba(255,255,255,0.15);border-radius:50%;width:64px;height:64px;line-height:64px;font-size:32px;margin-bottom:16px;">⏳</div>
+            <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;letter-spacing:-0.3px;">Trial ending in ${dayLabel}</h1>
+            <p style="margin:8px 0 0;color:#fef3c7;font-size:15px;">My Daily Routine</p>
+          </td>
+        </tr>
+
+        <!-- Body -->
+        <tr>
+          <td style="padding:40px 48px 32px;">
+            <p style="margin:0 0 8px;font-size:18px;font-weight:600;color:#1e293b;">Hi ${name},</p>
+            <p style="margin:0 0 24px;font-size:15px;color:#475569;line-height:1.6;">
+              Your free trial expires in <strong>${dayLabel}</strong>. After that, you'll lose access to these premium features:
+            </p>
+
+            <!-- Loss list -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+              <tr>
+                <td style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:20px 24px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding:6px 0;">
+                        <span style="font-size:16px;">🤖</span>
+                        <span style="font-size:14px;color:#1e293b;font-weight:600;margin-left:10px;">AI Routine Builder</span>
+                        <span style="font-size:13px;color:#64748b;margin-left:6px;">— Gemini-powered routine generation</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:6px 0;">
+                        <span style="font-size:16px;">📊</span>
+                        <span style="font-size:14px;color:#1e293b;font-weight:600;margin-left:10px;">Advanced Stats</span>
+                        <span style="font-size:13px;color:#64748b;margin-left:6px;">— Progress charts and completion trends</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:6px 0;">
+                        <span style="font-size:16px;">🎯</span>
+                        <span style="font-size:14px;color:#1e293b;font-weight:600;margin-left:10px;">Priority Goal Management</span>
+                        <span style="font-size:13px;color:#64748b;margin-left:6px;">— Critical priority, subtasks, and tags</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:0 0 28px;font-size:15px;color:#475569;line-height:1.6;">
+              Upgrade now to keep everything you've built and continue growing your habits without interruption.
+            </p>
+          </td>
+        </tr>
+
+        <!-- CTA -->
+        <tr>
+          <td style="padding:0 48px 40px;text-align:center;">
+            <a href="${baseUrl}/pricing"
+               style="display:inline-block;background:linear-gradient(135deg,#b45309,#f59e0b);color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 40px;border-radius:10px;letter-spacing:0.2px;box-shadow:0 4px 12px rgba(180,83,9,0.30);">
+              Upgrade Now →
+            </a>
+          </td>
+        </tr>
+
+        <!-- Divider -->
+        <tr><td style="padding:0 48px;"><div style="border-top:1px solid #e2e8f0;"></div></td></tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:24px 48px 36px;text-align:center;">
+            <p style="margin:0 0 4px;font-size:13px;color:#94a3b8;">You're receiving this because you have an active free trial at</p>
+            <p style="margin:0;font-size:13px;font-weight:600;color:#3b82f6;">My Daily Routine</p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error) {
+    console.error("Trial expiry email send error:", error);
+    return { success: false, error };
+  }
+}

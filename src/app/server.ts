@@ -1,6 +1,35 @@
 "use server";
 
+import { auth as getNextAuthSession } from "@/auth";
+import { dbConnect } from "@/lib/mongo";
+import { verifyToken } from "@/lib/server/jwt";
+import { User } from "@/models/User";
 import { GoogleGenAI } from "@google/genai";
+import { cookies } from "next/headers";
+
+async function requirePremium(): Promise<void> {
+  const session = await getNextAuthSession();
+  let email: string | undefined;
+
+  if (session?.user?.email) {
+    email = session.user.email.toLowerCase().trim();
+  } else {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("authToken")?.value;
+    if (!token) throw new Error("UNAUTHORIZED");
+    const tokenUser = await verifyToken(token);
+    if (!tokenUser?.email) throw new Error("UNAUTHORIZED");
+    email = tokenUser.email.toLowerCase().trim();
+  }
+
+  await dbConnect();
+  const user = await User.findOne({ email }).select("paymentType isAdmin");
+  if (!user) throw new Error("UNAUTHORIZED");
+
+  if (!user.isAdmin && !user.paymentType?.toLowerCase().includes("premium")) {
+    throw new Error("Premium subscription required");
+  }
+}
 
 export async function aiRoutineResponse(
   prompt: string,
@@ -8,6 +37,8 @@ export async function aiRoutineResponse(
   userRoutine: string,
   currentAIRoutine: string,
 ): Promise<{ text: string; updatedRoutine?: import("@/app/actions").AIRoutineData }> {
+  await requirePremium();
+
   if (!process.env.GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY is not set");
   }

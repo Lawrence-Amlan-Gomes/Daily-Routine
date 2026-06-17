@@ -161,7 +161,7 @@ interface RawGoogleUser {
   image?: unknown;
 }
 
-export const cleanGoogleUserForClient = (googleUser: RawGoogleUser) => {
+export const cleanGoogleUserForClient = (googleUser: RawGoogleUser | null) => {
   if (!googleUser) return null;
 
   return {

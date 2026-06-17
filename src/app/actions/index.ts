@@ -88,6 +88,15 @@ async function assertActorCanAccessEmail(targetEmail: string) {
   return actor;
 }
 
+async function assertPremiumAccess(email: string): Promise<void> {
+  const actor = await assertActorCanAccessEmail(email);
+  if (actor.isAdmin) return;
+  const user = await User.findOne({ email: actor.email }).select("paymentType");
+  if (!user?.paymentType?.toLowerCase().includes("premium")) {
+    throw new Error("Premium subscription required");
+  }
+}
+
 // ==================== AUTH ACTIONS ====================
 
 const loginSchema = z.object({
@@ -320,7 +329,7 @@ export async function updatePaymentType(
     }
   }
   await dbConnect();
-  const updateData: any = { paymentType: parsedType.data, expiredAt };
+  const updateData: { paymentType: string; expiredAt: Date | null; paddleSubscriptionId?: string } = { paymentType: parsedType.data, expiredAt };
   if (options?.subscriptionId) {
     updateData.paddleSubscriptionId = options.subscriptionId;
   }
@@ -453,7 +462,7 @@ export async function incrementThisMonthPremiumCount(
   thisMonthPremiumResponses: string,
 ) {
   try {
-    await assertActorCanAccessEmail(email);
+    await assertPremiumAccess(email);
     await dbConnect();
 
     const result = await User.updateOne(
@@ -1054,7 +1063,7 @@ type AIRoutineDoc = {
 export async function getAIRoutineDoc(
   email: string,
 ): Promise<{ aiRoutine: AIRoutineData; chatHistory: ChatSession[] }> {
-  await assertActorCanAccessEmail(email);
+  await assertPremiumAccess(email);
   await dbConnect();
   const { AIRoutine } = await import("@/models/AIRoutine");
   const doc = (await AIRoutine.findOne({
@@ -1078,7 +1087,7 @@ export async function upsertAIRoutine(
   email: string,
   aiRoutine: AIRoutineData,
 ): Promise<void> {
-  await assertActorCanAccessEmail(email);
+  await assertPremiumAccess(email);
   await dbConnect();
   const { AIRoutine } = await import("@/models/AIRoutine");
   await AIRoutine.findOneAndUpdate(
@@ -1094,7 +1103,7 @@ export async function appendChatMessage(
   date: string,
   message: ChatMessage,
 ): Promise<void> {
-  await assertActorCanAccessEmail(email);
+  await assertPremiumAccess(email);
   await dbConnect();
   const { AIRoutine } = await import("@/models/AIRoutine");
   // Single atomic pipeline update: append to existing session or create new one.
@@ -1144,7 +1153,7 @@ export async function clearChatSession(
   email: string,
   date: string,
 ): Promise<void> {
-  await assertActorCanAccessEmail(email);
+  await assertPremiumAccess(email);
   await dbConnect();
   const { AIRoutine } = await import("@/models/AIRoutine");
   await AIRoutine.findOneAndUpdate(
