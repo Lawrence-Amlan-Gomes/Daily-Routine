@@ -353,127 +353,109 @@ export async function updatePaymentType(
   revalidatePath("/");
 }
 
-export async function cancelSubscription(email: string) {
-  console.log("[cancelSubscription] Starting cancellation for:", email);
-
+// Returns a result object (never throws for expected failures) — Next.js masks
+// thrown server-action errors in production, so the modal would only see a
+// generic "Server Components render" message. Returning { error } lets the UI
+// surface the real reason.
+export async function cancelSubscription(
+  email: string,
+): Promise<{ success: true } | { error: string }> {
   const actor = await getActionActor();
-  console.log("[cancelSubscription] Actor:", actor.email, "isAdmin:", actor.isAdmin);
-
   const normalizedTarget = String(email).toLowerCase().trim();
   if (actor.email !== normalizedTarget && !actor.isAdmin) {
-    console.error("[cancelSubscription] FORBIDDEN - actor email doesn't match target");
-    throw new Error("FORBIDDEN");
+    return { error: "You are not allowed to cancel this subscription." };
   }
 
   await dbConnect();
-  console.log("[cancelSubscription] Database connected");
-
   const user = await User.findOne({ email });
-  console.log("[cancelSubscription] User found:", !!user);
-  console.log("[cancelSubscription] User paymentType:", user?.paymentType);
-  console.log("[cancelSubscription] User paddleSubscriptionId:", user?.paddleSubscriptionId);
-
-  if (!user) {
-    console.error("[cancelSubscription] User not found");
-    throw new Error("User not found");
-  }
-
+  if (!user) return { error: "User not found." };
   if (!user.paymentType || user.paymentType === "Expired") {
-    console.error("[cancelSubscription] No active subscription");
-    throw new Error("No active subscription");
+    return { error: "No active subscription to cancel." };
   }
 
   const paddleApiKey = process.env.PADDLE_API_KEY;
-  console.log("[cancelSubscription] Paddle API key configured:", !!paddleApiKey);
-
   if (!paddleApiKey) {
-    console.error("[cancelSubscription] Paddle API key not configured");
-    throw new Error("Paddle API key not configured");
+    console.error("[cancelSubscription] PADDLE_API_KEY not configured");
+    return { error: "Billing is not configured. Please contact support." };
   }
+  const authHeader = { Authorization: `Bearer ${paddleApiKey}` };
 
-  let subscriptionId = user.paddleSubscriptionId;
-
-  // Fallback: if no subscription ID stored, fetch from Paddle API
+  // 1) Resolve the Paddle subscription id. Prefer the stored one; otherwise look
+  //    it up by customer email. The lookup covers subscriptions created before
+  //    the activation webhook stored the id (e.g. during the schema-bug window).
+  let subscriptionId = user.paddleSubscriptionId || "";
   if (!subscriptionId) {
-    console.log("[cancelSubscription] No stored subscription ID, fetching from Paddle API...");
-
     try {
-      const response = await fetch("https://api.paddle.com/subscriptions?status=active", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${paddleApiKey}`,
-        },
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("[cancelSubscription] Paddle fetch error:", response.status, errorText);
-        throw new Error(`Failed to fetch subscriptions from Paddle: ${response.status}`);
+      // Paddle's list endpoints expose customer email only via the customers
+      // resource (`search`), not on subscriptions — so resolve customer first.
+      const custRes = await fetch(
+        `https://api.paddle.com/customers?search=${encodeURIComponent(normalizedTarget)}`,
+        { headers: authHeader, cache: "no-store" },
+      );
+      if (!custRes.ok) {
+        console.error("[cancelSubscription] customers lookup failed:", custRes.status, await custRes.text());
+        return { error: "Could not reach the billing provider. Please try again." };
+      }
+      const custData = (await custRes.json()) as { data?: Array<{ id: string; email?: string }> };
+      const customerId = (custData.data || []).find(
+        (c) => c.email?.toLowerCase() === normalizedTarget,
+      )?.id;
+      if (!customerId) {
+        return { error: "No billing customer found for your account." };
       }
 
-      const data = (await response.json()) as { data?: Array<{ id: string; customer?: { email?: string } }> };
-      const subscriptions = data.data || [];
-      console.log("[cancelSubscription] Found", subscriptions.length, "active subscriptions");
-
-      const userSub = subscriptions.find((sub) => {
-        const subEmail = sub.customer?.email;
-        console.log("[cancelSubscription] Checking subscription with email:", subEmail, "against:", email);
-        return subEmail?.toLowerCase() === email.toLowerCase();
-      });
-
-      if (!userSub) {
-        console.error("[cancelSubscription] Subscription not found in Paddle for email:", email);
-        throw new Error("Subscription not found in Paddle");
+      const subsRes = await fetch(
+        `https://api.paddle.com/subscriptions?customer_id=${customerId}&status=active`,
+        { headers: authHeader, cache: "no-store" },
+      );
+      if (!subsRes.ok) {
+        console.error("[cancelSubscription] subscriptions lookup failed:", subsRes.status, await subsRes.text());
+        return { error: "Could not reach the billing provider. Please try again." };
       }
-
-      subscriptionId = userSub.id;
-      console.log("[cancelSubscription] Found subscription ID from Paddle:", subscriptionId);
-    } catch (error) {
-      console.error("[cancelSubscription] Error fetching subscription from Paddle:", error);
-      throw error;
+      const subsData = (await subsRes.json()) as { data?: Array<{ id: string }> };
+      subscriptionId = subsData.data?.[0]?.id || "";
+    } catch (err) {
+      console.error("[cancelSubscription] lookup error:", err);
+      return { error: "Could not reach the billing provider. Please try again." };
     }
   }
 
+  if (!subscriptionId) {
+    return { error: "No active subscription found to cancel." };
+  }
+
+  // 2) Cancel at end of billing period. Paddle requires an explicit body when
+  //    Content-Type is JSON, so always send effective_from.
   try {
-    const subscriptionUrl = `https://api.paddle.com/subscriptions/${subscriptionId}/cancel`;
-    console.log("[cancelSubscription] Calling Paddle API:", subscriptionUrl);
-
-    const cancelResponse = await fetch(subscriptionUrl, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${paddleApiKey}`,
-        "Content-Type": "application/json",
+    const cancelRes = await fetch(
+      `https://api.paddle.com/subscriptions/${subscriptionId}/cancel`,
+      {
+        method: "POST",
+        headers: { ...authHeader, "Content-Type": "application/json" },
+        body: JSON.stringify({ effective_from: "next_billing_period" }),
+        cache: "no-store",
       },
-    });
-
-    console.log("[cancelSubscription] Paddle response status:", cancelResponse.status);
-
-    if (!cancelResponse.ok) {
-      const errorText = await cancelResponse.text();
-      console.error("[cancelSubscription] Paddle cancel error:", cancelResponse.status, errorText);
-      throw new Error(`Failed to cancel subscription in Paddle: ${cancelResponse.status} - ${errorText}`);
+    );
+    if (!cancelRes.ok) {
+      console.error("[cancelSubscription] Paddle cancel failed:", cancelRes.status, await cancelRes.text());
+      return { error: "The billing provider rejected the cancellation. Please try again or contact support." };
     }
-
-    console.log("[cancelSubscription] Paddle API success, webhook will finalize DB update at period end");
-    console.log("[cancelSubscription] User will keep access until end of billing period");
-
-    // Mark cancellation as pending now. The subscription.canceled webhook fires
-    // only at period end; until then this flag is the only signal that the
-    // still-active paid plan won't renew (drives the "already cancelled" state).
-    await User.updateOne({ email }, { subscriptionCanceledAt: new Date() });
-
-    console.log("[cancelSubscription] Revalidating /profile path");
-
-    revalidatePath("/profile");
-    revalidatePath("/billing");
-
-    console.log("[cancelSubscription] Cancellation completed successfully");
-    return { success: true, message: "Subscription canceled. You will have access until the end of your billing period." };
-  } catch (error) {
-    console.error("[cancelSubscription] Subscription cancellation error:", error);
-    throw error;
+  } catch (err) {
+    console.error("[cancelSubscription] cancel request error:", err);
+    return { error: "Could not reach the billing provider. Please try again." };
   }
+
+  // 3) Mark pending-cancel now (the subscription.canceled webhook finalizes to
+  //    "Expired" at period end). Backfill paddleSubscriptionId for records that
+  //    were missing it so a future cancel skips the lookup.
+  await User.updateOne(
+    { email },
+    { subscriptionCanceledAt: new Date(), paddleSubscriptionId: subscriptionId },
+  );
+  revalidatePath("/profile");
+  revalidatePath("/billing");
+
+  return { success: true };
 }
 
 export async function incrementThisMonthPremiumCount(

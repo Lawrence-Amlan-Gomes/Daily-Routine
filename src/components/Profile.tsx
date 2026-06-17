@@ -104,7 +104,12 @@ const Profile = () => {
 
   const doCancelSubscription = async () => {
     if (!auth?.email) throw new Error("Not signed in");
-    await cancelSubscription(auth.email);
+    const result = await cancelSubscription(auth.email);
+    if ("error" in result) {
+      // Surfaces in the modal's error state (the action returns instead of
+      // throwing so the real message survives the prod RSC boundary).
+      throw new Error(result.error);
+    }
     // Reflect the pending cancellation immediately (webhook finalizes at period end).
     setAuth({ ...auth, subscriptionCanceledAt: new Date().toISOString() });
   };
