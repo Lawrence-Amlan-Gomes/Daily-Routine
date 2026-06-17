@@ -32,12 +32,23 @@ const Profile = () => {
   }, [auth?.name]);
 
   const handleUpdate = async () => {
-    if (!auth || !name.trim()) return;
+    const trimmedName = name.trim();
+    if (!auth) return;
+    if (!trimmedName) {
+      setName(auth.name || "");
+      setIsEditing(false);
+      return;
+    }
     setIsEditing(false);
     setNameError("");
     try {
-      await updateUser(auth.email, { name });
-      setAuth({ ...auth, name });
+      const result = await updateUser(auth.email, { name: trimmedName });
+      if (result?.error) {
+        setNameError(result.error);
+        setName(auth.name || "");
+      } else {
+        setAuth({ ...auth, name: trimmedName });
+      }
     } catch {
       setNameError("Failed to update name. Please try again.");
       setName(auth.name || "");

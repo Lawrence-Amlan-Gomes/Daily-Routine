@@ -200,6 +200,10 @@ export async function performLogin({
           thursday: [],
           friday: [],
         },
+    paddleSubscriptionId: user.paddleSubscriptionId ? String(user.paddleSubscriptionId) : undefined,
+    subscriptionCanceledAt: user.subscriptionCanceledAt
+      ? new Date(user.subscriptionCanceledAt).toISOString()
+      : null,
     thisMonthPremiumResponses: user.thisMonthPremiumResponses || "",
     stats: Array.isArray(user.stats) ? user.stats : [],
     goals: Array.isArray(user.goals) ? user.goals : [],
@@ -521,6 +525,8 @@ export async function resetPassword(email: string, newPassword: string) {
   revalidatePath("/profile");
 }
 
+const nameSchema = z.string().trim().min(1, "Name cannot be empty").max(100, "Name is too long");
+
 export async function updateUser(
   email: string,
   updates: {
@@ -528,10 +534,16 @@ export async function updateUser(
     firstTimeLogin?: boolean;
   },
 ) {
+  if (updates.name !== undefined) {
+    const parsed = nameSchema.safeParse(updates.name);
+    if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid name" };
+    updates = { ...updates, name: parsed.data };
+  }
+
   await assertActorCanAccessEmail(email);
   await dbConnect();
   await User.updateOne({ email }, { $set: updates });
-  revalidatePath("/");
+  revalidatePath("/profile");
 }
 
 export async function findUserByEmail(email: string) {
@@ -559,6 +571,10 @@ export async function findUserByEmail(email: string) {
     createdAt: user.createdAt?.toISOString() || new Date().toISOString(),
     expiredAt: user.expiredAt?.toISOString() || expiredAt.toISOString(),
     paymentType: user.paymentType,
+    paddleSubscriptionId: user.paddleSubscriptionId ? String(user.paddleSubscriptionId) : undefined,
+    subscriptionCanceledAt: user.subscriptionCanceledAt
+      ? new Date(user.subscriptionCanceledAt).toISOString()
+      : null,
     thisMonthPremiumResponses: user.thisMonthPremiumResponses || "",
     stats: Array.isArray(user.stats) ? user.stats : [],
     goals: Array.isArray(user.goals)
