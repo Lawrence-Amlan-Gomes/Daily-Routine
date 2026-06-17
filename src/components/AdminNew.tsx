@@ -1,7 +1,7 @@
 // src/components/Admin.tsx
 "use client";
 
-import { getAllFeedbacks, getAllUsers } from "@/app/actions";
+import { getAllFeedbacks, getAllUsers, setUserAdmin } from "@/app/actions";
 import { useAuth } from "@/app/hooks/useAuth";
 import { format } from "date-fns";
 import {
@@ -33,6 +33,7 @@ type UserItem = {
   paymentType: string;
   isEmailVerified: boolean;
   isRegisteredWithGoogle: boolean;
+  isAdmin: boolean;
 };
 
 type AdminView = "feedback" | "users";
@@ -47,6 +48,23 @@ export default function Admin() {
   const [currentView, setCurrentView] = useState<AdminView>("feedback");
   const [ratingFilter, setRatingFilter] = useState<number | "all">("all");
   const [showRatingDropdown, setShowRatingDropdown] = useState(false);
+  const [togglingAdmin, setTogglingAdmin] = useState<string | null>(null);
+
+  async function handleToggleAdmin(user: UserItem) {
+    setTogglingAdmin(user.email);
+    try {
+      await setUserAdmin(user.email, !user.isAdmin);
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.email === user.email ? { ...u, isAdmin: !user.isAdmin } : u,
+        ),
+      );
+    } catch (err) {
+      console.error("Failed to toggle admin:", err);
+    } finally {
+      setTogglingAdmin(null);
+    }
+  }
 
   useEffect(() => {
     if (!auth?.email || !auth.isAdmin) {
@@ -392,6 +410,9 @@ export default function Admin() {
                           <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider">
                             Expires
                           </th>
+                          <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider">
+                            Admin
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
@@ -455,6 +476,27 @@ export default function Admin() {
                                     "MMM d, yyyy",
                                   )
                                 : "Never"}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {user.email === auth?.email ? (
+                                <span className="text-xs text-gray-400 dark:text-gray-600">you</span>
+                              ) : (
+                                <button
+                                  disabled={togglingAdmin === user.email}
+                                  onClick={() => handleToggleAdmin(user)}
+                                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full transition-colors disabled:opacity-50 ${
+                                    user.isAdmin
+                                      ? "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50"
+                                      : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"
+                                  }`}
+                                >
+                                  {togglingAdmin === user.email
+                                    ? "..."
+                                    : user.isAdmin
+                                      ? "Admin"
+                                      : "User"}
+                                </button>
+                              )}
                             </td>
                           </tr>
                         ))}

@@ -982,7 +982,7 @@ export async function getAllUsers(adminEmail: void) {
 
   const users = await User.find()
     .select(
-      "name email createdAt expiredAt paymentType isEmailVerified isRegisteredWithGoogle",
+      "name email createdAt expiredAt paymentType isEmailVerified isRegisteredWithGoogle isAdmin",
     )
     .sort({ createdAt: -1 })
     .lean();
@@ -997,7 +997,30 @@ export async function getAllUsers(adminEmail: void) {
     paymentType: doc.paymentType || "Free",
     isEmailVerified: doc.isEmailVerified,
     isRegisteredWithGoogle: doc.isRegisteredWithGoogle,
+    isAdmin: Boolean(doc.isAdmin),
   }));
+}
+
+/**
+ * Admin only: Grant or revoke admin status on another user.
+ * An admin cannot demote themselves.
+ */
+export async function setUserAdmin(targetEmail: string, makeAdmin: boolean) {
+  const actor = await getActionActor();
+  if (!actor.isAdmin) throw new Error("Forbidden");
+
+  const normalizedTarget = targetEmail.toLowerCase().trim();
+  if (normalizedTarget === actor.email) {
+    throw new Error("You cannot change your own admin status");
+  }
+
+  await dbConnect();
+  const result = await User.updateOne(
+    { email: normalizedTarget },
+    { $set: { isAdmin: makeAdmin } },
+  );
+
+  if (result.matchedCount === 0) throw new Error("User not found");
 }
 
 export async function getPublicFeedbacks() {

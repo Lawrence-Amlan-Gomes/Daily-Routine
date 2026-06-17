@@ -52,28 +52,22 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 
 **Date:** 2026-06-17  
 **What we did:**
-- Added server-side paymentType gate to all AI actions — previously AI features were only hidden in the UI; any authenticated user could call the server actions directly and consume Gemini API quota.
+- Implemented "admin can grant/revoke admin status on another user" feature.
 
 **New code:**
-- `src/app/server.ts` — added 5 imports (`@/auth`, `next/headers`, `@/lib/server/jwt`, `@/lib/mongo`, `@/models/User`); added private `requirePremium()` helper that resolves caller identity (NextAuth session → JWT cookie → DB lookup) and throws `"Premium subscription required"` if `!isAdmin && !paymentType?.toLowerCase().includes("premium")`; called as first line of `aiRoutineResponse`.
-- `src/app/actions/index.ts` — added private `assertPremiumAccess(email)` helper (after `assertActorCanAccessEmail`): wraps existing cross-user access check, then does a focused DB query for `paymentType`, throws `"Premium subscription required"` if not premium (admins bypass).
-
-**Files changed:**
-- `src/app/server.ts` — `requirePremium()` helper added, `await requirePremium()` is first line of `aiRoutineResponse`.
-- `src/app/actions/index.ts` — `assertPremiumAccess()` helper added; 5 AI actions switched from `assertActorCanAccessEmail` to `assertPremiumAccess`: `incrementThisMonthPremiumCount`, `getAIRoutineDoc`, `upsertAIRoutine`, `appendChatMessage`, `clearChatSession`.
+- `src/app/actions/index.ts` — `setUserAdmin(targetEmail, makeAdmin)` server action: admin-only guard, self-demotion blocked server-side (throws `"You cannot change your own admin status"`), updates `isAdmin` via `User.updateOne`, throws if user not found. Also updated `getAllUsers` to include `isAdmin` in `.select()` and return value.
+- `src/components/AdminNew.tsx` — `setUserAdmin` imported; `UserItem` type gains `isAdmin: boolean`; `togglingAdmin` state tracks in-flight row; `handleToggleAdmin` calls server action then optimistically updates local state; new "Admin" column in users table — amber badge for admins, gray for regular users, "you" label (non-clickable) for the current admin's own row.
 
 **Decisions made:**
-- Gate check: `paymentType.toLowerCase().includes("premium")` — matches both `"Premium"` and `"Premium Admin"`.
-- Admins (`isAdmin: true`) bypass the paymentType gate entirely.
-- `server.ts` gets its own inline auth resolution (no email param, can't reuse `assertActorCanAccessEmail` directly).
-- `actions/index.ts` uses a wrapper helper so the existing cross-user FORBIDDEN check is preserved.
+- Self-demotion blocked server-side to prevent accidental admin lockout.
+- Optimistic UI update after successful server action (no full reload needed).
 - TypeScript (`tsc --noEmit`) passed clean.
 
 **Open questions left unresolved:**
-- Cron still not scheduled in Coolify — needs a daily trigger set up against `/api/cron/trial-expiry-warning` with `Authorization: Bearer <CRON_SECRET>`
+- Cron still not scheduled in Coolify — needs a daily trigger against `/api/cron/trial-expiry-warning` with `Authorization: Bearer <CRON_SECRET>`
 - Dedup decision still open: user expiring in 3 days will get 3 emails (one per day). Add `trialWarningEmailSentAt` to User model to cap at 1.
-- `CancelSubscriptionModal` (built two sessions ago) not manually tested end-to-end yet.
-- Per-premium-user Gemini rate limit still not implemented (Open Decision #3 — now partially mitigated by the paymentType gate, but a runaway premium user could still rack up Gemini cost).
+- `CancelSubscriptionModal` not manually tested end-to-end yet.
+- Per-premium-user Gemini rate limit still not implemented.
 
 ---
 
@@ -84,11 +78,12 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 1. **Schedule the new cron in Coolify** — `GET /api/cron/trial-expiry-warning`, daily, `Authorization: Bearer <CRON_SECRET>`. Unscheduled = the whole trial warning feature is dead.
 2. **Dedup decision** — decide whether 3 emails over 3 days is acceptable or add `trialWarningEmailSentAt` to User model to cap at 1. Lean toward adding the field.
 3. **Manual test: CancelSubscriptionModal** — test loading, success, and error states end-to-end in browser (`src/components/CancelSubscriptionModal.tsx`, not yet verified).
-4. **HowToUse + Pricing component updates** — changes sitting in diff (`src/components/HowToUse.tsx`, `src/components/Pricing.tsx`); needs review and ship.
-5. **data-util.ts improvements** — `cleanUserForClient` changes in diff (`src/lib/data-util.ts`); verify nothing leaks to client.
-6. **Per-user Gemini rate limit** — paymentType gate blocks non-premium users, but a runaway premium user can still rack up Gemini cost. Add a per-user monthly cap check using `thisMonthPremiumResponses` (field already exists on User model).
-7. **Testing coverage** — Jest + `__tests__/` scaffolded. Need meaningful tests on auth actions (`src/app/actions/index.ts`), email validation (`src/lib/isValidEmail.ts`), schema validation (`src/lib/schemas.ts`).
-8. **Growth / retention** — no analytics on activation or churn yet. Consider PostHog funnels for registration → verification → first routine completion.
+4. **Manual test: Admin toggle** — test granting and revoking admin in the admin panel; confirm self-row shows "you" and self-demotion is blocked.
+5. **HowToUse + Pricing component updates** — changes sitting in diff (`src/components/HowToUse.tsx`, `src/components/Pricing.tsx`); needs review and ship.
+6. **data-util.ts improvements** — `cleanUserForClient` changes in diff (`src/lib/data-util.ts`); verify nothing leaks to client.
+7. **Per-user Gemini rate limit** — paymentType gate blocks non-premium users, but a runaway premium user can still rack up Gemini cost. Add a per-user monthly cap check using `thisMonthPremiumResponses` (field already exists on User model).
+8. **Testing coverage** — Jest + `__tests__/` scaffolded. Need meaningful tests on auth actions (`src/app/actions/index.ts`), email validation (`src/lib/isValidEmail.ts`), schema validation (`src/lib/schemas.ts`).
+9. **Growth / retention** — no analytics on activation or churn yet. Consider PostHog funnels for registration → verification → first routine completion.
 
 ---
 
