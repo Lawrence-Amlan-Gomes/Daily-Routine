@@ -261,7 +261,9 @@ const Profile = () => {
                   />
                 ) : (
                   <h1
-                    className={`text-xl font-bold truncate text-gray-900 dark:text-white`}
+                    onClick={toggleEdit}
+                    className={`text-xl font-bold truncate text-gray-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors`}
+                    title="Click to edit name"
                   >
                     {name || "User"}
                   </h1>
