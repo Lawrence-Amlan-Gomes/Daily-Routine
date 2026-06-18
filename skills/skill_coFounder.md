@@ -50,45 +50,30 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 
 ## Last Session Summary
 
-**Date:** 2026-06-18  
+**Date:** 2026-06-19 (Session 2)
 **What we did:**
 
-**1. Verified routine save is working (commit `c2865f9` from prior session)**
-- Confirmed the taskSchema time regex fix `/^\d{2}:\d{2} (AM|PM) - \d{2}:\d{2} (AM|PM)$/` is correct.
-- Three paths all produce 2-digit hours: UI (`formatTimePart` uses `padStart(2,"0")`), AI system prompt (explicitly instructs 2-digit padding in `server.ts:62`), and `saveToDatabase` now checks `result?.error`.
+**1. Added `<Toaster />` to `ClientLayout.tsx`**
+- `import { Toaster } from "sonner"` + `<Toaster richColors position="top-right" />` inside root div, after `TopNavBarWarper`.
+- Feedback.tsx toasts were silently no-oping in prod — now functional across the entire app.
 
-**2. Fixed profile name editing + surfaced missing subscription fields (commit `17300ed`)**
-- `src/app/actions/index.ts`:
-  - `updateUser`: added `nameSchema` (trim + min1 + max100), returns `{ error }` on validation failure, fixed `revalidatePath("/")` → `revalidatePath("/profile")`.
-  - `performLogin`: was missing `paddleSubscriptionId` and `subscriptionCanceledAt` in returned `cleanUser` — email/password users had `undefined` for both at login time.
-  - `findUserByEmail`: same two fields missing — TopNavbar calls this on every mount to sync auth from DB, silently wiping subscription state from Redux on each page load.
-- `src/components/Profile.tsx`:
-  - `handleUpdate` now checks `result?.error` and surfaces it / reverts name on failure.
-  - Empty-name edge case fixed: clearing the name and clicking Save no longer leaves the button stuck in "Save Changes" mode — now reverts to original name and exits edit mode.
-- Photo upload/delete logic verified correct; no changes needed.
+**2. Deleted dead code**
+- Deleted `src/components/TestimonialCard.tsx` — unused since Testimonials page rewrite.
+- Deleted `src/app/testimonials/testimonials.ts` — static data file replaced by `getPublicFeedbacks()`.
 
-**3. Fixed clicking name to enter edit mode (commit `76947b5`)**
-- Root cause of "can't edit name": the name `<h1>` had no click handler. Only the "Edit Profile" button at the bottom of the page triggered editing — a UX disconnect Lawrence discovered by tapping the name.
-- Fix: added `onClick={toggleEdit}` + `cursor-pointer` + hover color to the name `<h1>`. Name is now clickable inline.
+**3. Confirmed completed items**
+- `mydailyroutine.app` already deployed and running (commit `08679b5` from prior session).
+- Trial-expiry cron already scheduled on cron-job.org — no action needed.
 
-**4. Git push rule established**
-- I pushed `76947b5` without being asked. Lawrence corrected this. Rule saved to memory: **never push without explicit permission**. Commit freely, push only when asked.
-
-**Commits this session (all on `main`, pushed):**
-- `c2865f9` — routine save fix (verified, from prior session)
-- `17300ed` — profile name + subscription field fixes
-- `76947b5` — clicking name enters edit mode
+**Commits this session:**
+- Not committed yet — `<Toaster />` addition + dead code deletion staged locally.
 
 **Decisions made:**
-- Photo upload/delete order is correct as-is (`uploadPhoto`: upload → update DB → delete old; `deletePhoto`: delete S3 → update DB). No changes.
-- Do not push to git without Lawrence asking. `@skills/skill_AddCommitPush.md` invocation counts as permission.
+- Lawrence is building a separate learning project ("Backend Deepdives") with another co-founder. Not related to this codebase — no action here.
 
 **Open questions:**
-- **Still not redeployed in Coolify.** All 3 new commits + prior `a9045a4` cancel fix need a Coolify redeploy.
-- Cancel fix still unverified in prod (`mydailyroutinecontact@gmail.com` → Profile → Cancel Subscription).
-- Trial-expiry cron still not scheduled in Coolify.
-- Did Lawrence add the weekly disk-prune cron? (`crontab -l` to confirm)
-- Dedup decision still open (3 trial warning emails vs cap at 1 via `trialWarningEmailSentAt`).
+- Contact form not verified in prod — need to log in, go to `/contact`, fill form, confirm email arrives at `mydailyroutinecontact@gmail.com` with correct `replyTo`.
+- Cancel fix, name editing, photo upload — all unverified in prod.
 
 ---
 
@@ -96,16 +81,15 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 
 > *(Maintained as a ranked list. Top = most important.)*
 
-1. **Redeploy in Coolify** — 4 commits pending deployment (`a9045a4`, `c2865f9`, `17300ed`, `76947b5`). Hit Redeploy in Coolify. No new push needed — all are already on `main`.
-2. **Verify the cancel fix in prod** — after redeploy, log in as `mydailyroutinecontact@gmail.com` → Profile → Cancel Subscription on the Admin Monthly sub. Expect button → "already cancelled" + Paddle shows scheduled end-of-period cancel (access until Jul 17). If it errors, modal now shows the real message.
-3. **Verify name editing + photo upload in prod** — after redeploy: (a) click the name in the profile to enter edit mode, type a new name, save, refresh — confirm it persists; (b) upload a new photo — confirm old one is replaced in S3; (c) delete photo — confirm it's gone from S3.
-4. **Schedule the trial-expiry cron in Coolify** — daily trigger on `GET /api/cron/trial-expiry-warning` with `Authorization: Bearer <CRON_SECRET>`. Feature is dead until scheduled. Confirm the secret value in Coolify matches `.env.local`.
-5. **Dedup decision** — decide whether 3 trial-warning emails over 3 days is acceptable or add `trialWarningEmailSentAt` to User model to cap at 1. Lean toward adding the field.
-6. **Admin "resync from Paddle" action** — schema bug + webhook dedup means the live Admin sub (`sub_01kvbbrtcn6aacvhsdk6tz270n`) can't be reconciled via replay. Build admin-only action: given an email, look up Paddle customer + active subscription → write correct `paymentType` / `expiredAt` / `paddleSubscriptionId`. Reuse lookup logic from `cancelSubscription`.
-7. **Verify the full payment lifecycle** — do a fresh sandbox purchase to confirm: checkout → `paymentType` + `paddleSubscriptionId` written → cancel → `subscriptionCanceledAt` set → period-end webhook → `Expired`.
-8. **Manual test: Admin toggle** — test granting/revoking admin in the admin panel; confirm self-row shows "you" and self-demotion is blocked (`src/components/AdminNew.tsx`).
-9. **Per-user Gemini rate limit** — `thisMonthPremiumResponses` field exists on User model but isn't checked server-side before the Gemini call. A runaway premium user can rack up cost. Add the cap check.
-10. **Testing coverage** — highest-value first test: unit test asserting `paymentTypeSchema` accepts every string the webhook can produce (would have caught the June-2 outage). Then auth actions, email validation.
+1. **Commit + deploy Toaster fix** — `ClientLayout.tsx` change + dead code deletion not committed yet. Commit, push, redeploy in Coolify.
+2. **Verify contact form in prod** — log in, go to `/contact`, fill the form, hit Send. Confirm email arrives at `mydailyroutinecontact@gmail.com` with correct replyTo.
+3. **Verify cancel fix in prod** — `mydailyroutinecontact@gmail.com` → Profile → Cancel Subscription. Expect "already cancelled" state + Paddle shows end-of-period cancel.
+4. **Verify name editing + photo upload in prod** — click name to enter edit mode, save, refresh. Upload photo, confirm S3 replace. Delete photo, confirm S3 remove.
+5. **Dedup decision** — 3 trial-warning emails vs cap at 1 via `trialWarningEmailSentAt` on User model. Still open.
+6. **Admin "resync from Paddle" action** — lookup Paddle customer by email → active subscription → write correct `paymentType`/`expiredAt`/`paddleSubscriptionId`. Needed to fix live Admin sub (`sub_01kvbbrtcn6aacvhsdk6tz270n`).
+7. **Per-user Gemini rate limit** — `thisMonthPremiumResponses` exists on User model but isn't checked server-side before Gemini call. Cost risk.
+8. **OG banner image** — Icon.png is 1080×1080 square, not ideal for social cards. Create a proper 1200×630 banner (`public/og-banner.png`) and update `layout.tsx`.
+9. **Testing coverage** — unit test for `paymentTypeSchema` accepting every webhook-produced string (would have caught June-2 outage). Then auth actions, email validation.
 
 ---
 
@@ -117,8 +101,9 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 |---|----------|---------|--------|
 | 1 | Test strategy | Unit (Jest) vs integration vs E2E (Playwright) | Open — Jest scaffolded but scope unclear |
 | 2 | Upgrade path UI | Current modal approach — does it handle annual→monthly gracefully? | Needs manual test |
-| 3 | AI routine quota | Non-premium users now blocked by server-side gate. Per-premium-user monthly cap still needed — `thisMonthPremiumResponses` field exists but not checked server-side before Gemini call | Partially mitigated — per-user cap still open |
-| 4 | Trial warning dedup | Send up to 3 emails per expiring user (1/day over 3-day window) vs. cap at 1 via `trialWarningEmailSentAt` on User model | Open — decide next session |
+| 3 | AI routine quota | Per-premium-user monthly cap — `thisMonthPremiumResponses` field exists but not checked server-side before Gemini call | Open — cost risk |
+| 4 | Trial warning dedup | Send up to 3 emails per expiring user (1/day over 3-day window) vs. cap at 1 via `trialWarningEmailSentAt` on User model | Open |
+| 5 | OG banner image | Use Icon.png (1080×1080 square, declared correctly now) vs. create a proper 1200×630 banner | Open — social card quality |
 
 ---
 
@@ -128,11 +113,11 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 
 - No test suite yet — only TypeScript + ESLint as automated checks. Neither caught the June-2 payment bug (runtime zod-validation mismatch) — only a unit test or live run would have.
 - **`paymentType` string is duplicated across 4 places that silently drift:** `PRICE_ID_TO_PLAN` (webhook tier names), the webhook's `${type} ${period}` build, `paymentTypeSchema` (validates it), and UI (`.includes(...)` + Profile's `/^(Standard|Premium|Admin) /` regex). No single source of truth → caused the June-2 outage. Candidate refactor: derive all from one tier/period constant.
-- **Admin tier is intentionally asymmetric** (`Admin Monthly` vs `Premium Admin Annually`) — `"Admin Monthly"` fails the `.includes("premium")` AI gate, but admins pass via `isAdmin`, so it's only a problem if an admin-tier buyer is NOT `isAdmin`. Edge case on an internal-only tier; left as-is per Lawrence.
-- `actions/index.ts` is ~1180 LOC — growing; may need splitting when it hits 1500+
-- Two ESLint config files present (`.eslintrc.json` + `eslint.config.mjs`) — flat config is current but old one may cause confusion
-- Disk space on VPS accumulates Docker build cache — bit us **twice** now (hit 98% on 2026-06-18, blocked a deploy). Runbook: `COOLIFY_TROUBLESHOOTING.md`. Gave Lawrence a weekly preventive cron (`0 4 * * 0 docker builder prune -af && docker image prune -af`); **confirm it was actually added** (`crontab -l`).
-- **Failed Paddle webhook events are permanently deduped.** A rejected event (e.g. the schema-bug-era `subscription.activated`) leaves its `event_id` in `PaddleWebhookEvent`, so Paddle re-delivery is silently skipped. Recovery requires the resync action (priority #5), not a replay.
+- **Admin tier is intentionally asymmetric** (`Admin Monthly` vs `Premium Admin Annually`) — `"Admin Monthly"` fails the `.includes("premium")` AI gate, but admins pass via `isAdmin`. Edge case on an internal-only tier; left as-is per Lawrence.
+- `actions/index.ts` is ~1370 LOC now (grew this session) — may need splitting when it hits 1500+.
+- Two ESLint config files present (`.eslintrc.json` + `eslint.config.mjs`) — flat config is current but old one may cause confusion.
+- Disk space on VPS accumulates Docker build cache — hit 98% on 2026-06-18, blocked a deploy. Runbook: `COOLIFY_TROUBLESHOOTING.md`. Weekly cron given to Lawrence (`0 4 * * 0 docker builder prune -af && docker image prune -af`) — **confirm it was actually added** (`crontab -l`).
+- **Failed Paddle webhook events are permanently deduped.** A rejected event leaves its `event_id` in `PaddleWebhookEvent`, so Paddle re-delivery is silently skipped. Recovery requires the resync action (priority #6), not a replay.
 
 ---
 
