@@ -50,8 +50,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/Icon.png",
-        width: 1200,
-        height: 630,
+        width: 1080,
+        height: 1080,
         alt: "My Daily Routine app",
       },
     ],

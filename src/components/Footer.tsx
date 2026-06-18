@@ -7,6 +7,12 @@ const PRODUCT_LINKS = [
   { label: "Pricing", href: "/pricing" },
 ];
 
+const COMPANY_LINKS = [
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
+  { label: "Testimonials", href: "/testimonials" },
+];
+
 const LEGAL_LINKS = [
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms & Conditions", href: "/terms-and-conditions" },
@@ -18,7 +24,7 @@ function Footer() {
     <footer className="w-full border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black">
       <div className="w-full px-5 sm:px-8 md:px-[10%] py-12 md:py-16">
         {/* Top grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link href="/" className="inline-flex items-center gap-2.5 mb-4">
@@ -55,6 +61,25 @@ function Footer() {
             </h3>
             <ul className="space-y-3">
               {PRODUCT_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Company */}
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-4">
+              Company
+            </h3>
+            <ul className="space-y-3">
+              {COMPANY_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}

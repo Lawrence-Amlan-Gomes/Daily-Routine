@@ -5,7 +5,7 @@ import { auth as getNextAuthSession, signOut } from "@/auth";
 import { cleanUserForClient } from "@/lib/data-util";
 import { dbConnect } from "@/lib/mongo";
 import { deleteFromS3, uploadToS3 } from "@/lib/photoService";
-import { sendOtpEmail, sendWelcomeEmail } from "@/lib/server/email";
+import { sendContactMessageEmail, sendOtpEmail, sendWelcomeEmail } from "@/lib/server/email";
 import { generateToken, verifyToken } from "@/lib/server/jwt";
 import { enforceRateLimitByIp } from "@/lib/server/rate-limit";
 import { Feedback } from "@/models/Feedback";
@@ -1295,6 +1295,61 @@ export async function uploadPhoto(email: string, formData: FormData) {
   revalidatePath("/profile");
 
   return { photo: url };
+}
+
+// ==================== CONTACT ACTIONS ====================
+
+export async function sendContactMessage(
+  name: string,
+  subject: string,
+  body: string,
+): Promise<{ error?: string }> {
+  let actor: { email: string; isAdmin: boolean };
+  try {
+    actor = await getActionActor();
+  } catch {
+    return { error: "UNAUTHORIZED" };
+  }
+
+  const reqHeaders = await headers();
+  const forwarded = reqHeaders.get("x-forwarded-for");
+  const ip =
+    (forwarded ? forwarded.split(",")[0].trim() : reqHeaders.get("x-real-ip")) ||
+    "unknown";
+
+  const limit = await enforceRateLimitByIp(ip, {
+    route: "contact-message",
+    max: 3,
+    windowMs: 60 * 60 * 1000,
+    keyParts: [actor.email],
+  });
+  if (!limit.allowed) {
+    const mins = Math.ceil(limit.retryAfterSec / 60);
+    return { error: `Too many messages. Try again in ${mins} minute${mins !== 1 ? "s" : ""}.` };
+  }
+
+  const schema = z.object({
+    name: z.string().trim().min(1, "Name is required").max(100),
+    subject: z.string().trim().min(1, "Subject is required").max(200),
+    body: z.string().trim().min(10, "Message must be at least 10 characters").max(5000),
+  });
+  const parsed = schema.safeParse({ name, subject, body });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  try {
+    await sendContactMessageEmail(
+      actor.email,
+      parsed.data.name,
+      parsed.data.subject,
+      parsed.data.body,
+    );
+    return {};
+  } catch (err) {
+    console.error("sendContactMessage error:", err);
+    return { error: "Failed to send. Please email us directly at mydailyroutinecontact@gmail.com." };
+  }
 }
 
 export async function deletePhoto(email: string) {

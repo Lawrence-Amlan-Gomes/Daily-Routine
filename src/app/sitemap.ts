@@ -12,11 +12,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/register",
     "/forgot-password",
     "/pricing",
+    "/about",
+    "/contact",
     "/testimonials",
-    "/feedback",
-    "/refund-policy",
-    "/cancellation-policy",
-    "/privacy-policy",
+    "/refund",
+    "/privacy",
     "/terms-and-conditions",
   ];
 

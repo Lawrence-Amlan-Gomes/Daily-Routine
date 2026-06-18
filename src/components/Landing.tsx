@@ -1,4 +1,5 @@
 "use client";
+import FAQ from "./FAQ";
 import Feedback from "./Feedback";
 import Footer from "./Footer";
 import Hero from "./Hero";
@@ -33,6 +34,14 @@ export default function LandingPage() {
         <section className="py-16 md:py-24">
           <Feedback />
         </section>
+
+        {/* Divider */}
+        <div className="w-full px-5 sm:px-8 md:px-[10%]">
+          <hr className="border-gray-100 dark:border-gray-900" />
+        </div>
+
+        {/* FAQ */}
+        <FAQ />
 
       </main>
 

@@ -240,6 +240,70 @@ Get started: ${baseUrl}/login
   }
 }
 
+export async function sendContactMessageEmail(
+  fromEmail: string,
+  fromName: string,
+  subject: string,
+  body: string,
+) {
+  const mailOptions = {
+    from: process.env.SMTP_FROM,
+    to: "mydailyroutinecontact@gmail.com",
+    replyTo: fromEmail,
+    subject: `[Contact] ${subject}`,
+    text: `From: ${fromName} <${fromEmail}>\n\n${body}`,
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Contact message</title></head>
+<body style="margin:0;padding:0;background:#f0f4ff;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4ff;padding:40px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(37,99,235,0.10);">
+        <tr>
+          <td style="background:linear-gradient(135deg,#1d4ed8 0%,#3b82f6 100%);padding:32px 48px;text-align:center;">
+            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">New Contact Message</h1>
+            <p style="margin:6px 0 0;color:#bfdbfe;font-size:14px;">My Daily Routine</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 48px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">
+              <tr style="background:#f8fafc;">
+                <td style="padding:10px 16px;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid #e2e8f0;">From</td>
+              </tr>
+              <tr>
+                <td style="padding:12px 16px;font-size:14px;color:#1e293b;">${fromName} &lt;${fromEmail}&gt;</td>
+              </tr>
+              <tr style="background:#f8fafc;">
+                <td style="padding:10px 16px;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;">Subject</td>
+              </tr>
+              <tr>
+                <td style="padding:12px 16px;font-size:14px;color:#1e293b;">${subject}</td>
+              </tr>
+            </table>
+            <p style="margin:0 0 8px;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;">Message</p>
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;font-size:14px;color:#334155;line-height:1.7;white-space:pre-wrap;">${body}</div>
+            <p style="margin:24px 0 0;font-size:13px;color:#94a3b8;">Reply directly to this email to respond to ${fromName}.</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error) {
+    console.error("Contact message email send error:", error);
+    return { success: false, error };
+  }
+}
+
 export async function sendTrialExpiringEmail(email: string, name: string, daysLeft: number) {
   const dayLabel = daysLeft === 1 ? "1 day" : `${daysLeft} days`;
   const mailOptions = {
