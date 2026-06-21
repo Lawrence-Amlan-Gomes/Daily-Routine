@@ -50,30 +50,44 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 
 ## Last Session Summary
 
-**Date:** 2026-06-19 (Session 2)
+**Date:** 2026-06-19 (Session 3)
 **What we did:**
 
-**1. Added `<Toaster />` to `ClientLayout.tsx`**
-- `import { Toaster } from "sonner"` + `<Toaster richColors position="top-right" />` inside root div, after `TopNavBarWarper`.
-- Feedback.tsx toasts were silently no-oping in prod — now functional across the entire app.
+**1. Confirmed all prod verifications done**
+- Cancel fix, name editing, photo upload — all verified working in prod.
+- No code changes needed.
 
-**2. Deleted dead code**
-- Deleted `src/components/TestimonialCard.tsx` — unused since Testimonials page rewrite.
-- Deleted `src/app/testimonials/testimonials.ts` — static data file replaced by `getPublicFeedbacks()`.
+**2. Drew main system design diagram in Excalidraw**
+- File: `public/systemDesignMyDailyRoutine.excalidraw`
+- Mapped all components: Browser, Next.js Server (Coolify/Docker/Hostinger VPS), MongoDB, MinIO/S3, Paddle, Google Analytics (GA4), Brevo SMTP, Google OAuth, Google Gemini, cron-job.org.
+- Clarified arrow directions for every service (see below).
 
-**3. Confirmed completed items**
-- `mydailyroutine.app` already deployed and running (commit `08679b5` from prior session).
-- Trial-expiry cron already scheduled on cron-job.org — no action needed.
+**3. Analytics clarification**
+- Confirmed **Google Analytics is live** — `G-S546G5N7P2` hardcoded in `layout.tsx`, GTM script loaded via `next/script`.
+- PostHog env vars (`NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST`) exist but **no script/provider wired in the code** — PostHog is not active.
+- Side note: GA ID is hardcoded, not in env var. Low risk (public measurement ID) but worth moving to `NEXT_PUBLIC_GA_ID` eventually.
 
-**Commits this session:**
-- Not committed yet — `<Toaster />` addition + dead code deletion staged locally.
+**4. Arrow direction decisions (for diagram)**
+- `↔` bidirectional: Client ↔ Next.js Server, Client ↔ Paddle, Client ↔ Google OAuth
+- `→` client sends only: Client → Google Analytics (fire-and-forget, no return)
+- `←` client receives only: MinIO → Client (public photo URLs, browser reads only — server does all writes)
+- No client connection: MongoDB, Brevo SMTP, Google Gemini, cron-job.org (all server-only)
+- MinIO dual arrow note: Server → MinIO (write), MinIO → Client (read public URLs) — two separate arrows in diagram.
+
+**5. Auth flow detailed (for potential mini diagrams)**
+- Walked through all 4 flows: Email Registration, Email Login, Google OAuth, Middleware.
+- Decided NOT to build individual flow diagrams — main diagram only.
+
+**Commits this session:** None (no code changes)
 
 **Decisions made:**
-- Lawrence is building a separate learning project ("Backend Deepdives") with another co-founder. Not related to this codebase — no action here.
+- Only main system design diagram — no individual flow diagrams.
+- PostHog not in use — GA only.
+- Dedup recommendation: cap trial warning at 1 email via `trialWarningEmailSentAt` (still open, not implemented).
 
 **Open questions:**
-- Contact form not verified in prod — need to log in, go to `/contact`, fill form, confirm email arrives at `mydailyroutinecontact@gmail.com` with correct `replyTo`.
-- Cancel fix, name editing, photo upload — all unverified in prod.
+- Dedup decision still not implemented.
+- Weekly Docker prune cron on VPS — still unconfirmed if actually added (`crontab -l`).
 
 ---
 
@@ -81,15 +95,13 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 
 > *(Maintained as a ranked list. Top = most important.)*
 
-1. **Commit + deploy Toaster fix** — `ClientLayout.tsx` change + dead code deletion not committed yet. Commit, push, redeploy in Coolify.
-2. **Verify contact form in prod** — log in, go to `/contact`, fill the form, hit Send. Confirm email arrives at `mydailyroutinecontact@gmail.com` with correct replyTo.
-3. **Verify cancel fix in prod** — `mydailyroutinecontact@gmail.com` → Profile → Cancel Subscription. Expect "already cancelled" state + Paddle shows end-of-period cancel.
-4. **Verify name editing + photo upload in prod** — click name to enter edit mode, save, refresh. Upload photo, confirm S3 replace. Delete photo, confirm S3 remove.
-5. **Dedup decision** — 3 trial-warning emails vs cap at 1 via `trialWarningEmailSentAt` on User model. Still open.
-6. **Admin "resync from Paddle" action** — lookup Paddle customer by email → active subscription → write correct `paymentType`/`expiredAt`/`paddleSubscriptionId`. Needed to fix live Admin sub (`sub_01kvbbrtcn6aacvhsdk6tz270n`).
-7. **Per-user Gemini rate limit** — `thisMonthPremiumResponses` exists on User model but isn't checked server-side before Gemini call. Cost risk.
-8. **OG banner image** — Icon.png is 1080×1080 square, not ideal for social cards. Create a proper 1200×630 banner (`public/og-banner.png`) and update `layout.tsx`.
-9. **Testing coverage** — unit test for `paymentTypeSchema` accepting every webhook-produced string (would have caught June-2 outage). Then auth actions, email validation.
+1. **Dedup decision** — implement cap at 1 trial-warning email via `trialWarningEmailSentAt` on User model. Add field to Mongoose schema, check before send in `/api/cron/trial-expiry-warning`, set on send.
+2. **Confirm VPS weekly prune cron** — SSH into `185.201.8.71`, run `crontab -l`, verify `0 4 * * 0 docker builder prune -af && docker image prune -af` is present. Add if missing.
+3. **Admin "resync from Paddle" action** — lookup Paddle customer by email → active subscription → write correct `paymentType`/`expiredAt`/`paddleSubscriptionId`. Needed to fix live Admin sub (`sub_01kvbbrtcn6aacvhsdk6tz270n`).
+4. **Per-user Gemini rate limit** — `thisMonthPremiumResponses` exists on User model but isn't checked server-side before Gemini call. Cost risk. Add check in `src/app/server.ts#aiRoutineResponse`.
+5. **OG banner image** — Icon.png is 1080×1080 square, not ideal for social cards. Create proper 1200×630 banner (`public/og-banner.png`) and update `layout.tsx`.
+6. **Move GA ID to env var** — `G-S546G5N7P2` hardcoded in `layout.tsx`. Move to `NEXT_PUBLIC_GA_ID`, add to Coolify env vars.
+7. **Testing coverage** — unit test for `paymentTypeSchema` accepting every webhook-produced string (would have caught June-2 outage). Then auth actions, email validation.
 
 ---
 
