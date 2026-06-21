@@ -50,44 +50,44 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 
 ## Last Session Summary
 
-**Date:** 2026-06-19 (Session 3)
+**Date:** 2026-06-21 (Session 4)
 **What we did:**
 
-**1. Confirmed all prod verifications done**
-- Cancel fix, name editing, photo upload — all verified working in prod.
-- No code changes needed.
+**1. Expanded FAQ section for SEO**
+- File: `src/components/FAQ.tsx`
+- Grew from 5 to 18 detailed FAQs with full-paragraph answers covering: free trial, AI builder mechanics, what a routine planner is, habit science, goal tracking, subtasks, mobile support, stats, repeat schedules, payment methods, privacy, cancellation, task limits, missed days.
+- Added 6 h3 + paragraph content blocks ABOVE the accordion for organic SEO: why routines are the foundation of productivity, what makes a good weekly routine, how goal/habit tracking work together, the role of completion stats, how the AI builder works, who benefits most.
 
-**2. Drew main system design diagram in Excalidraw**
-- File: `public/systemDesignMyDailyRoutine.excalidraw`
-- Mapped all components: Browser, Next.js Server (Coolify/Docker/Hostinger VPS), MongoDB, MinIO/S3, Paddle, Google Analytics (GA4), Brevo SMTP, Google OAuth, Google Gemini, cron-job.org.
-- Clarified arrow directions for every service (see below).
+**2. Rewrote About page for SEO**
+- File: `src/components/About.tsx`
+- Full rewrite — 9 distinct h2 sections: Our Mission, What Is It, Who Is It For, Why Routines Work, The AI Routine Builder, Pricing, Privacy and Data Security, Built for Reliability, CTA (register + pricing buttons).
+- Replaced 3-paragraph stub with ~600 words of keyword-rich, structured content.
 
-**3. Analytics clarification**
-- Confirmed **Google Analytics is live** — `G-S546G5N7P2` hardcoded in `layout.tsx`, GTM script loaded via `next/script`.
-- PostHog env vars (`NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST`) exist but **no script/provider wired in the code** — PostHog is not active.
-- Side note: GA ID is hardcoded, not in env var. Low risk (public measurement ID) but worth moving to `NEXT_PUBLIC_GA_ID` eventually.
+**3. Improved About page metadata**
+- File: `src/app/about/page.tsx`
+- Expanded title: "About My Daily Routine — Weekly Planner, Goal Tracker & AI Scheduler"
+- Expanded description with target keywords: freelancers, students, remote workers, AI routine builder.
 
-**4. Arrow direction decisions (for diagram)**
-- `↔` bidirectional: Client ↔ Next.js Server, Client ↔ Paddle, Client ↔ Google OAuth
-- `→` client sends only: Client → Google Analytics (fire-and-forget, no return)
-- `←` client receives only: MinIO → Client (public photo URLs, browser reads only — server does all writes)
-- No client connection: MongoDB, Brevo SMTP, Google Gemini, cron-job.org (all server-only)
-- MinIO dual arrow note: Server → MinIO (write), MinIO → Client (read public URLs) — two separate arrows in diagram.
+**4. Updated FAQ JSON-LD structured data**
+- File: `src/app/page.tsx`
+- FAQ schema grew from 5 to 18 questions — all matching the live accordion for Google rich results.
 
-**5. Auth flow detailed (for potential mini diagrams)**
-- Walked through all 4 flows: Email Registration, Email Login, Google OAuth, Middleware.
-- Decided NOT to build individual flow diagrams — main diagram only.
+**5. Fixed prod build failure (deploy blocker)**
+- File deleted: `src/components/LandingTestimonials.tsx`
+- Component imported `@/app/testimonials/testimonials` (deleted in a prior session) and non-existent `TestimonialCard`. Was never imported anywhere in the app. Also contained copy from a different product ("Recruiter's Reply") — confirmed dead code, deleted.
+- Build error surfaced on Coolify deploy triggered by our FAQ/About push.
 
-**Commits this session:** None (no code changes)
+**Commits this session:**
+- `fe61c4b` — feat: expand FAQ and About pages with rich SEO content
+- `7170cfa` — fix: remove dead LandingTestimonials component breaking prod build
 
 **Decisions made:**
-- Only main system design diagram — no individual flow diagrams.
-- PostHog not in use — GA only.
-- Dedup recommendation: cap trial warning at 1 email via `trialWarningEmailSentAt` (still open, not implemented).
+- `LandingTestimonials.tsx` deleted (not stubbed) — confirmed dead code, wrong product copy.
+- No CLAUDE.md update needed — no new architecture, routes, or dependencies.
 
 **Open questions:**
-- Dedup decision still not implemented.
-- Weekly Docker prune cron on VPS — still unconfirmed if actually added (`crontab -l`).
+- Dedup decision still not implemented (was priority #1 last session, skipped this session).
+- Weekly Docker prune cron on VPS — still unconfirmed (`crontab -l` not run).
 
 ---
 
@@ -126,10 +126,11 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 - No test suite yet — only TypeScript + ESLint as automated checks. Neither caught the June-2 payment bug (runtime zod-validation mismatch) — only a unit test or live run would have.
 - **`paymentType` string is duplicated across 4 places that silently drift:** `PRICE_ID_TO_PLAN` (webhook tier names), the webhook's `${type} ${period}` build, `paymentTypeSchema` (validates it), and UI (`.includes(...)` + Profile's `/^(Standard|Premium|Admin) /` regex). No single source of truth → caused the June-2 outage. Candidate refactor: derive all from one tier/period constant.
 - **Admin tier is intentionally asymmetric** (`Admin Monthly` vs `Premium Admin Annually`) — `"Admin Monthly"` fails the `.includes("premium")` AI gate, but admins pass via `isAdmin`. Edge case on an internal-only tier; left as-is per Lawrence.
-- `actions/index.ts` is ~1370 LOC now (grew this session) — may need splitting when it hits 1500+.
+- `actions/index.ts` is ~1370 LOC — may need splitting when it hits 1500+.
 - Two ESLint config files present (`.eslintrc.json` + `eslint.config.mjs`) — flat config is current but old one may cause confusion.
 - Disk space on VPS accumulates Docker build cache — hit 98% on 2026-06-18, blocked a deploy. Runbook: `COOLIFY_TROUBLESHOOTING.md`. Weekly cron given to Lawrence (`0 4 * * 0 docker builder prune -af && docker image prune -af`) — **confirm it was actually added** (`crontab -l`).
-- **Failed Paddle webhook events are permanently deduped.** A rejected event leaves its `event_id` in `PaddleWebhookEvent`, so Paddle re-delivery is silently skipped. Recovery requires the resync action (priority #6), not a replay.
+- **Failed Paddle webhook events are permanently deduped.** A rejected event leaves its `event_id` in `PaddleWebhookEvent`, so Paddle re-delivery is silently skipped. Recovery requires the resync action, not a replay.
+- **Dead component cleanup risk:** `LandingTestimonials.tsx` slipped through undetected until it broke a prod build (2026-06-21). Worth doing a periodic audit of `src/components/` for files never imported — `grep -rL "import.*from.*components/Foo"` pattern.
 
 ---
 
