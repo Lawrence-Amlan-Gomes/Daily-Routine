@@ -13,8 +13,6 @@ export function getRedis(): Redis {
 
   const client = new Redis(url, {
     maxRetriesPerRequest: 1,
-    lazyConnect: true,
-    enableOfflineQueue: false,
   });
 
   client.on("error", (err) => console.error("[redis]", err));
