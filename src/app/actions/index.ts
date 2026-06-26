@@ -11,6 +11,7 @@ import { enforceRateLimitByIp } from "@/lib/server/rate-limit";
 import { Feedback } from "@/models/Feedback";
 import { OtpCode } from "@/models/OtpCode";
 import { User } from "@/models/User";
+import { getRedis } from "@/lib/redis";
 import { CleanUser, IRoutine } from "@/store/features/auth/authSlice";
 import bcrypt from "bcrypt";
 import { unstable_noStore as noStore, revalidatePath } from "next/cache";
@@ -35,6 +36,7 @@ type LeanFeedback = {
 type ActionActor = {
   email: string;
   isAdmin: boolean;
+  _id: string;
 };
 
 async function setAuthCookie(token: string) {
@@ -55,11 +57,12 @@ async function getActionActor(): Promise<ActionActor> {
   if (sessionEmail) {
     await dbConnect();
     const dbUser = await User.findOne({ email: sessionEmail }).select(
-      "email isAdmin",
+      "email isAdmin _id",
     );
     return {
       email: dbUser?.email ?? sessionEmail,
       isAdmin: Boolean(dbUser?.isAdmin),
+      _id: dbUser?._id?.toString() ?? "",
     };
   }
 
@@ -71,11 +74,12 @@ async function getActionActor(): Promise<ActionActor> {
   if (!tokenUser?.email) throw new Error("UNAUTHORIZED");
 
   await dbConnect();
-  const dbUser = await User.findOne({ email: tokenUser.email.toLowerCase().trim() }).select("email isAdmin");
+  const dbUser = await User.findOne({ email: tokenUser.email.toLowerCase().trim() }).select("email isAdmin _id");
 
   return {
     email: dbUser?.email ?? tokenUser.email.toLowerCase().trim(),
     isAdmin: Boolean(dbUser?.isAdmin),
+    _id: dbUser?._id?.toString() ?? "",
   };
 }
 
@@ -88,13 +92,14 @@ async function assertActorCanAccessEmail(targetEmail: string) {
   return actor;
 }
 
-async function assertPremiumAccess(email: string): Promise<void> {
+async function assertPremiumAccess(email: string): Promise<ActionActor> {
   const actor = await assertActorCanAccessEmail(email);
-  if (actor.isAdmin) return;
+  if (actor.isAdmin) return actor;
   const user = await User.findOne({ email: actor.email }).select("paymentType");
   if (!user?.paymentType?.toLowerCase().includes("premium")) {
     throw new Error("Premium subscription required");
   }
+  return actor;
 }
 
 // ==================== AUTH ACTIONS ====================
@@ -742,9 +747,14 @@ export async function updateRoutine(email: string, routine: IRoutine) {
   const parsed = routineSchema.safeParse(routine);
   if (!parsed.success) return { error: "Invalid routine data" };
 
-  await assertActorCanAccessEmail(email);
+  const actor = await assertActorCanAccessEmail(email);
   await dbConnect();
   await User.updateOne({ email }, { routine: parsed.data });
+  try {
+    await getRedis().del(`routine:${actor._id}`);
+  } catch (err) {
+    console.error("[redis] updateRoutine invalidation failed:", err);
+  }
   revalidatePath("/dashBoard");
 }
 
@@ -1100,34 +1110,55 @@ type AIRoutineDoc = {
   chatHistory?: ChatSession[];
 };
 
-export async function getAIRoutineDoc(
-  email: string,
-): Promise<{ aiRoutine: AIRoutineData; chatHistory: ChatSession[] }> {
+const AI_ROUTINE_TTL = 1800; // 30 minutes
+
+export async function getAIRoutine(email: string): Promise<AIRoutineData> {
+  const actor = await assertPremiumAccess(email);
+  const userId = actor._id;
+  const cacheKey = `routine:${userId}:ai`;
+
+  try {
+    const cached = await getRedis().get(cacheKey);
+    if (cached) return JSON.parse(cached) as AIRoutineData;
+  } catch (err) {
+    console.error("[redis] getAIRoutine read failed:", err);
+  }
+
+  await dbConnect();
+  const { AIRoutine } = await import("@/models/AIRoutine");
+  const doc = (await AIRoutine.findOne({ email }).select("aiRoutine").lean()) as Pick<AIRoutineDoc, "aiRoutine"> | null;
+  const aiRoutine: AIRoutineData = doc?.aiRoutine ?? {
+    saturday: [],
+    sunday: [],
+    monday: [],
+    tuesday: [],
+    wednesday: [],
+    thursday: [],
+    friday: [],
+  };
+
+  try {
+    await getRedis().set(cacheKey, JSON.stringify(aiRoutine), "EX", AI_ROUTINE_TTL);
+  } catch (err) {
+    console.error("[redis] getAIRoutine write failed:", err);
+  }
+
+  return aiRoutine;
+}
+
+export async function getChatHistory(email: string): Promise<ChatSession[]> {
   await assertPremiumAccess(email);
   await dbConnect();
   const { AIRoutine } = await import("@/models/AIRoutine");
-  const doc = (await AIRoutine.findOne({
-    email,
-  }).lean()) as AIRoutineDoc | null;
-  return {
-    aiRoutine: doc?.aiRoutine ?? {
-      saturday: [],
-      sunday: [],
-      monday: [],
-      tuesday: [],
-      wednesday: [],
-      thursday: [],
-      friday: [],
-    },
-    chatHistory: doc?.chatHistory ?? [],
-  };
+  const doc = (await AIRoutine.findOne({ email }).select("chatHistory").lean()) as Pick<AIRoutineDoc, "chatHistory"> | null;
+  return doc?.chatHistory ?? [];
 }
 
 export async function upsertAIRoutine(
   email: string,
   aiRoutine: AIRoutineData,
 ): Promise<void> {
-  await assertPremiumAccess(email);
+  const actor = await assertPremiumAccess(email);
   await dbConnect();
   const { AIRoutine } = await import("@/models/AIRoutine");
   await AIRoutine.findOneAndUpdate(
@@ -1135,6 +1166,11 @@ export async function upsertAIRoutine(
     { $set: { aiRoutine } },
     { upsert: true, new: true },
   );
+  try {
+    await getRedis().del(`routine:${actor._id}:ai`);
+  } catch (err) {
+    console.error("[redis] upsertAIRoutine invalidation failed:", err);
+  }
   revalidatePath("/ai-routine");
 }
 

@@ -8,7 +8,8 @@ import {
   ChatMessage,
   ChatSession,
   clearChatSession,
-  getAIRoutineDoc,
+  getAIRoutine,
+  getChatHistory,
   incrementThisMonthPremiumCount,
   upsertAIRoutine,
 } from "@/app/actions";
@@ -624,8 +625,8 @@ export default function AIRoutineBoard() {
     const email = auth.email;
     let mounted = true;
     setLoadingRoutine(true);
-    getAIRoutineDoc(email)
-      .then(({ aiRoutine, chatHistory }) => {
+    Promise.all([getAIRoutine(email), getChatHistory(email)])
+      .then(([aiRoutine, chatHistory]) => {
         if (!mounted) return;
         setAiRoutine(aiRoutine);
         setChatHistory(chatHistory);

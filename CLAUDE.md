@@ -13,6 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **State:** Redux Toolkit 2 + react-redux 9
 - **Auth:** NextAuth v5 beta (Google provider) + custom JWT via `jose` (email/password users); cookie name `authToken`; `bcrypt` for password hashing
 - **Database:** MongoDB via Mongoose 8 (global connection cache on `globalThis._mongoosePromise`)
+- **Cache:** Redis via `ioredis` — lazy singleton in `src/lib/redis.ts` (`getRedis()`); keyed by `_id` (`routine:{userId}`, `routine:{userId}:ai`); requires `REDIS_URL` env var
 - **Storage:** S3-compatible (MinIO) via `@aws-sdk/client-s3`; `sharp` resizes profile photos to 256×256 webp
 - **Payments:** Paddle (`@paddle/paddle-js`) — subscription model with recurring billing (monthly/annual), HMAC-SHA256 webhook signature verification
 - **AI:** `@google/genai` (Gemini) for the AI routine builder
@@ -53,6 +54,7 @@ src/
 │   └── ThemeProvider.tsx       # Context + hook for class-based dark mode; persists to localStorage
 ├── lib/
 │   ├── mongo.ts                # dbConnect w/ global promise cache
+│   ├── redis.ts                # getRedis() lazy singleton (ioredis); never import at module level — call inside try/catch
 │   ├── data-util.ts            # cleanUserForClient (Mongoose → plain)
 │   ├── photoService.ts         # S3 upload/delete + sharp resize
 │   ├── s3.ts                   # S3 client
@@ -145,6 +147,7 @@ All mutations use `revalidatePath(path)` from `next/cache` (imported alongside `
 | Var | Purpose | Required |
 |---|---|---|
 | `MONGODB_URI` | Mongo connection string | Yes |
+| `REDIS_URL` | ioredis connection string for routine/AI routine cache | Yes |
 | `JWT_SECRET` | Signs custom `authToken` (HS256, 7d) | Yes |
 | `NEXTAUTH_SECRET` / `AUTH_SECRET` | NextAuth v5 session secret (set both) | Yes |
 | `NEXTAUTH_URL` | Base URL for NextAuth callbacks | Yes |

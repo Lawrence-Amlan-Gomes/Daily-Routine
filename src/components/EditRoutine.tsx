@@ -3,7 +3,7 @@
 // The parent (DashBoard) passes the same props to this single component.
 "use client";
 
-import { updateRoutine, updateStats, getAIRoutineDoc } from "@/app/actions";
+import { updateRoutine, updateStats, getAIRoutine } from "@/app/actions";
 import { useAuth } from "@/app/hooks/useAuth";
 import { IRoutine, IRoutineItem, IStatEntry } from "@/store/features/auth/authSlice";
 import { useEffect, useMemo, useState } from "react";
@@ -399,7 +399,7 @@ export default function EditRoutine({
     if (!confirmed) return;
     setCopyingFromAI(true);
     try {
-      const { aiRoutine } = await getAIRoutineDoc(auth.email);
+      const aiRoutine = await getAIRoutine(auth.email);
       updateRoutineWithHistory({ ...aiRoutine });
       setMessage({ type: "success", text: "Copied from AI Routine!" });
       setTimeout(() => setMessage(null), 2000);
