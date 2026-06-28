@@ -144,7 +144,7 @@ export default function HowToUse() {
               <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950">
                 <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
-              <span className="text-3xl font-black text-gray-300 dark:text-gray-600 select-none">
+              <span className="text-3xl font-black text-black dark:text-white select-none">
                 {step}
               </span>
             </div>
