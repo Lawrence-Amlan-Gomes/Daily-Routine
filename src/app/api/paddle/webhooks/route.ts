@@ -2,8 +2,8 @@
 import { updatePaymentType } from "@/app/actions";
 import { dbConnect } from "@/lib/mongo";
 import { PaddleWebhookEvent } from "@/models/PaddleWebhookEvent";
+import { User } from "@/models/User";
 import crypto from "crypto";
-import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 
 const PADDLE_WEBHOOK_SECRET = process.env.PADDLE_WEBHOOK_SECRET!;
@@ -211,7 +211,6 @@ async function handleSubscriptionActivated(subscription: PaddleTransaction) {
   }
 
   // Auto-cancel old subscription if user upgrading
-  const User = mongoose.models.User || mongoose.model("User");
   const user = await User.findOne({ email });
   if (user?.paddleSubscriptionId && user.paddleSubscriptionId !== subscriptionId) {
     try {

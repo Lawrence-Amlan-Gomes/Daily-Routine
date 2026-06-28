@@ -50,44 +50,42 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 
 ## Last Session Summary
 
-**Date:** 2026-06-21 (Session 4)
+**Date:** 2026-06-26 (Session 5)
 **What we did:**
 
-**1. Expanded FAQ section for SEO**
-- File: `src/components/FAQ.tsx`
-- Grew from 5 to 18 detailed FAQs with full-paragraph answers covering: free trial, AI builder mechanics, what a routine planner is, habit science, goal tracking, subtasks, mobile support, stats, repeat schedules, payment methods, privacy, cancellation, task limits, missed days.
-- Added 6 h3 + paragraph content blocks ABOVE the accordion for organic SEO: why routines are the foundation of productivity, what makes a good weekly routine, how goal/habit tracking work together, the role of completion stats, how the AI builder works, who benefits most.
+**1. Redis cache-aside for routine and AI routine reads**
 
-**2. Rewrote About page for SEO**
-- File: `src/components/About.tsx`
-- Full rewrite — 9 distinct h2 sections: Our Mission, What Is It, Who Is It For, Why Routines Work, The AI Routine Builder, Pricing, Privacy and Data Security, Built for Reliability, CTA (register + pricing buttons).
-- Replaced 3-paragraph stub with ~600 words of keyword-rich, structured content.
+Designed and implemented in collaboration with Lawrence's backend co-founder (relay conversation). Full audit of mutation surface before writing any cache code.
 
-**3. Improved About page metadata**
-- File: `src/app/about/page.tsx`
-- Expanded title: "About My Daily Routine — Weekly Planner, Goal Tracker & AI Scheduler"
-- Expanded description with target keywords: freelancers, students, remote workers, AI routine builder.
+Files changed:
+- `src/lib/redis.ts` — NEW. Lazy `getRedis()` singleton using `ioredis`. Doesn't initialize at module load (avoids Next.js build-time crash). Fails gracefully — all ops wrapped in try/catch, falls back to MongoDB silently.
+- `src/app/actions/index.ts` — multiple changes:
+  - `ActionActor` type now includes `_id: string`
+  - `getActionActor()` selects `_id` from DB on both auth paths (Google + JWT)
+  - `assertPremiumAccess` now returns `ActionActor` instead of `void`
+  - `getAIRoutineDoc` replaced by two split functions: `getAIRoutine(email)` (cache-aside, 30-min TTL, key `routine:{userId}:ai`) and `getChatHistory(email)` (always MongoDB, no cache)
+  - `updateRoutine` (line ~747) — adds `getRedis().del(routine:${actor._id})` after write
+  - `upsertAIRoutine` (line ~1133) — adds `getRedis().del(routine:${actor._id}:ai)` after write
+- `src/components/AIRoutineBoard.tsx` — `Promise.all([getAIRoutine(email), getChatHistory(email)])` replaces single `getAIRoutineDoc` call
+- `src/components/EditRoutine.tsx` — pure `getAIRoutine(email)` call; zero MongoDB on warm cache
+- `CLAUDE.md` — updated with Redis dependency, `src/lib/redis.ts` entry, `REDIS_URL` env var row
 
-**4. Updated FAQ JSON-LD structured data**
-- File: `src/app/page.tsx`
-- FAQ schema grew from 5 to 18 questions — all matching the live accordion for Google rich results.
-
-**5. Fixed prod build failure (deploy blocker)**
-- File deleted: `src/components/LandingTestimonials.tsx`
-- Component imported `@/app/testimonials/testimonials` (deleted in a prior session) and non-existent `TestimonialCard`. Was never imported anywhere in the app. Also contained copy from a different product ("Recruiter's Reply") — confirmed dead code, deleted.
-- Build error surfaced on Coolify deploy triggered by our FAQ/About push.
+**Key decisions made:**
+- Cache key by `_id` not email — email mutability is a permanent correctness risk
+- Split `getAIRoutine` / `getChatHistory` — chatHistory mutates on every message, caching it alongside aiRoutine would evict on every chat turn (zero benefit). Only aiRoutine is cached.
+- 2 invalidation points total across the entire codebase — audited every MongoDB mutation before writing any `redis.del`
+- `getRedis()` lazy pattern (not module-level singleton) — module-level init crashes Next.js build when `REDIS_URL` not set
 
 **Commits this session:**
-- `fe61c4b` — feat: expand FAQ and About pages with rich SEO content
-- `7170cfa` — fix: remove dead LandingTestimonials component breaking prod build
+- `5bc58e5` — feat: add Redis cache-aside for routine and AI routine reads
 
-**Decisions made:**
-- `LandingTestimonials.tsx` deleted (not stubbed) — confirmed dead code, wrong product copy.
-- No CLAUDE.md update needed — no new architecture, routes, or dependencies.
+**Deploy status:**
+- First deploy attempt failed at Nix package install step (transient nixpacks network timeout — not our code). VPS disk was 44% (healthy). Re-triggered. Outcome not confirmed at end of session.
 
 **Open questions:**
-- Dedup decision still not implemented (was priority #1 last session, skipped this session).
-- Weekly Docker prune cron on VPS — still unconfirmed (`crontab -l` not run).
+- Dedup decision still not implemented (was priority #1 last two sessions, skipped again).
+- Weekly Docker prune cron on VPS — still unconfirmed (`crontab -l` not run). VPS disk was 44% today so not urgent, but cron still needs to be set.
+- Redis cache working in prod — confirm by checking Coolify logs after next deploy for `[redis]` errors or absence of them.
 
 ---
 
@@ -95,13 +93,14 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 
 > *(Maintained as a ranked list. Top = most important.)*
 
-1. **Dedup decision** — implement cap at 1 trial-warning email via `trialWarningEmailSentAt` on User model. Add field to Mongoose schema, check before send in `/api/cron/trial-expiry-warning`, set on send.
+1. **Dedup decision** — implement cap at 1 trial-warning email via `trialWarningEmailSentAt` on User model. Add field to Mongoose schema, check before send in `/api/cron/trial-expiry-warning`, set on send. (Skipped 3 sessions in a row — do this next.)
 2. **Confirm VPS weekly prune cron** — SSH into `185.201.8.71`, run `crontab -l`, verify `0 4 * * 0 docker builder prune -af && docker image prune -af` is present. Add if missing.
-3. **Admin "resync from Paddle" action** — lookup Paddle customer by email → active subscription → write correct `paymentType`/`expiredAt`/`paddleSubscriptionId`. Needed to fix live Admin sub (`sub_01kvbbrtcn6aacvhsdk6tz270n`).
-4. **Per-user Gemini rate limit** — `thisMonthPremiumResponses` exists on User model but isn't checked server-side before Gemini call. Cost risk. Add check in `src/app/server.ts#aiRoutineResponse`.
-5. **OG banner image** — Icon.png is 1080×1080 square, not ideal for social cards. Create proper 1200×630 banner (`public/og-banner.png`) and update `layout.tsx`.
-6. **Move GA ID to env var** — `G-S546G5N7P2` hardcoded in `layout.tsx`. Move to `NEXT_PUBLIC_GA_ID`, add to Coolify env vars.
-7. **Testing coverage** — unit test for `paymentTypeSchema` accepting every webhook-produced string (would have caught June-2 outage). Then auth actions, email validation.
+3. **Confirm Redis working in prod** — after next successful deploy, check Coolify runtime logs for `[redis]` errors on AI routine page load. Absence of errors = working.
+4. **Admin "resync from Paddle" action** — lookup Paddle customer by email → active subscription → write correct `paymentType`/`expiredAt`/`paddleSubscriptionId`. Needed to fix live Admin sub (`sub_01kvbbrtcn6aacvhsdk6tz270n`).
+5. **Per-user Gemini rate limit** — `thisMonthPremiumResponses` exists on User model but isn't checked server-side before Gemini call. Cost risk. Add check in `src/app/server.ts#aiRoutineResponse`.
+6. **OG banner image** — Icon.png is 1080×1080 square, not ideal for social cards. Create proper 1200×630 banner (`public/og-banner.png`) and update `layout.tsx`.
+7. **Move GA ID to env var** — `G-S546G5N7P2` hardcoded in `layout.tsx`. Move to `NEXT_PUBLIC_GA_ID`, add to Coolify env vars.
+8. **Testing coverage** — unit test for `paymentTypeSchema` accepting every webhook-produced string (would have caught June-2 outage). Then auth actions, email validation.
 
 ---
 
@@ -126,7 +125,8 @@ Think like a co-founder: challenge bad ideas, flag risks, suggest what will move
 - No test suite yet — only TypeScript + ESLint as automated checks. Neither caught the June-2 payment bug (runtime zod-validation mismatch) — only a unit test or live run would have.
 - **`paymentType` string is duplicated across 4 places that silently drift:** `PRICE_ID_TO_PLAN` (webhook tier names), the webhook's `${type} ${period}` build, `paymentTypeSchema` (validates it), and UI (`.includes(...)` + Profile's `/^(Standard|Premium|Admin) /` regex). No single source of truth → caused the June-2 outage. Candidate refactor: derive all from one tier/period constant.
 - **Admin tier is intentionally asymmetric** (`Admin Monthly` vs `Premium Admin Annually`) — `"Admin Monthly"` fails the `.includes("premium")` AI gate, but admins pass via `isAdmin`. Edge case on an internal-only tier; left as-is per Lawrence.
-- `actions/index.ts` is ~1370 LOC — may need splitting when it hits 1500+.
+- `actions/index.ts` is now ~1420 LOC — may need splitting when it hits 1500+.
+- **Redis connection untestable locally** — `REDIS_URL` points to a Coolify internal Docker network hostname (`p14b0g5b0bem8q55tj3pehgv`) only resolvable inside Coolify. Can't `redis-cli` or test-script from dev machine. Verify via Coolify runtime logs only.
 - Two ESLint config files present (`.eslintrc.json` + `eslint.config.mjs`) — flat config is current but old one may cause confusion.
 - Disk space on VPS accumulates Docker build cache — hit 98% on 2026-06-18, blocked a deploy. Runbook: `COOLIFY_TROUBLESHOOTING.md`. Weekly cron given to Lawrence (`0 4 * * 0 docker builder prune -af && docker image prune -af`) — **confirm it was actually added** (`crontab -l`).
 - **Failed Paddle webhook events are permanently deduped.** A rejected event leaves its `event_id` in `PaddleWebhookEvent`, so Paddle re-delivery is silently skipped. Recovery requires the resync action, not a replay.
